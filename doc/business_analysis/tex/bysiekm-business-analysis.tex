@@ -6,18 +6,19 @@
 
 \PassOptionsToPackage{usenames,dvipsnames,svgnames}{xcolor}
 
-\input{titlepage}
+\input{../../includes/titlepage}
 
 \university{Warsaw University of Technology}
 \faculty{Faculty of Mathematics and~Computer~Science}
 \location{Warsaw}
-\supervisor{prof. nzw. dr hab. Władysław Homenda\newline dr Lucjan Stapp}
+\supervisor{dr Lucjan Stapp} %prof. nzw. dr hab. Władysław Homenda\newline
 \title{$\Phi$nite}
-\description{application for building finite automaton that is equivalent to a given regular expression}
+\description{application for building finite automaton that is equivalent to a given regular
+expression \newline and for simulating machine's evaluation of a given word}
 \author{Mateusz Bysiek}
-\date{28 Feb 2013}
+\date{14 Mar 2013}
 
-\input{documentmetric}
+\input{../../includes/documentmetric}
 
 \company{WUT}
 \documentsubject{business analysis}
@@ -29,11 +30,11 @@ giving set of requirements that such application must fulfill and providing guid
 developers.}
 
 \openingdate{21 Feb 2013}
-\version{0.06}
+\version{0.08}
 \status{pre-alpha}
 \filename{bysiekm-business-analysis.pdf}
 
-\input{footer}
+\input{../../includes/footer}
 
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -57,9 +58,13 @@ world of regular expressions\textsuperscript{\cite{wiki_rl}} and finite-state
 machines\textsuperscript{\cite{wiki_fsm}} (i.e. the theoretical constructs that let us evaluate
 regular expressions). The application will consist of GUI (graphical user interface) coupled with a
 regular expression evaluation engine. Together these two components will enable the user to enter an
-expression by hand (or, alternatively, load it from plain text file) and then semi-automatically
-construct a finite-state machine that is equivalent to this expression. In other words, given
-regular expression expands into the same set of words that a resulting finite-state machine accepts.
+expression by hand (or, alternatively, load it from a list of prepared examples) and then
+semi-automatically construct a finite-state machine that is equivalent to this expression.
+In other words, given regular expression expands into the same set of words that a resulting
+finite-state machine accepts.
+
+Furthermore, the user will be able to simulate how the built finite-state machine works for a given
+input word.
 
 \section{Feature overview}
 In this section, reader is presented with the features that must be implemented, unless a given
@@ -84,11 +89,12 @@ unless it is impossible in certain cases, be visually similar to a regular expre
 written without plain text editor. Using \LaTeX{} math mode syntax is preferred, but not
 mandatory.
 
-Ex. ``\verb|ab^*|'' may represent $ab^*$, and \verb|(ab)*(| may represent $(ab)\ast($ i.e. a word
-in which parentheses and other special characters denote letters. The latter example is ambiguous,
-because it either prevents user from using parentheses at all, or parentheses may mean different
-things depending on entered regular expression. Such situation is unacceptable, because any
-scheme in which characters have different meaning depending on context is ambiguous.
+Ex. ``\verb|ab^*|'' under a set of not ambiguous rules may represent $ab^*$, and on the other hand,
+there is no set of unambiguous rules to convert \verb|(ab)*(| to a regular expression. The latter
+may represent $(ab)\ast($ i.e. a word in which parentheses and other special characters denote
+letters (preventing the user from using parentheses - which is unacceptable), or maybe $(ab)^*($
+where the last parenthesis serves as a letter, and the two first are parentheses. The opening
+parenthesis may have different meaning depending on context - it is also unacceptable.
 
 \subsubsection*{Requirements}
 
@@ -135,6 +141,7 @@ The user will be able to edit the expression regardless of what the input method
 proceeds with calculations. Editing the input is to be done via a plain text field in the GUI.
 
 \subsection{Calculation methods}
+\label{sec:calcmethods}
 
 \subsubsection*{Definitions}
 \begin{itemize}%[noitemsep,nolistsep]
@@ -158,8 +165,10 @@ The second table has at list three columns: initial expression, subtracted symbo
 expression. If the algorithm is currently in derivation phase, the currently derived expression is
 highlighted.
 
-Highlighting means that the background color of a cell in which a highlighted content resides is
-changed to the font color, and the font color is changed to the background color.
+Highlighting means that either 1) the background color of a cell in which a highlighted content
+resides is changed to the font color, and the font color is changed to the background color or 2)
+background color of a cell has color changed from white to gray (between \verb|#c0c0c0| and
+\verb|#808080|, inclusive).
 
 \subsubsection*{Requirements}
 The user will be able to convert the entered expression to an equivalent finite-state machine using
@@ -226,9 +235,48 @@ convention regarding drawing finite-state machines:
 
   \item the drawing has to be readable, i.e. font size used has to be at least 10 points.
 
+  \item if the drawing is too big to fit in applicatin window or on user's screen, the output is not
+  zoomed out but rather a method must be implemented so that the user can scroll around the drawing
+  to be able to see everything piece by piece.
+
 \end{itemize}
 
-\section{Workflow with example}
+\subsection{Simulation methods}
+
+\subsubsection*{Definition}
+\begin{itemize}[noitemsep,nolistsep]
+
+  \item \textit{finite-state machine simulation} is a process of evaluation of a sequence
+  of letters given by the user using a finite-state machine.
+
+\end{itemize}
+
+\subsubsection*{Requirements}
+The finite-state machine simulation must conform with the following requirements:
+\begin{itemize}
+
+  \item the simulation should be done step-by-step, much like in the case of machine construction
+  process, but the difference is that the feature of immediate solution may be ommited
+  (see requirements part in section~\ref{sec:calcmethods} for details regarding solution methods)
+  
+  \item the evaluation is represented graphically, i.e. the requirements regarding graphical
+  representation of the output apply to the finite-state machine simulation
+
+  \item in each step the node that represents the current state of the machine is highlighted (see
+  the end of definitions in section~\ref{sec:calcmethods})
+  
+  \item if a rejecting state is entered than no node is highlighted anymore and the dialog is
+  displayed that informs the user that the word was rejected by the machine
+  
+  \item if there are no more letters for evaluation and current state is not an accepting state, the
+  dialog (analogous to the one in the previous point) is displayed
+  
+  \item if an accepting state is entered and there are no more letters remaining for evaluation, the
+  dialog is displayed that informs the user that the word was accepted by the machine
+
+\end{itemize}
+
+\section{Building finite-state machine: workflow with example}
 The computation process used by the application shall follow the following outline. Solutions to two
 sub-problems:
 \begin{itemize}
@@ -406,64 +454,13 @@ This concludes a complete computation process.
   \caption{graphical representation of the final answer for the example problem}
 \end{figure}
 
-\section{GUI mockup}
+%\section{Word evaluation: workflow with example}
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics[width=.5\textwidth]{../../graphics/PhiniteGuiMockup.png}
-  \caption{schema of the graphical user interface}
-\end{figure}
+%\subsection{Input}
 
-\subsection{Main menu}
-Main menu contains all general options that are required to be implemented, but are not connected
-with a specific step of calculation. Contents of the menu must not change during application
-operation, but its certain entries may be temporarily disabled during some phases of computation.
+%\subsection{Solution process}
 
-Main menu will contain, ex. exit option, %load option, 
-example selection option.
-
-\subsection{Main area}
-Main area will contain frequently changing content, as it may have any of the following: a text
-field for entering a regular expression, button to proceed to the next step of computation, button
-to abort computation, button to display final result, a table with intermediate results, a final
-result, etc. Content of main area depends on context, i.e. previous actions of the user and current
-status of application.
-
-\subsection{Status bar}
-Status bar must contain one of three phrases at all times, unless there are equivalent indicators
-implemented (mentioned in each point):
-\begin{itemize}
-
-  \item ``busy'' - if program computes the final or intermediate result. %, or is loading data.
-  
-  Equivalent of this is locking all elements of the GUI while the program is busy.
-
-  \item ``awaiting user interaction'' - if program is not busy, but intends to be right after user
-  gives some information that may help with further computation. The phrase may be changed to other
-  with the same meaning. This status is intended only for computation phase, and only for those
-  parts of computation phase that require user input.
-  
-  Equivalent of this status is displaying a new window. All information and input fields needed by
-  the user to help the program must be in this new window. When it is closed, program resumes
-  computation.
-  
-  Since the user feedback mechanism is optional (provided that it is of course substituted with
-  working implementation), in certain implementation scenarios this status will never occur (or
-  window will never be shown). If development team is able to prove that this feature would really
-  never be used, this status indication does not have to be implemented.
-
-  \item ``ready'' - in all other situations, for example: after start-up, %after loading the data,
-  after completing the computation.
-  
-  Equivalent of this status is a situation in which both previous mechanisms are implemented using
-  second variant. If it is so, this status can be omitted.
-
-\end{itemize}
-
-Status bar may also temporarily contain some optional content that may help the user in completing
-the user interaction phase, provided that the main area is not a proper place for this content.
-
-%\newpage
+%\subsection{Final solution}
 
 \section{Use cases}
 
@@ -500,7 +497,7 @@ point, if the validation fails, either:
   \item a dialog is presented with information about this fact,
 
   \item or text box with the input data is highlighted by changing its border to red line that has
-  width between 2 and 5 pixels; and text informing the user about the error is added to the status
+  width between 2 and 4 pixels; and text informing the user about the error is added to the status
   bar.
 
 \end{itemize}
@@ -508,6 +505,8 @@ point, if the validation fails, either:
 Program will prohibit user from changing input data after the computation has started. Editing
 capabilities will be restored after the computation has finished, or after the user aborts current
 computation before it has concluded and the final solution is presented.
+
+\newpage
 
 \begin{thebibliography}{9}
 

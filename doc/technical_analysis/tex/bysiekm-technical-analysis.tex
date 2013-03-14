@@ -1,0 +1,110 @@
+\documentclass{article}
+\usepackage[cm]{fullpage} %very small margins (around 1.5cm)
+\usepackage[utf8]{inputenc} %sets input encoding to UTF-8, needed for Polish, Japanese, etc.
+\usepackage[T1]{fontenc} %needed for Polish characters
+\usepackage{lmodern} %this font handles Polish characters properly
+
+\PassOptionsToPackage{usenames,dvipsnames,svgnames}{xcolor}
+
+\input{../../includes/titlepage}
+
+\university{Warsaw University of Technology}
+\faculty{Faculty of Mathematics and~Computer~Science}
+\location{Warsaw}
+\supervisor{prof. nzw. dr hab. W³adys³aw Homenda\newline dr Lucjan Stapp}
+\title{$\Phi$nite}
+\description{application for building finite automaton that is equivalent to a given regular expression
+\newline and for simulating machine's evaluation of a given word}
+\author{Mateusz Bysiek}
+\date{28 Feb 2013}
+
+\input{../../includes/documentmetric}
+
+\company{WUT}
+\documentsubject{business analysis}
+\documenttopicslist{initial analysis of the problem, requirements specification, guidelines}
+
+\documentsummary{Author of the document analyses the problem of designing an application for solving
+a well defined language\mbox{-}theory related problem, doing it from the business perspective, i.e.
+giving set of requirements that such application must fulfill and providing guidelines for
+developers.}
+
+\openingdate{21 Feb 2013}
+\version{0.06}
+\status{pre-alpha}
+\filename{bysiekm-business-analysis.pdf}
+
+\input{../../includes/footer}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{multicol} %use \begin{multicols}{#} for # columns
+\usepackage{enumitem} %remove vertical space in itemize with: [noitemsep,nolistsep]
+\usepackage{tikz}
+
+\usetikzlibrary{arrows,positioning,automata}
+
+\newcommand{\writehere}{\textbf{\textcolor{red}{Write here!}}}
+
+\begin{document}
+
+\section{GUI mockup}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.5\textwidth]{../../graphics/PhiniteGuiMockup.png}
+  \caption{schema of the graphical user interface}
+\end{figure}
+
+\subsection{Main menu}
+Main menu contains all general options that are required to be implemented, but are not connected
+with a specific step of calculation. Contents of the menu must not change during application
+operation, but its certain entries may be temporarily disabled during some phases of computation.
+
+Main menu will contain, ex. exit option, %load option, 
+example selection option.
+
+\subsection{Main area}
+Main area will contain frequently changing content, as it may have any of the following: a text
+field for entering a regular expression, button to proceed to the next step of computation, button
+to abort computation, button to display final result, a table with intermediate results, a final
+result, etc. Content of main area depends on context, i.e. previous actions of the user and current
+status of application.
+
+\subsection{Status bar}
+Status bar must contain one of three phrases at all times, unless there are equivalent indicators
+implemented (mentioned in each point):
+\begin{itemize}
+
+  \item ``busy'' - if program computes the final or intermediate result. %, or is loading data.
+  
+  Equivalent of this is locking all elements of the GUI while the program is busy.
+
+  \item ``awaiting user interaction'' - if program is not busy, but intends to be right after user
+  gives some information that may help with further computation. The phrase may be changed to other
+  with the same meaning. This status is intended only for computation phase, and only for those
+  parts of computation phase that require user input.
+  
+  Equivalent of this status is displaying a new window. All information and input fields needed by
+  the user to help the program must be in this new window. When it is closed, program resumes
+  computation.
+  
+  Since the user feedback mechanism is optional (provided that it is of course substituted with
+  working implementation), in certain implementation scenarios this status will never occur (or
+  window will never be shown). If development team is able to prove that this feature would really
+  never be used, this status indication does not have to be implemented.
+
+  \item ``ready'' - in all other situations, for example: after start-up, %after loading the data,
+  after completing the computation.
+  
+  Equivalent of this status is a situation in which both previous mechanisms are implemented using
+  second variant. If it is so, this status can be omitted.
+
+\end{itemize}
+
+Status bar may also temporarily contain some optional content that may help the user in completing
+the user interaction phase, provided that the main area is not a proper place for this content.
+
+%\newpage
+
+\end{document}
