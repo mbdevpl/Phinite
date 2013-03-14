@@ -1,0 +1,87 @@
+%this file must be included in the preamble
+
+\usepackage{booktabs} %use \begin{tabular}{} with \toprule \midrule \bottomrule
+\usepackage{tabulary}
+
+\def\company#1{\gdef\companytext{#1}}
+\def\companytext{\errmessage{Please define the company}}
+
+\def\documentsubject#1{\gdef\documentsubjecttext{#1}}
+\def\documentsubjecttext{\errmessage{Please define the documentsubject}}
+
+\def\documenttopicslist#1{\gdef\documenttopicslisttext{#1}}
+\def\documenttopicslisttext{\errmessage{Please define the documenttopicslist}}
+
+\def\filename#1{\gdef\filenametext{#1}}
+\def\filenametext{\errmessage{Please define the filename}}
+
+\def\version#1{\gdef\versiontext{#1}}
+\def\versiontext{\errmessage{Please define the version}}
+
+\def\status#1{\gdef\statustext{#1}}
+\def\statustext{\errmessage{Please define the status}}
+
+\def\openingdate#1{\gdef\openingdatetext{#1}}
+\def\openingdatetext{\errmessage{Please define the openingdate}}
+
+\def\documentsummary#1{\gdef\documentsummarytext{#1}}
+\def\documentsummarytext{\errmessage{Please define the documentsummary}}
+
+% \def\#1{\gdef\text{#1}}
+% \def\text{\errmessage{Please define the }}
+
+\newcommand{\tableheader}[1]{\textbf{\large {#1}}}
+\newcommand{\fieldheader}[1]{\textbf{\footnotesize {#1}}}
+
+\newcommand{\documentmetric}{
+\pdfbookmark[1]{Document metric}{docmetric}
+\begin{center}
+\begin{tabulary}{\textwidth}{LJLJLJ}
+\toprule
+\multicolumn{6}{l}{\tableheader{Document metric}} \\
+\midrule
+\fieldheader{Project} & \multicolumn{3}{l}{\textsc{\titletext}} 
+& \fieldheader{Company} & \companytext \\
+\midrule    
+\fieldheader{Document name} & \multicolumn{5}{l}{\documentsubjecttext} \\
+\midrule
+\fieldheader{Document topics} & \multicolumn{5}{l}{\documenttopicslisttext} \\
+\midrule
+\fieldheader{Author} & \multicolumn{5}{l}{\authortext} \\
+\midrule
+\fieldheader{File} & \multicolumn{5}{l}{\filenametext} \\
+\midrule
+\fieldheader{Version no.} & \versiontext 
+& \fieldheader{Status} & \statustext
+& \fieldheader{Opening date} & \openingdatetext \\
+\midrule
+\fieldheader{Summary} & \multicolumn{5}{l}{\parbox{.80\textwidth}{\documentsummarytext}
+} \\
+\midrule
+\fieldheader{Authorized by} & \multicolumn{3}{l}{\parbox{.40\textwidth}{\supervisortext}} 
+& \fieldheader{Last modification date} & \datetext \\
+\bottomrule
+\multicolumn{6}{l}{\makebox[.96\textwidth]{}} \\
+\end{tabulary}
+\end{center}
+}
+
+\newcommand{\historyofchanges}[1]{
+\pdfbookmark[1]{History of changes}{dochistory}
+\begin{center}
+\begin{tabulary}{\textwidth}{LLLJ}
+\toprule
+\multicolumn{4}{l}{\tableheader{History of changes}} \\
+\midrule
+\fieldheader{Version} & \fieldheader{Date} & \fieldheader{Author} & \fieldheader{Description} \hspace*{\fill} \\
+#1
+\bottomrule
+\multicolumn{4}{l}{\makebox[.96\textwidth]{}} \\
+\end{tabulary}
+\end{center}
+}
+
+\newcommand{\change}[4]{
+\midrule
+{#1} & {#2} & {#3} & {#4} \\
+}

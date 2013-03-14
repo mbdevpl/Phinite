@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexpIO", "RegexpIO\RegexpIO.csproj", "{B385EB4F-A358-4B31-A436-D4715094C66F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexpToFSM", "RegexpToFSM\RegexpToFSM.csproj", "{632DF988-3749-4CE8-8441-A7F4FE74EF18}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Phinite", "Phinite\Phinite.csproj", "{37E21191-F904-4D4C-B636-47FF73B81805}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestRegexpIO", "TestRegexpIO\TestRegexpIO.csproj", "{51C07DED-1393-4D63-9D20-340E647ADD5F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B385EB4F-A358-4B31-A436-D4715094C66F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B385EB4F-A358-4B31-A436-D4715094C66F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B385EB4F-A358-4B31-A436-D4715094C66F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B385EB4F-A358-4B31-A436-D4715094C66F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{632DF988-3749-4CE8-8441-A7F4FE74EF18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{632DF988-3749-4CE8-8441-A7F4FE74EF18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{632DF988-3749-4CE8-8441-A7F4FE74EF18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{632DF988-3749-4CE8-8441-A7F4FE74EF18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E21191-F904-4D4C-B636-47FF73B81805}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37E21191-F904-4D4C-B636-47FF73B81805}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37E21191-F904-4D4C-B636-47FF73B81805}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37E21191-F904-4D4C-B636-47FF73B81805}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51C07DED-1393-4D63-9D20-340E647ADD5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51C07DED-1393-4D63-9D20-340E647ADD5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51C07DED-1393-4D63-9D20-340E647ADD5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51C07DED-1393-4D63-9D20-340E647ADD5F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

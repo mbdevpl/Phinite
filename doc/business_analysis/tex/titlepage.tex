@@ -1,0 +1,93 @@
+%this file must be included in the preamble
+
+\usepackage{graphicx} %use \includegraphics[scale=1.00]{file.jpg} for images
+\usepackage[unicode]{hyperref}
+
+\hypersetup{
+  bookmarksopen,
+  bookmarksopenlevel=1,
+  pdfborder={0 0 0},
+  %pdfpagelayout={SinglePage},
+  %pdfstartview={FitH},
+  pdfdisplaydoctitle
+}
+
+\def\title#1{\gdef\titletext{#1}\hypersetup{pdftitle={#1}}}
+\def\titletext{\errmessage{Please define the title}}
+
+\def\author#1{\gdef\authortext{#1}\hypersetup{pdfauthor={#1}}}
+\def\authortext{\errmessage{Please define the author}}
+
+\def\supervisor#1{\gdef\supervisortext{#1}}
+\def\supervisortext{\errmessage{Please define the supervisor}}
+
+\def\date#1{\gdef\datetext{#1}}
+\def\datetext{\errmessage{Please define the date}}
+
+\def\university#1{\gdef\universitytext{#1}}
+\def\universitytext{\errmessage{Please define the university}}
+
+\def\faculty#1{\gdef\facultytext{#1}}
+\def\facultytext{\errmessage{Please define the faculty}}
+
+\def\location#1{\gdef\locationtext{#1}}
+\def\locationtext{\errmessage{Please define the location}}
+
+\def\description#1{\gdef\descriptiontext{#1}}
+\def\descriptiontext{\errmessage{Please define the description}}
+
+\renewcommand{\maketitle}{
+\pdfbookmark[1]{Title page}{titlepage}
+\begin{titlepage}
+\begin{center}
+  \begin{minipage}{.15\textwidth}
+    \begin{flushleft}
+      \includegraphics[scale=0.395]{logo_pw.jpg}
+    \end{flushleft}
+  \end{minipage}
+  \begin{minipage}{.66\textwidth}
+    \begin{center}
+      { \Large \universitytext }
+    \end{center}
+    
+    \begin{center}
+      { \Large \facultytext }
+    \end{center}
+  \end{minipage}
+  \begin{minipage}{.15\textwidth}
+    \begin{flushright}
+      \includegraphics[scale=0.16]{logo_mini.png}
+    \end{flushright}
+  \end{minipage}
+\end{center}
+
+\vspace*{\fill}
+  
+\begin{center}
+  \textsc{\Huge \titletext }
+\end{center}
+  
+\begin{center}
+  \textsc{ \descriptiontext }
+\end{center}
+
+\vspace*{\fill}
+
+\hspace{.5\textwidth}
+\begin{minipage}[t]{.4\textwidth}
+  \begin{flushleft}
+    {\large Author: \newline \authortext }
+  \end{flushleft}
+  
+  \begin{flushleft}
+    {\large Supervisor: \newline \supervisortext }
+  \end{flushleft}
+\end{minipage}
+
+\vspace{50pt}
+
+\begin{center}
+  {\large\locationtext, \datetext}
+\end{center}
+\end{titlepage}
+}

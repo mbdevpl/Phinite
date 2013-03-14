@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Sat Feb 23 15:34:31 CET 2013
+markTmpDer=true
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=bysiekm-business-analysis.tex
+outputFile=bysiekm-business-analysis.pdf
+langSpell=en
+markDer=true
+srcDir=tex

@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Phinite.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DefaultPdfViewerCommand" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">SumatraPDF\SumatraPDF.exe</Value>
+    </Setting>
+    <Setting Name="DefaultPdflatexCommand" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">MiKTeX\miktex\bin\pdflatex</Value>
+    </Setting>
+    <Setting Name="DefaultUseSystemDefaultPdfViewer" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

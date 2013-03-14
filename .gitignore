@@ -1,0 +1,21 @@
+# files that should be ignored by git
+
+# Windows
+Thumbs.db
+
+# LaTeX
+*.synctex.gz
+/doc/*/tmp
+
+# Visual Studio
+*.suo
+*.csproj.user
+*.cache
+/src/*/obj
+/src/*/bin
+/src/TestResults
+
+# Temporary enries
+/bin
+/doc/business_analysis/tex/example.tex
+/doc/business_analysis/example.pdf

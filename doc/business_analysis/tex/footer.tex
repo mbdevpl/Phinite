@@ -1,0 +1,15 @@
+%this file must be included in the preamble
+
+\usepackage{color}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{lastpage} %page x of y with: \cfoot{\thepage{} of \pageref{LastPage}}
+\usepackage{fancyhdr} % also needed for footers
+
+\fancyhead{}
+\fancyfoot{}
+\lfoot{{ \footnotesize \textcolor{gray}{\authortext} }}
+\cfoot{{ \footnotesize page \thepage{} of \pageref{LastPage} }}
+\rfoot{\textsc{ \footnotesize \textcolor{gray}{\titletext, v.\versiontext} }}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
