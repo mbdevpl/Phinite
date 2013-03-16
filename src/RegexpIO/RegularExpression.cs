@@ -16,49 +16,63 @@ namespace Phinite
 		/// <summary>
 		/// List of symbols that have special meaning.
 		/// </summary>
-		public static readonly KeyValuePair<string, InputSymbolTag>[] ReservedSymbols
-			= new KeyValuePair<string, InputSymbolTag>[]
-			{
-				new KeyValuePair<string, InputSymbolTag>("+", InputSymbolTag.Union),
-				new KeyValuePair<string, InputSymbolTag>("^*", InputSymbolTag.KleeneStar),
-				new KeyValuePair<string, InputSymbolTag>("^+", InputSymbolTag.KleenePlus),
-				new KeyValuePair<string, InputSymbolTag>(".", InputSymbolTag.EmptyWord),
-				new KeyValuePair<string, InputSymbolTag>("(", InputSymbolTag.OpeningParenthesis),
-				new KeyValuePair<string, InputSymbolTag>(")", InputSymbolTag.ClosingParenthesis)
-			};
+		public static readonly KeyValuePair<string, InputSymbolTag>[] ReservedSymbols;
+
 		/// <summary>
 		/// Maximum lenght of any of ReservedSymbols.
 		/// </summary>
-		public static readonly int ReservedSymbolMaxLength = 2;
+		public static readonly int ReservedSymbolMaxLength;
 
 		/// <summary>
 		/// Literals that represent each of the tags.
 		/// 
 		/// Conceptually, it is an exact reverse of ReservedSymbols list.
 		/// </summary>
-		public static readonly Dictionary<InputSymbolTag, string> TagsStrings
-			= new Dictionary<InputSymbolTag, string>
-			{
-				{InputSymbolTag.Union, "+"},
-				{InputSymbolTag.KleeneStar, "^*"},
-				{InputSymbolTag.KleenePlus, "^+"},
-				{InputSymbolTag.EmptyWord, "."},
-				{InputSymbolTag.OpeningParenthesis, "("},
-				{InputSymbolTag.ClosingParenthesis, ")"}
-			};
+		public static readonly Dictionary<InputSymbolTag, string> TagsStrings;
 
 		/// <summary>
 		/// Those symbols are skipped when they are encountered in the input.
 		/// </summary>
-		public static readonly string[] IgnoredSymbols = new string[] { " ", "\t" };
-		public static readonly int IgnoredSymbolMaxLength = 1;
+		public static readonly string[] IgnoredSymbols;
+
+		public static readonly int IgnoredSymbolMaxLength;
 
 		/// <summary>
 		/// Those symbols cannot be used alone in the input. Sometimes they may be still allowed as parts
 		/// of longer, multi-character symbols.
 		/// </summary>
-		public static readonly string[] ForbiddenSymbols = new string[] { "*" };
-		public static readonly int ForbiddenSymbolMaxLength = 1;
+		public static readonly string[] ForbiddenSymbols;
+
+		public static readonly int ForbiddenSymbolMaxLength;
+
+		static RegularExpression()
+		{
+			ReservedSymbols = new KeyValuePair<string, InputSymbolTag>[]
+				{
+					new KeyValuePair<string, InputSymbolTag>("+", InputSymbolTag.Union),
+					new KeyValuePair<string, InputSymbolTag>("^*", InputSymbolTag.KleeneStar),
+					new KeyValuePair<string, InputSymbolTag>("^+", InputSymbolTag.KleenePlus),
+					new KeyValuePair<string, InputSymbolTag>(".", InputSymbolTag.EmptyWord),
+					new KeyValuePair<string, InputSymbolTag>("(", InputSymbolTag.OpeningParenthesis),
+					new KeyValuePair<string, InputSymbolTag>(")", InputSymbolTag.ClosingParenthesis)
+				};
+			ReservedSymbolMaxLength = 2;
+
+			var reversedReservedSymbols = new Dictionary<InputSymbolTag, string>();
+			foreach (var pair in ReservedSymbols)
+			{
+				if (reversedReservedSymbols.ContainsKey(pair.Value))
+					continue;
+				reversedReservedSymbols.Add(pair.Value, pair.Key);
+			}
+			TagsStrings = reversedReservedSymbols;
+
+			IgnoredSymbols = new string[] { " ", "\t" };
+			IgnoredSymbolMaxLength = 1;
+
+			ForbiddenSymbols = new string[] { "*" };
+			ForbiddenSymbolMaxLength = 1;
+		}
 
 		/// <summary>
 		/// Original input given to the constructor of this object.

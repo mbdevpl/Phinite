@@ -29,9 +29,9 @@ expression \newline and for simulating machine's evaluation of a given word}
 \documenttopicslist{technical analysis of the problem, details of used algorihms, interface specification}
 
 \documentsummary{Author of the document analyses the problem of designing an application for solving
-a well defined language\mbox{-}theory related problem, doing it from the developer perspective, i.e.
-providing definitions of expected application environment, developer environment, user interface
-requirements, and all used algorithms.}
+a well defined language\mbox{-}theory related problem, doing it from the developer team leader
+perspective, i.e. providing definitions of expected application environment, developer environment,
+user interface requirements, and all used algorithms.}
 
 \openingdate{16 Mar 2013}
 \version{0.15}
@@ -45,7 +45,8 @@ requirements, and all used algorithms.}
 \usepackage{multicol} %use \begin{multicols}{#} for # columns
 \usepackage{enumitem} %remove vertical space in itemize with: [noitemsep,nolistsep]
 \usepackage{tikz}
-%\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
+\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
+\usepackage{tabularx}
 
 \usetikzlibrary{arrows,positioning,automata}
 
@@ -69,9 +70,9 @@ program will be run.
 \begin{itemize}
 
   \item \textit{the application} is a synonym for \titletext, the term includes the runtime of
-  \titletext with the documentation, but not the source code.
+  \titletext{} with the user documentation, but not the source code and class documentation.
 
-\end{itemize} 
+\end{itemize}
 
 \subsection{Hardware requirements}
 
@@ -82,7 +83,7 @@ not have to use all the available space, but it must work within the boundaries.
 
 \subsection{Operating system}
 
-Application is expected to work on the following set of operating systems:
+The application is expected to work on the following set of operating systems:
 
 \begin{itemize}
 
@@ -94,38 +95,44 @@ Application is expected to work on the following set of operating systems:
 
   \item Microsoft Windows 7 Ultimate x64
 
-\end{itemize} 
+\end{itemize}
 
-\subsection{Software present in the system}
+\subsection{Additional software}
 
-Other than the operating system, application cannot be expected to work corretly unless all of the
+Other than the operating system, the application cannot be expected to work corretly unless all of the
 following components are present in the operating system:
 
-\begin{itemize}
+\begin{enumerate}
 
   \item .NET Framework 4.0 Full Profile
 
   \item PDF (Portable Document Format) file viewer
 
-  \item PDF-LaTeX creation toolkit that is able to create PDF files from LaTeX source code using
+  \item PDF-LaTeX toolkit that is able to create PDF files from LaTeX source code automatically, using
   command-line.
 
-\end{itemize} 
+\end{enumerate}
 
 The application may seem to work correctly without some of these components being present, but it is
 undefined what will happen.
+
+The development team shall provide portable (in the sense that their installation and/or
+configuration by the user will not be required in order for them to work) runtimes for the latter
+two components. The first component has to be installed by the user.
 
 \section{Development process constraints}
 
 This section provides a set of requiremets with regard to the environment, in which the application
 and its documentation will be developed.
 
-\subsection*{Definition}
+\subsection*{Definitions}
 
 \begin{itemize}
 
-  \item \textit{the project} is term used for all of the listed: the runtime of \titletext{} with the
-  documentation, the source code and required external libraries.
+  \item \textit{the project} is term used for all of the listed: the runtime of \titletext{} with
+  all documentation, the source code and required external libraries.
+
+  \item the development process will follow the waterfall model
 
 \end{itemize}
 
@@ -134,10 +141,13 @@ and its documentation will be developed.
 \begin{itemize}
 
   \item Visual Studio 2012 Ultimate will be used
-  
-  \item C\# will be used to implement the algorithms used to fulfil the main purpose of
-  \titletext{}: for building finite-state machine that is equivalent to a given regular expression
-  and for simulating machine's evaluation of a given word
+
+  \item C\# will be used to implement main algorithms of \titletext: for building finite-state
+  machine that is equivalent to a given regular expression and for simulating machine's evaluation
+  of a given word
+
+  \item .NET Framework 4.0 features such as lambda expressions and Linq will be used to simplify the
+  implementation proces and make the code more readable.
 
   \item WPF (Windows Presentation Framework) will be used to create the user interface, via use of
   C\# and XAML
@@ -165,28 +175,26 @@ and its documentation will be developed.
 
 \end{itemize}
 
-\writehere
-
-\section{Used technologies}
-
-\subsection{The runtime}
-
-\begin{itemize}
-
-  \item 
-
-\end{itemize}
-
-\subsection{The development}
-
-The list of technologies for the runtime applies also to this section. Moreover, there are some
-extra components used exclusively for the development.  
-
-\begin{itemize}
-
-  \item 
-
-\end{itemize}
+% \section{Used technologies}
+% 
+% \subsection{The runtime}
+% 
+% \begin{itemize}
+% 
+%   \item 
+% 
+% \end{itemize}
+% 
+% \subsection{The development}
+% 
+% The list of technologies for the runtime applies also to this section. Moreover, there are some
+% extra components used exclusively for the development.  
+% 
+% \begin{itemize}
+% 
+%   \item 
+% 
+% \end{itemize}
 
 \newpage
 
@@ -250,49 +258,312 @@ the user interaction phase, provided that the main area is not a proper place fo
 \section{Classes}
 This section goes through the most important classes used in the project.
 
-\subsection{RegularExpression}
+\subsection{Regular expression}
+Numerous classes are required to store regular expression from its raw form up to completely parsed
+form. First of all, enumeration of tags used to tag the input character sequence:
 
-\begin{verbatim}
-class RegularExpression
-{
-	string input;
-	
-	List<string, Tag> taggedInput;
-	
-	PartialExpression parsedInput;
-}
-\end{verbatim}
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public enum InputSymbolTag
+	{
+		Letter, Union, KleeneStar, KleenePlus, OpeningParenthesis, ClosingParenthesis, EmptyWord
+	}
+\end{minted}
 
-\subsection{PartialExpression}
+An object that stores all the data about the regular expression:
 
-\begin{verbatim}
-class PartialExpression
-{
-	Role role;
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public class RegularExpression
+	{
+		public static readonly KeyValuePair<string, InputSymbolTag>[] ReservedSymbols;
 
-	PartialExpression parts;
-}
-\end{verbatim}
+		public static readonly Dictionary<InputSymbolTag, string> TagsStrings;
 
-\subsection{FiniteStateMachine}
+		public static readonly string[] IgnoredSymbols;
 
-\begin{verbatim}
-class FiniteStateMachine
-{
-	RegularExpression input;
-	
-	RegularExpression initialState;
-	
-	List<RegularExpression> states;
-	
-	List<RegularExpression> finalStates;
-}
-\end{verbatim}
+		public static readonly string[] ForbiddenSymbols;
+
+		public string Input;
+
+		public ReadOnlyCollection<string> Alphabet;
+
+		private List<KeyValuePair<string, InputSymbolTag>> taggedInput;
+
+		private Dictionary<InputSymbolTag, uint> tagCount;
+
+		private PartialExpression parsedInput;
+
+		private void TagInput();
+
+		private void CountTags();
+
+		private void ParseInput();
+
+		public void Optimize();
+
+		public RegularExpression Derive(string removedLetter);
+
+		public bool GeneratesEmptyWord();
+	}
+\end{minted}
+
+Enumeration of roles that a given part of the expression can assume.
+
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public enum PartialExpressionRole
+	{
+		EmptyWord, Letter, Concatenation, Union, Undetermined
+	}
+\end{minted}
+
+Enumeration of unary operators that a given part of the expression can be affected by:
+
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public enum UnaryOperator
+	{
+		None, KleeneStar, KleenePlus
+	}
+\end{minted}
+
+A single node of a tree that stores the actual expression in its parsed form:
+
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public class PartialExpression
+	{
+		public PartialExpressionRole Role;
+
+		public PartialExpression Root;
+
+		public ReadOnlyCollection<PartialExpression> Parts;
+
+		public string Value;
+
+		public UnaryOperator Operator;
+
+		public void Optimize();
+
+		public void Derive(string removedLetter);
+
+		public bool GeneratesEmptyWord();
+	}
+\end{minted}
+
+\subsection{Finite-state machine}
+Few classes are required to store information about the constructed finite-state machine, because
+most of the computational complexity is on the side of PartialExpression class.
+
+A place to store all information about a single finite-state machine:
+
+\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+	public class FiniteStateMachine
+	{
+		public RegularExpression Input;
+
+		public ReadOnlyCollection<RegularExpression> States;
+
+		public ReadOnlyCollection<Tuple<RegularExpression, string, RegularExpression>> Transitions;
+
+		public ReadOnlyCollection<RegularExpression> FinalStates;
+
+		private void FindTransitions();
+
+		private void FindFinalStates();
+	}
+\end{minted}
+
+\newpage
 
 \section{Algorithms}
 
 \subsection{Conversion of plain text into a RegularExpression object}
+The algorithm should follow the standard procedure applied in the are of natural language
+processing. Of course in case of this algorithm that process is simplified greatly because of the
+fact that we do not parse a human language but a machine language.
+
+\subsubsection{Tagging}
+First step is to tag the input data accordingly. This is done for several reasons:
+
+\begin{enumerate}
+
+  \item As the tagging is done, algorithm eliminates ignored symbols by not adding them to the
+  tagged input.
+
+  \item The tagging eliminates the difference between letters, all non-special symbols are simply
+  regarded as ``letters''. From the point of view of further parsing, this greatly simplifies the
+  process.
+
+  \item As the input is tagged, it becomes much easier to detect which parts of it belong together.
+
+  \item The validation and therefore stopping in case of some mistakes like open bracket without a
+  corresponding closing one, or placing a unary operator after an opening bracket, etc. is simplified.
+
+\end{enumerate}
+
+Program shall go through all the letters and assign a tag to each of them. The direction of the
+processing (left to right or right to left) does not matter. In fact, the solution can, but does not
+have to be, parallelized. In case of sequential solution the worst case running time must be $O(n)$,
+in case of parallel solution $O(n/k)$ assuming $k$ is the number of cores used, $k \leq n$.
+
+The developer should pay attention to the fact that some special symbols consist of several
+characters. In such case a single tag is placed over all of the characters that constitute such
+symbol. Therefore the parallelization may add some complications.
+
+Results of tagging are stored in \verb|taggedInput| field. Relevant tag counts in the
+\verb|tagCount| field are incremented on-the-go.
+
+\subsubsection{Tag counting}
+In this step the algorithm simply checks the counts of parentheses to ensure that there is the same
+number of opening and closing ones.
+
+\subsubsection{Parsing}
+Third step is to parse the tagged input into a tree. A tree created by parsing a plain text using a
+certain grammar is called a parse tree in research texts related to natural language processing.
+
+The initial steps of the algorithm and definitions used later on:
+\begin{enumerate}
+
+  \item a new, empty \verb|PartialExpression| is created and it becomes a current part
+
+  \item current part is always labeled as ``Part''
+
+  \item Part becomes a root part of the currently created parse tree
+
+  \item root of the current parse tree is always labeled as ``Root''
+
+  \item the role of Part is set to \verb|Undetermined|
+
+  \item role of the current part is always labeled as ``Role''
+
+  \item the algorithm goes through all characters of the input, starting from the first
+
+  \item at each step, the currently evaluated symbol is labeled as ``Symbol''
+
+  \item at each step, the actions of the algorithm depend on the Role, Symbol and Root; they are
+  described in a separate table that follows
+
+  \item if there are no more symbols to parse, the returned part is set as a root of the regular
+  expression (field \verb|parsedInput| of \verb|RegularExpression|)
+
+\end{enumerate}
+
+The procedure is a recursive one. Parentheses are the triggers for recursion. The below table shows
+the behaviour of the algorithm. This table is a human-readable version of an underlying grammar that
+is used to create the parse tree.
+
+\vspace{10pt} \noindent
+\begin{tabularx}{\textwidth}{l|l|l|X}
+
+Role & Symbol & Root & result \\ \hline
+
+\verb|Undetermined| & \verb|EmptyWord| & $*$ &
+
+1) Role is set to \verb|Concatenation| \newline
+2) a new part with role \verb|EmptyWord| is added to parts of Part \\
+
+\verb|Undetermined| & \verb|Letter| & $*$ &
+
+1) Role is set to \verb|Concatenation| \newline
+2) and a new part with role \verb|Letter| and value of the Symbol is added to parts of Part \\
+
+%\verb|Undetermined| & \verb|ClosingParenthesis| & $*$ &
+
+%\\
+
+\verb|Concatenation| & \verb|EmptyWord| & $*$ &
+
+a new part with role \verb|EmptyWord| is added \\
+
+\verb|Concatenation| & \verb|Letter| & $*$ &
+
+a new part with role \verb|Letter| and value of the Symbol is added \\
+
+\verb|Concatenation| & \verb|Union| & $\equiv$Part &
+
+1) a new part with role \verb|Union| is created, and this new part is set as Root; \newline
+2) Part is added to the parts of Root \newline
+3) a new part with role \verb|Undetermined| is created, it is appended to the parts of the Root and
+it is set as Part \\
+
+\verb|Concatenation| & \verb|Union| & $\not\equiv$Part &
+
+%1) a new part with role \verb|Union| is created, and this new part is set as Root; \newline
+%1) Part is added to the parts of Root \newline
+a new part with role \verb|Concatenation| is created, it is appended to the parts of the Root and
+it is set as Part \\
+
+\verb|Concatenation| & \verb|OpeningParenthesis| & $*$ &
+
+1) the sub-procedure of parsing starts from step one, and the sub-procedure treats the first
+symbol after the parenthesis as the first symbol of input \newline
+2) when the sub-procedure ends, the returned value is added to the parts of Part \newline
+3) the procedure skips all symbols parsed by the sub-procedure and continues \\
+
+\verb|Concatenation| & \verb|ClosingParenthesis| & $*$ &
+
+the parsing procedure ends, Root is returned \\
+
+\verb|Concatenation| & \verb|KleeneStar| & $*$ &
+
+the operator of the last of the parts of Part is set to \verb|KleeneStar| \\
+
+\verb|Concatenation| & \verb|KleenePlus| & $*$ &
+
+the operator of the last of the parts of Part is set to \verb|KleenePlus| \\
+
+\end{tabularx}
+
+\vspace{10pt} All other encountered pairs of Role-Symbol result in an undefined behaviour. Such pairs would
+however violate the rules of the underlying grammar, therefore they can, and shall be detected in
+the tagging step. Also, in the table there are some assumptions about data integrity which are
+ommited. Catching of invalid tag sequences in before starting parsing phase and correct
+implementation of the above algorithm ensures data integrity i.e. ensures that the correct parse
+tree will be built.
+
+\subsubsection{Optimization}
+The fourth and the last phase is to optimize the parse tree i.e. eliminate any useless productions.
+This step is optional, but highly recommended.
+
+Useless productions are understood here as expression parts that are not optimal, and are defined as
+those that are of one of the following kinds:
+\begin{enumerate}
+
+  \item A part that has role of \verb|Concatenation| or \verb|Union|, and has only one part - it
+  shall be converted to the part itself.
+
+  In this case special rules regarding operators apply:
+
+  \noindent
+  \begin{tabular}{c|c|c}
+  Operator of parent & Operator of its single part & resulting operator \\ \hline
+  \verb|None| & $*$ & $*$ \\
+  $*$ & \verb|None| & $*$ \\
+  \verb|KleeneStar| & $*$ & \verb|KleeneStar| \\
+  $*$ & \verb|KleeneStar| & \verb|KleeneStar| \\
+  \verb|KleenePlus| & \verb|KleenePlus| & \verb|KleenePlus| \\
+  \end{tabular}
+
+  \vspace{10pt} The algorithm shall analyze if the rules apply to the current situation from top to
+  bottom, and apply the first matching rule.
+
+  \item A part that is a part of \verb|Concatenation| and its role is equal to \verb|EmptyWord| -
+  such part can be deleted altogether unless it is the only part of that \verb|Concatenation|.
+
+  \item If a \verb|Union| has some parts that are equal, the duplicates can be safely deleted.
+
+\end{enumerate}
+
+This step is needed to ensure that the implementation second algorithm can be greatly simplified.
+The implementation of the second algorithm becomes much more difficult without assumption that the
+parse tree is optimal.
+
+It is still possible to implement the derivation and labeling algorithm without optimizations, that
+is why the implementation of optimization is not mandatory.
 
 \subsection{Conversion of RegularExpression object into FiniteStateMachine object}
+
+\subsubsection{Initialization}
+
+\subsubsection{Derivation step}
+
+\subsubsection{Labeling step}
 
 \end{document}
