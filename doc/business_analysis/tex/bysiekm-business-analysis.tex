@@ -8,6 +8,10 @@
 
 \input{../../includes/titlepage}
 
+\logoleft{../../graphics/logo_pw.jpg}
+\logoleftscale{0.395}
+\logoright{../../graphics/logo_mini.png}
+\logorightscale{0.16}
 \university{Warsaw University of Technology}
 \faculty{Faculty of Mathematics and~Computer~Science}
 \location{Warsaw}
@@ -30,7 +34,7 @@ giving set of requirements that such application must fulfill and providing guid
 developers.}
 
 \openingdate{21 Feb 2013}
-\version{0.08}
+\version{0.09}
 \status{pre-alpha}
 \filename{bysiekm-business-analysis.pdf}
 
@@ -265,14 +269,14 @@ The finite-state machine simulation must conform with the following requirements
   \item in each step the node that represents the current state of the machine is highlighted (see
   the end of definitions in section~\ref{sec:calcmethods})
   
-  \item if a rejecting state is entered than no node is highlighted anymore and the dialog is
-  displayed that informs the user that the word was rejected by the machine
+  \item if a rejecting state is entered than no node is highlighted anymore and the message window
+  is displayed that informs the user that the word was rejected by the machine
   
   \item if there are no more letters for evaluation and current state is not an accepting state, the
-  dialog (analogous to the one in the previous point) is displayed
+  message window (analogous to the one in the previous point) is displayed
   
   \item if an accepting state is entered and there are no more letters remaining for evaluation, the
-  dialog is displayed that informs the user that the word was accepted by the machine
+  message window is displayed that informs the user that the word was accepted by the machine
 
 \end{itemize}
 
@@ -494,7 +498,7 @@ point, if the validation fails, either:
 
 \begin{itemize}
 
-  \item a dialog is presented with information about this fact,
+  \item a message window is presented with information about this fact,
 
   \item or text box with the input data is highlighted by changing its border to red line that has
   width between 2 and 4 pixels; and text informing the user about the error is added to the status

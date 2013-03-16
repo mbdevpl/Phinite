@@ -9,6 +9,7 @@ Thumbs.db
 
 # Visual Studio
 *.suo
+*.v11.suo
 *.csproj.user
 *.cache
 /src/*/obj

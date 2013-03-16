@@ -12,6 +12,18 @@
   pdfdisplaydoctitle
 }
 
+\def\logoleft#1{\gdef\logoleftpath{#1}}
+\def\logoleftpath{\errmessage{Please define the logoleft}}
+
+\def\logoleftscale#1{\gdef\logoleftscaletext{#1}}
+\def\logoleftscaletext{\errmessage{Please define the logoleftscale}}
+
+\def\logoright#1{\gdef\logorightpath{#1}}
+\def\logorightpath{\errmessage{Please define the logoright}}
+
+\def\logorightscale#1{\gdef\logorightscaletext{#1}}
+\def\logorightscaletext{\errmessage{Please define the logorightscale}}
+
 \def\title#1{\gdef\titletext{#1}\hypersetup{pdftitle={#1}}}
 \def\titletext{\errmessage{Please define the title}}
 
@@ -42,7 +54,7 @@
 \begin{center}
   \begin{minipage}{.15\textwidth}
     \begin{flushleft}
-      \includegraphics[scale=0.395]{logo_pw.jpg}
+      \includegraphics[scale=\logoleftscaletext]{\logoleftpath}
     \end{flushleft}
   \end{minipage}
   \begin{minipage}{.66\textwidth}
@@ -56,7 +68,7 @@
   \end{minipage}
   \begin{minipage}{.15\textwidth}
     \begin{flushright}
-      \includegraphics[scale=0.16]{logo_mini.png}
+      \includegraphics[scale=\logorightscaletext]{\logorightpath}
     \end{flushright}
   \end{minipage}
 \end{center}

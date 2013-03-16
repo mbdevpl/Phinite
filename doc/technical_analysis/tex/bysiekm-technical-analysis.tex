@@ -8,29 +8,33 @@
 
 \input{../../includes/titlepage}
 
+\logoleft{../../graphics/logo_pw.jpg}
+\logoleftscale{0.395}
+\logoright{../../graphics/logo_mini.png}
+\logorightscale{0.16}
 \university{Warsaw University of Technology}
 \faculty{Faculty of Mathematics and~Computer~Science}
 \location{Warsaw}
-\supervisor{prof. nzw. dr hab. W³adys³aw Homenda\newline dr Lucjan Stapp}
+\supervisor{dr Lucjan Stapp}
 \title{$\Phi$nite}
-\description{application for building finite automaton that is equivalent to a given regular expression
-\newline and for simulating machine's evaluation of a given word}
+\description{application for building finite-state machine that is equivalent to a given regular
+expression \newline and for simulating machine's evaluation of a given word}
 \author{Mateusz Bysiek}
-\date{28 Feb 2013}
+\date{21 Mar 2013}
 
 \input{../../includes/documentmetric}
 
 \company{WUT}
-\documentsubject{business analysis}
-\documenttopicslist{initial analysis of the problem, requirements specification, guidelines}
+\documentsubject{technical analysis}
+\documenttopicslist{technical analysis of the problem, details of used algorihms, interface specification}
 
 \documentsummary{Author of the document analyses the problem of designing an application for solving
-a well defined language\mbox{-}theory related problem, doing it from the business perspective, i.e.
-giving set of requirements that such application must fulfill and providing guidelines for
-developers.}
+a well defined language\mbox{-}theory related problem, doing it from the developer perspective, i.e.
+providing definitions of expected application environment, developer environment, user interface
+requirements, and all used algorithms.}
 
-\openingdate{21 Feb 2013}
-\version{0.06}
+\openingdate{16 Mar 2013}
+\version{0.15}
 \status{pre-alpha}
 \filename{bysiekm-business-analysis.pdf}
 
@@ -41,12 +45,150 @@ developers.}
 \usepackage{multicol} %use \begin{multicols}{#} for # columns
 \usepackage{enumitem} %remove vertical space in itemize with: [noitemsep,nolistsep]
 \usepackage{tikz}
+%\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
 
 \usetikzlibrary{arrows,positioning,automata}
 
 \newcommand{\writehere}{\textbf{\textcolor{red}{Write here!}}}
 
 \begin{document}
+
+\input{firstpages}
+
+\section*{Abstract}
+
+\writehere
+
+\section{The runtime environment}
+
+This section provides a set of requiremets with regard to the environment, in which the developed
+program will be run.
+
+\subsection*{Definition}
+
+\begin{itemize}
+
+  \item \textit{the application} is a synonym for \titletext, the term includes the runtime of
+  \titletext with the documentation, but not the source code.
+
+\end{itemize} 
+
+\subsection{Hardware requirements}
+
+The computer on which the application is run must conform with the minimum requirements that are
+defined for operating system and the components listed in further sections. The application itself
+must require at most 1GB of hard drive space and 1GB of RAM to work. The actual implementation does
+not have to use all the available space, but it must work within the boundaries.
+
+\subsection{Operating system}
+
+Application is expected to work on the following set of operating systems:
+
+\begin{itemize}
+
+  \item Microsoft Windows 7 Professional x86
+
+  \item Microsoft Windows 7 Professional x64
+
+  \item Microsoft Windows 7 Ultimate x86
+
+  \item Microsoft Windows 7 Ultimate x64
+
+\end{itemize} 
+
+\subsection{Software present in the system}
+
+Other than the operating system, application cannot be expected to work corretly unless all of the
+following components are present in the operating system:
+
+\begin{itemize}
+
+  \item .NET Framework 4.0 Full Profile
+
+  \item PDF (Portable Document Format) file viewer
+
+  \item PDF-LaTeX creation toolkit that is able to create PDF files from LaTeX source code using
+  command-line.
+
+\end{itemize} 
+
+The application may seem to work correctly without some of these components being present, but it is
+undefined what will happen.
+
+\section{Development process constraints}
+
+This section provides a set of requiremets with regard to the environment, in which the application
+and its documentation will be developed.
+
+\subsection*{Definition}
+
+\begin{itemize}
+
+  \item \textit{the project} is term used for all of the listed: the runtime of \titletext{} with the
+  documentation, the source code and required external libraries.
+
+\end{itemize}
+
+\subsection{Developing the application}
+
+\begin{itemize}
+
+  \item Visual Studio 2012 Ultimate will be used
+  
+  \item C\# will be used to implement the algorithms used to fulfil the main purpose of
+  \titletext{}: for building finite-state machine that is equivalent to a given regular expression
+  and for simulating machine's evaluation of a given word
+
+  \item WPF (Windows Presentation Framework) will be used to create the user interface, via use of
+  C\# and XAML
+
+\end{itemize}
+
+\subsection{Source code documentation}
+
+\begin{itemize}
+
+  \item All namespaces introduced in the development process have to be documented. 
+
+  \item All classes, interfaces and enumerated types have to be at least briefly described. 
+
+  \item All public properites and UI event handlers also have to be documented.
+
+  \item The source code documentation will follow the standard C\# documentation rules, because the
+  Visual Studio has built-in support for creation of such documentation.
+
+  \item Where the rules of C\# documentation are not enough, the doxygen documentation format can be
+  used: ex. to group classes into modules, to document namespaces, etc.
+
+  \item Doxygen will be used to process the source code to create a set of web pages (which use HTML
+  and CSS) with the complete documentation.
+
+\end{itemize}
+
+\writehere
+
+\section{Used technologies}
+
+\subsection{The runtime}
+
+\begin{itemize}
+
+  \item 
+
+\end{itemize}
+
+\subsection{The development}
+
+The list of technologies for the runtime applies also to this section. Moreover, there are some
+extra components used exclusively for the development.  
+
+\begin{itemize}
+
+  \item 
+
+\end{itemize}
+
+\newpage
 
 \section{GUI mockup}
 
@@ -105,6 +247,52 @@ implemented (mentioned in each point):
 Status bar may also temporarily contain some optional content that may help the user in completing
 the user interaction phase, provided that the main area is not a proper place for this content.
 
-%\newpage
+\section{Classes}
+This section goes through the most important classes used in the project.
+
+\subsection{RegularExpression}
+
+\begin{verbatim}
+class RegularExpression
+{
+	string input;
+	
+	List<string, Tag> taggedInput;
+	
+	PartialExpression parsedInput;
+}
+\end{verbatim}
+
+\subsection{PartialExpression}
+
+\begin{verbatim}
+class PartialExpression
+{
+	Role role;
+
+	PartialExpression parts;
+}
+\end{verbatim}
+
+\subsection{FiniteStateMachine}
+
+\begin{verbatim}
+class FiniteStateMachine
+{
+	RegularExpression input;
+	
+	RegularExpression initialState;
+	
+	List<RegularExpression> states;
+	
+	List<RegularExpression> finalStates;
+}
+\end{verbatim}
+
+\section{Algorithms}
+
+\subsection{Conversion of plain text into a RegularExpression object}
+
+\subsection{Conversion of RegularExpression object into FiniteStateMachine object}
 
 \end{document}
