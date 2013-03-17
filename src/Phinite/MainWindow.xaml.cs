@@ -273,11 +273,9 @@ namespace Phinite
 			}
 		}
 
-		private void InitializeComputation(bool stepByStep)
+		private void InitializeValidation()
 		{
 			ChangeStatus(Status.ValidatingInput);
-
-			this.stepByStep = stepByStep;
 
 			Thread t = new Thread(ValidationWorker);
 			t.Name = "ValidationThread";
@@ -311,46 +309,23 @@ namespace Phinite
 				return;
 			}
 
-			Thread t = new Thread(ValidationEnded);
-			t.Name = "ValidationEndingThread";
-			//t.Priority = ThreadPriority.BelowNormal;
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
-		}
+			//Thread t = new Thread(ValidationEnded);
+			//t.Name = "ValidationEndingThread";
+			////t.Priority = ThreadPriority.BelowNormal;
+			//t.SetApartmentState(ApartmentState.STA);
+			//t.Start();
 
-		private void ValidationEnded()
-		{
-			if (stepByStep)
-			{
-				Dispatcher.BeginInvoke((Action)delegate { OriginalInput.Text = regexp.Input; });
-				Dispatcher.BeginInvoke((Action)delegate { ValidatedInput.Text = regexp.ToString(); });
-				LabeledExpressionsData = null;
-				TransitionsData = null;
-
-				SetUIVisibilityState(UIVisibility.IntermediateResult);
-
-				ChangeStatus(Status.ReadyForNextStep);
-			}
-			else
-			{
-				Thread t = new Thread(ComputationWorker);
-				t.Name = "ComputationThread";
-				t.SetApartmentState(ApartmentState.STA);
-				t.Start();
-			}
-		}
-
-		private void ComputationStepWorker()
-		{
-			ChangeStatus(Status.Busy);
-
-			if (fsm == null)
-				fsm = new FiniteStateMachine(regexp);
+			Dispatcher.BeginInvoke((Action)delegate { OriginalInput.Text = regexp.Input; });
+			Dispatcher.BeginInvoke((Action)delegate { ValidatedInput.Text = regexp.ToString(); });
+			LabeledExpressionsData = null;
+			TransitionsData = null;
 
 			try
 			{
-				Thread.Sleep(500); // perform one step of computation
-				fsm.EvaluateInput();
+				Thread.Sleep(500);
+				//if (fsm == null)
+				fsm = new FiniteStateMachine(regexp);
+				//fsm.EvaluateInput();
 			}
 			catch (Exception e)
 			{
@@ -358,6 +333,88 @@ namespace Phinite
 					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
 					).ShowDialog();
 				ChangeStatus(Status.ReadyForNextStep);
+				return;
+			}
+
+			SetUIVisibilityState(UIVisibility.IntermediateResult);
+
+			if (stepByStep)
+			{
+				ChangeStatus(Status.ReadyForNextStep);
+				return;
+			}
+
+			PerformOneStepOfFSMConstruction();
+			//InitializeComputation();
+		}
+
+		//private void ValidationEnded()
+		//{
+		//}
+
+		//private void InitializeComputation()
+		//{
+		//	Thread t = new Thread(ComputationInitializationWorker);
+		//	t.Name = "ComputationInitializationThread";
+		//	t.SetApartmentState(ApartmentState.STA);
+		//	t.Start();
+		//}
+
+		//private void ComputationInitializationWorker()
+		//{
+		//	ChangeStatus(Status.Busy);
+
+		//	//if (stepByStep)
+		//	//{
+		//	//	//return;
+		//	//}
+
+		//	//Thread t = new Thread(ComputationEnded);
+		//	//t.Name = "ComputationEndingThread";
+		//	//t.SetApartmentState(ApartmentState.STA);
+		//	//t.Start();
+
+			
+		//}
+
+		private void PerformOneStepOfFSMConstruction()
+		{
+			Thread t = new Thread(ComputationStepWorker/*, int.MaxValue*/);
+			t.Name = "ComputationStepThread";
+			t.SetApartmentState(ApartmentState.STA);
+			t.Start();
+		}
+
+		private void ComputationStepWorker()
+		{
+			ChangeStatus(Status.Busy);
+
+			try
+			{
+				Thread.Sleep(500); // perform one step of computation
+				fsm.Construct(1);
+			}
+			//catch (StackOverflowException e) // this cannot be caught since .NET 2.0
+			//{
+			//	new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+			//		String.Format("The provided regular expression seems too complicated for the program,"
+			//		+ " which resulted in too many recursively nested function calls (i.e. a stack overflow): {0}.", e.Message)
+			//		).ShowDialog();
+			//	ChangeStatus(Status.ReadyForNextStep);
+			//	return;
+			//}
+			catch (Exception e)
+			{
+				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
+					).ShowDialog();
+				ChangeStatus(Status.ReadyForNextStep);
+				return;
+			}
+
+			if (fsm.IsConstructionFinished())
+			{
+				ComputationEnded();
 				return;
 			}
 
@@ -395,42 +452,21 @@ namespace Phinite
 			foreach (var transition in fsm.Transitions)
 			{
 				data2.Add(new Tuple<RegularExpression, string, string, string, RegularExpression>(
-					transition.Item1, String.Format("q{0}", states.IndexOf(transition.Item1)),
-					transition.Item2,
-					String.Format("q{0}", states.IndexOf(transition.Item3)), transition.Item3));
+					states[transition.Item1], String.Format("q{0}", transition.Item1),
+					String.Join(", ", transition.Item2),
+					String.Format("q{0}", transition.Item3), states[transition.Item3]));
 			}
 			TransitionsData = data2;
 
 			SetUIVisibilityState(UIVisibility.IntermediateResult);
 
-			ChangeStatus(Status.ReadyForNextStep);
-		}
-
-		private void ComputationWorker()
-		{
-			ChangeStatus(Status.Busy);
-
-			if (fsm == null)
-				fsm = new FiniteStateMachine(regexp);
-
-			try
+			if (stepByStep)
 			{
-				Thread.Sleep(500); // compute final result without breaks unless necessary
-				fsm.EvaluateInput();
-			}
-			catch (Exception e)
-			{
-				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
-					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
-					).ShowDialog();
 				ChangeStatus(Status.ReadyForNextStep);
 				return;
 			}
 
-			Thread t = new Thread(ComputationEnded);
-			t.Name = "ComputationEndingThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			PerformOneStepOfFSMConstruction();
 		}
 
 		private void ComputationEnded()
@@ -526,12 +562,14 @@ namespace Phinite
 
 		private void OptionImmediate_Click(object sender, RoutedEventArgs e)
 		{
-			InitializeComputation(false);
+			stepByStep = false;
+			InitializeValidation();
 		}
 
 		private void OptionStepByStep_Click(object sender, RoutedEventArgs e)
 		{
-			InitializeComputation(true);
+			stepByStep = true;
+			InitializeValidation();
 		}
 
 		#endregion
@@ -602,20 +640,14 @@ namespace Phinite
 
 		private void OptionNextStep_Click(object sender, RoutedEventArgs e)
 		{
-			Thread t = new Thread(ComputationStepWorker);
-			t.Name = "ComputationStepThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			PerformOneStepOfFSMConstruction();
 		}
 
 		private void OptionFinalResult_Click(object sender, RoutedEventArgs e)
 		{
 			stepByStep = false;
 
-			Thread t = new Thread(ComputationWorker);
-			t.Name = "ComputationThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			PerformOneStepOfFSMConstruction();
 		}
 
 		private void OptionAbort_Click(object sender, RoutedEventArgs e)

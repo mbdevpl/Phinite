@@ -14,7 +14,7 @@ namespace Phinite
 			= "\\documentclass{article}\n"
 			+ "\n"
 			+ "\\usepackage{fullpage}\n"
-			//+ "\\usepackage{tabularx}\n"
+			+ "\\usepackage{tabularx}\n"
 			+ "\\usepackage{breqn}\n"
 			//+ "\\usepackage{amsmath}\n"
 			+ "\\usepackage[usenames,dvipsnames,svgnames]{xcolor}\n"
@@ -55,10 +55,13 @@ namespace Phinite
 			s.AppendLine(@"\end{dmath*}");
 			s.AppendLine();
 
-			s.AppendLine(@"\noindent Input expression with ambiguity safeguards:");
+			s.AppendLine(@"\noindent Input expression after optimizations and with ambiguity safeguards:");
 			s.AppendLine(@"\begin{dmath*}");
 			s.AppendLine(regexp.ToString().Replace(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord], @"\epsilon"));
 			s.AppendLine(@"\end{dmath*}");
+			s.AppendLine();
+
+			s.AppendLine(@"Further calculations are based on the preprocessed (i.e. second) expression.");
 			s.AppendLine();
 
 			//s.AppendLine(@"\section{Solution process}");
@@ -75,59 +78,26 @@ namespace Phinite
 			s.AppendLine();
 
 			s.AppendLine(@"\subsection{States}");
-			s.AppendLine(@"");
+			s.AppendLine(@"The table lists all distincts states that were identified, together with labels that were assigned to them.");
 			s.AppendLine();
-			//\begin{tabularx}{\linewidth}{Xc}
-			//  \hline
-			//  Expression & State \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ \\
-			//  \hline
-			//  $a^*$ & $q_{20}$ \\
-			//  \hline
-			//\end{tabularx}
+
+			s.AppendLine(@"\vspace{10pt}");
+			s.AppendLine(StatesTable(fsm));
+			s.AppendLine();
 
 			s.AppendLine(@"\subsection{Transitions}");
-			s.AppendLine(@"");
+			//s.AppendLine(@"");
 			s.AppendLine();
-			//\begin{tabularx}{\linewidth}{XcccX}
-			//  \hline
-			//  Starting expression & From & Symbol & To & Resulting expression \\
-			//  \hline
-			//  $a^*$ & $q_{0}$ & a & $q_{0}$ & $a^*$ \\
-			//  \hline
-			//\end{tabularx}
 
+			//s.AppendLine(@"\vspace{10pt}");
+			s.AppendLine(TransitionsTable(fsm));
+			s.AppendLine();
 
 			s.AppendLine(@"\subsection{Graph}");
 			s.AppendLine(@"The figure below shows a deterministic finite-state machine that is equivalent to the given input.");
 			s.AppendLine();
 
-			s.AppendLine(FiniteStateMachineToLatex(fsm));
+			s.AppendLine(DrawGraph(fsm));
 			s.AppendLine();
 
 			if (includeEnding)
@@ -139,7 +109,65 @@ namespace Phinite
 			return s.ToString();
 		}
 
-		public static string FiniteStateMachineToLatex(FiniteStateMachine fsm)
+		private static string StatesTable(FiniteStateMachine fsm)
+		{
+			StringBuilder s = new StringBuilder();
+
+			s.AppendLine(@"\noindent");
+			s.AppendLine(@"\begin{tabularx}{\linewidth}{Xcl}");
+			s.AppendLine(@"\hline");
+			s.AppendLine(@"Expression & State & Remarks \\");
+			var states = fsm.States;
+			var final = fsm.FinalStates;
+			var initial = fsm.InitialState;
+			int i = 0;
+			foreach (var state in states)
+			{
+				s.AppendLine(@"\hline");
+				s.Append(@"$").Append(state).Append(@"$ & $").Append(@"q_{").Append(i++).Append(@"}$ &");
+				if (state == initial)
+					s.Append(" initial state");
+				if (final.Any(x => x == state))
+				{
+					if (state == initial)
+						s.Append(",");
+					s.Append(" final state");
+				}
+				s.AppendLine(@" \\");
+			}
+			s.AppendLine(@"\hline");
+			s.AppendLine(@"\end{tabularx}");
+
+			return s.ToString();
+		}
+
+		private static string TransitionsTable(FiniteStateMachine fsm)
+		{
+			StringBuilder s = new StringBuilder();
+
+			s.AppendLine(@"\noindent");
+			s.AppendLine(@"\begin{tabularx}{\linewidth}{XcccX}");
+			s.AppendLine(@"\hline");
+			s.AppendLine(@"Starting expression & From & Symbol & To & Resulting expression \\");
+			var states = fsm.States;
+			foreach (var transition in fsm.Transitions)
+			{
+				s.AppendLine(@"\hline");
+				s.AppendLine(@"$");
+				s.Append(states[transition.Item1]).Append(@"$ & $q_{").Append(transition.Item1);
+				s.Append(@"}$ & ");
+				s.Append(String.Join(@", \; ", transition.Item2));
+				s.Append(@" & $q_{");
+				s.Append(transition.Item3).Append(@"}$ & $").Append(states[transition.Item3]);
+				s.Append(@"$ \\");
+			}
+			s.AppendLine(@"\hline");
+			s.AppendLine(@"\end{tabularx}");
+
+			return s.ToString();
+		}
+
+		private static string DrawGraph(FiniteStateMachine fsm)
 		{
 			StringBuilder s = new StringBuilder();
 
@@ -178,8 +206,8 @@ namespace Phinite
 			s.AppendLine(@"    \path");
 			foreach (var transition in fsm.Transitions)
 			{
-				int index1 = states.IndexOf(transition.Item1);
-				int index2 = states.IndexOf(transition.Item3);
+				int index1 = transition.Item1; //states.IndexOf(transition.Item1);
+				int index2 = transition.Item3; //states.IndexOf(transition.Item3);
 				s.Append(@"    (q").Append(index1).Append(@") edge [");
 				int diff = index2 - index1;
 				if (diff == 0)
@@ -194,7 +222,7 @@ namespace Phinite
 				}
 				s.Append(@"] node [");
 				s.Append(@"sloped,above");
-				s.Append(@"] {$").Append(transition.Item2).Append(@"$} (q").Append(index2).AppendLine(@")");
+				s.Append(@"] {$").Append(String.Join(",", transition.Item2)).Append(@"$} (q").Append(index2).AppendLine(@")");
 			}
 
 			s.AppendLine(@"    ;");

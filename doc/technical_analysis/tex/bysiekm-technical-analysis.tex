@@ -404,21 +404,21 @@ have to be, parallelized. In case of sequential solution the worst case running 
 in case of parallel solution $O(n/k)$ assuming $k$ is the number of cores used, $k \leq n$.
 
 The developer should pay attention to the fact that some special symbols consist of several
-characters. In such case a single tag is placed over all of the characters that constitute such
+characters. In such cases a single tag is placed over all of the characters that constitute such
 symbol. Therefore the parallelization may add some complications.
 
 Results of tagging are stored in \verb|taggedInput| field. Relevant tag counts in the
 \verb|tagCount| field are incremented on-the-go.
 
 \subsubsection{Tag counting}
-In this step the algorithm simply checks the counts of parentheses to ensure that there is the same
-number of opening and closing ones.
+In this step the algorithm simply checks (using already prepared \verb|tagCount| field) the counts
+of parentheses to ensure that there is the same number of opening and closing ones.
 
 \subsubsection{Parsing}
 Third step is to parse the tagged input into a tree. A tree created by parsing a plain text using a
 certain grammar is called a parse tree in research texts related to natural language processing.
 
-The initial steps of the algorithm and definitions used later on:
+The steps of the algorithm and definitions used later on:
 \begin{enumerate}
 
   \item a new, empty \verb|PartialExpression| is created and it becomes a current part
@@ -437,11 +437,11 @@ The initial steps of the algorithm and definitions used later on:
 
   \item at each step, the currently evaluated symbol is labeled as ``Symbol''
 
-  \item at each step, the actions of the algorithm depend on the Role, Symbol and Root; they are
-  described in a separate table that follows
+  \item at each step, the actions of the algorithm depend on the Role, Symbol and Root; these
+  actions are described in a separate table that follows
 
-  \item if there are no more symbols to parse, the returned part is set as a root of the regular
-  expression (field \verb|parsedInput| of \verb|RegularExpression|)
+  \item if there are no more symbols to parse, the part that is Root is set as a root of the parse
+  tree of the whole regular expression (field \verb|parsedInput| of \verb|RegularExpression|)
 
 \end{enumerate}
 
@@ -479,27 +479,27 @@ a new part with role \verb|Letter| and value of the Symbol is added \\
 \verb|Concatenation| & \verb|Union| & $\equiv$Part &
 
 1) a new part with role \verb|Union| is created, and this new part is set as Root; \newline
-2) Part is added to the parts of Root \newline
-3) a new part with role \verb|Undetermined| is created, it is appended to the parts of the Root and
+2) Part is added to the list of parts of Root (becoming the first part in this list) \newline
+3) a new part with \verb|Undetermined| role is created, it is appended to the parts of the Root and
 it is set as Part \\
 
 \verb|Concatenation| & \verb|Union| & $\not\equiv$Part &
 
 %1) a new part with role \verb|Union| is created, and this new part is set as Root; \newline
 %1) Part is added to the parts of Root \newline
-a new part with role \verb|Concatenation| is created, it is appended to the parts of the Root and
+a new part with \verb|Undetermined| role is created, it is appended to the parts of the Root and
 it is set as Part \\
 
 \verb|Concatenation| & \verb|OpeningParenthesis| & $*$ &
 
-1) the sub-procedure of parsing starts from step one, and the sub-procedure treats the first
+1) the sub-procedure of parsing starts from step one (see algorithm), and the sub-procedure treats the first
 symbol after the parenthesis as the first symbol of input \newline
-2) when the sub-procedure ends, the returned value is added to the parts of Part \newline
+2) when the sub-procedure ends, the returned partial expression is appended to the list of parts of Part \newline
 3) the procedure skips all symbols parsed by the sub-procedure and continues \\
 
 \verb|Concatenation| & \verb|ClosingParenthesis| & $*$ &
 
-the parsing procedure ends, Root is returned \\
+the parsing sub-procedure ends, Root is returned \\
 
 \verb|Concatenation| & \verb|KleeneStar| & $*$ &
 
@@ -549,6 +549,60 @@ those that are of one of the following kinds:
 
   \item If a \verb|Union| has some parts that are equal, the duplicates can be safely deleted.
 
+  \item If we have two consequtive parts of a \verb|Concatenation| that satisfy all of the following conditions:
+
+  \begin{itemize}
+
+    \item both have unary operators
+
+    \item those unary operators may be different or the same
+
+    \item without taking operators into account, these parts are equal
+
+  \end{itemize}
+
+  then, one of the parts can be safely removed provided that the operator of the other part is
+  modified accordingly:
+
+  \noindent
+  \begin{tabular}{c|c|c}
+  initial operator & operator & resulting operator \\
+  of the remaining part & of removed part & of the remaining part \\ \hline
+  \verb|KleeneStar| & \verb|KleenePlus| & \verb|KleenePlus| \\
+  \verb|KleenePlus| & \verb|KleeneStar| & \verb|KleenePlus| \\
+  \end{tabular}
+  
+  \vspace{10pt}
+  and cases where operators are identical is covered by point 2. of this list.
+
+  \item If we have a pair of parts of a \verb|Union|, which are placed anywhere in the union, that
+  satisfy all of the following conditions:
+
+  \begin{itemize}
+
+    \item either both of them have any (but different) unary operator, or one of them has
+    \verb|KleenePlus| and the other has no operator
+
+    \item without taking operators into account, these parts are equal
+
+  \end{itemize}
+
+  then, one of the parts can be safely removed provided that the operator of the other part is
+  modified accordingly:
+
+  \noindent
+  \begin{tabular}{c|c|c}
+  initial operator & operator & resulting operator \\
+  of the remaining part & of removed part & of the remaining part \\ \hline
+  \verb|KleenePlus| & \verb|None| & \verb|KleenePlus| \\
+  \verb|None| & \verb|KleenePlus| & \verb|KleenePlus| \\
+  \verb|KleeneStar| & \verb|KleenePlus| & \verb|KleeneStar| \\
+  \verb|KleenePlus| & \verb|KleeneStar| & \verb|KleeneStar| \\
+  \end{tabular}
+  
+  \vspace{10pt}
+  and cases where operators are identical is covered by point 3. of this list.
+
 \end{enumerate}
 
 This step is needed to ensure that the implementation second algorithm can be greatly simplified.
@@ -558,12 +612,40 @@ parse tree is optimal.
 It is still possible to implement the derivation and labeling algorithm without optimizations, that
 is why the implementation of optimization is not mandatory.
 
+\newpage
+
 \subsection{Conversion of RegularExpression object into FiniteStateMachine object}
+
+\writehere
 
 \subsubsection{Initialization}
 
-\subsubsection{Derivation step}
+\writehere
 
-\subsubsection{Labeling step}
+\subsubsection{Step-by-step construction}
+
+The two following (labeling and derivation) steps are executed in the loop, until the computation is
+complete. Conditions for ending the computation are described in relevant section later on.
+
+Splitting the computation into loop consisting of small, repetative steps, is necessary for
+implementation of step-by-step computation. When immediate result is needed, a loop can be simply
+set to run without interruption.
+
+\subsubsection*{Labeling step}
+
+\writehere
+
+\subsubsection*{Derivation step}
+
+\writehere
+
+\subsubsection{Ending the computation}
+
+Computation is regarded as complete when after the derivation step, both \verb|notLabeled| and
+\verb|notDerived| lists are empty.
+
+\subsection{Evaluation of a given word using FiniteStateMachine object}
+
+\writehere
 
 \end{document}

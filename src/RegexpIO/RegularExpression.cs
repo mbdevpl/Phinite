@@ -128,6 +128,23 @@ namespace Phinite
 				EvaluateInput();
 		}
 
+		private RegularExpression(RegularExpression origin)
+		{
+			input = origin.input;
+			alphabet = new List<string>(origin.alphabet);
+			taggedInput = new List<KeyValuePair<string, InputSymbolTag>>(origin.taggedInput);
+			tagCount = new Dictionary<InputSymbolTag, uint>(origin.tagCount);
+			parsedInput = new PartialExpression(origin.parsedInput);
+		}
+
+		private RegularExpression(PartialExpression part)
+		{
+			input = part.ToString();
+			parsedInput = part;
+			TagInput();
+			CountTags();
+		}
+
 		/// <summary>
 		/// Evaluates the input string again. Can be used multiple times, but the result will always be
 		/// the same.
@@ -274,6 +291,14 @@ namespace Phinite
 					+ " there are {0} opening, but {1} closing parentheses", openCount, closeCount));
 		}
 
+		private void ParseInput()
+		{
+			int lastSymbol;
+			parsedInput = ParseSubExpression(0, out lastSymbol);
+			if (lastSymbol < taggedInput.Count - 1)
+				throw new ArgumentException("parsing is incomplete");
+		}
+
 		private PartialExpression ParseSubExpression(int startingIndex, out int lastIndex)
 		{
 			var returned = new PartialExpression(PartialExpressionRole.Undetermined, null);
@@ -347,14 +372,6 @@ namespace Phinite
 			return returned;
 		}
 
-		private void ParseInput()
-		{
-			int lastSymbol;
-			parsedInput = ParseSubExpression(0, out lastSymbol);
-			if (lastSymbol < taggedInput.Count - 1)
-				throw new ArgumentException("parsing is incomplete");
-		}
-
 		public void Optimize()
 		{
 			//string test = ToString();
@@ -375,21 +392,28 @@ namespace Phinite
 				throw new ArgumentNullException("cannot remove non-existing letter", "removedLetter");
 			if (removedLetter.Length != 1)
 				throw new ArgumentException("a single letter must be given", "removedLetter");
+
 			if (!alphabet.Contains(removedLetter))
-				throw new ArgumentException("this letter does not belong to the alphabet", "removedLetter");
+				//throw new ArgumentException("this letter does not belong to the alphabet", "removedLetter");
+				return null; // this can be simply handled, no need for exception
 
 			if (taggedInput == null || tagCount == null || parsedInput == null)
 				EvaluateInput();
 
-			var copy = new RegularExpression(this.input, true);
+			//var copy = new RegularExpression(this.input, true);
+			//copy.parsedInput.Derive(removedLetter);
+			//if (copy.parsedInput.Role.Equals(PartialExpressionRole.Invalid))
+			//	return null;
+			//copy.input = copy.ToString();
+			//copy.EvaluateInput();
+			//return copy;
 
-			copy.parsedInput.Derive(removedLetter);
-			if (copy.parsedInput.Role.Equals(PartialExpressionRole.Invalid))
+			var parseTreeCopy = new PartialExpression(parsedInput);
+			parseTreeCopy.Derive(removedLetter);
+			if (parseTreeCopy.Role.Equals(PartialExpressionRole.Invalid))
 				return null;
-			copy.input = copy.ToString();
-			copy.EvaluateInput();
 
-			return copy;
+			return new RegularExpression(parseTreeCopy);
 		}
 
 		/// <summary>
@@ -399,6 +423,45 @@ namespace Phinite
 		public bool GeneratesEmptyWord()
 		{
 			return parsedInput.GeneratesEmptyWord();
+		}
+
+		public bool IsEquivalent(RegularExpression regexp)
+		{
+			if (Equals(regexp))
+				return true;
+
+			//RegularExpression copy = new RegularExpression(this);
+			//RegularExpression regexpCopy = new RegularExpression(regexp);
+
+			List<string> commonAlphabet = new List<string>(this.alphabet);
+			foreach (string letter in regexp.alphabet)
+			{
+				if (commonAlphabet.Any(x => x.Equals(letter)))
+					continue;
+				commonAlphabet.Add(letter);
+			}
+
+			List<RegularExpression> thisDerivations = new List<RegularExpression>();
+			List<RegularExpression> regexpDerivations = new List<RegularExpression>();
+			foreach (string letter in commonAlphabet)
+			{
+				var r1 = this.Derive(letter);
+				var r2 = regexp.Derive(letter);
+
+				thisDerivations.Add(r1);
+				regexpDerivations.Add(r2);
+
+				if (r1 == null && r2 == null)
+					continue;
+				if ((r1 == null && r2 != null) || (r1 != null && r2 == null))
+					return false;
+				if (this.Equals(r1) && regexp.Equals(r2))
+					continue;
+				//if (!r1.IsEquivalent(r2))
+				return false;
+			}
+
+			return true;
 		}
 
 		public override bool Equals(object obj)

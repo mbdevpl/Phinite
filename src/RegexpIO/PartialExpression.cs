@@ -487,13 +487,18 @@ namespace Phinite
 
 			var part = (PartialExpression)obj;
 
+			if (this == part)
+				return true;
+
 			if (!role.Equals(part.role))
 				return false;
 
 			if (!_operator.Equals(part._operator))
 				return false;
 
-			if (role.Equals(PartialExpressionRole.Letter))
+			if (role.Equals(PartialExpressionRole.EmptyWord))
+				return true;
+			else if (role.Equals(PartialExpressionRole.Letter))
 				return _value.Equals(part._value);
 			else if (role.Equals(PartialExpressionRole.Concatenation))
 			{
@@ -513,7 +518,7 @@ namespace Phinite
 						return false;
 				return true;
 			}
-			else if (role.Equals(PartialExpressionRole.EmptyWord))
+			else if (role.Equals(PartialExpressionRole.Undetermined) || role.Equals(PartialExpressionRole.Invalid))
 				return true;
 
 			return base.Equals(obj);
