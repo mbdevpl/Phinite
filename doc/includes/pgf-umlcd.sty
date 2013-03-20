@@ -11,8 +11,8 @@
 \tikzstyle{help lines}+=[blue!50,very thin,dashed]
 
 \newcommand{\umltextcolor}{black}
-\newcommand{\umldrawcolor}{purple}
-\newcommand{\umlfillcolor}{yellow!20}
+\newcommand{\umldrawcolor}{black} %was: purple
+\newcommand{\umlfillcolor}{white} %was: yellow!20
 \tikzstyle{umlcolor}=[color=\umldrawcolor,fill=\umlfillcolor,text=\umltextcolor]
 \tikzstyle{umlcd style}=[umlcolor, >=angle 90]
 
@@ -79,6 +79,21 @@ minimum height=1cm, node distance=2cm]
 \end{classAndInterfaceCommon}
 }
 
+\newenvironment{enumeration}[3][]%
+{
+\begin{classAndInterfaceCommon}{#1}{#2}{#3}
+}%
+{%\calcuateNumberOfParts{}
+\setcounter{umlcdClassSplitPartNum}{2}% two parts by default
+\protected@xdef\umlcdSplitPart{2}
+\node[this umlcd style, anchor=north] (\umlcdClassName) at (\umlcdClassPos)
+    {$<<$enumeration$>>$ \\ \textbf{\umlcdClassName}
+\insertAttributes{}
+};
+
+\end{classAndInterfaceCommon}
+}
+
 \newenvironment{abstractclass}[3][]%
 {
 \begin{classAndInterfaceCommon}{#1}{#2}{#3}
@@ -120,6 +135,18 @@ minimum height=1cm, node distance=2cm]
 };
 
 \end{classAndInterfaceCommon}
+}
+
+\newcommand*{\insertAttributes}
+{
+  \ifnum\c@umlcdClassSplitPartNum>1
+  \nodepart{second}
+  \fi
+  \umlcdClassAttributes
+  %\ifnum\c@umlcdClassSplitPartNum>2
+  %\nodepart{third}
+  %\fi
+  %\umlcdClassOperations
 }
 
 \newcommand*{\insertAttributesAndOperations}

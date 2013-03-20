@@ -34,9 +34,9 @@ perspective, i.e. providing definitions of expected application environment, dev
 user interface requirements, and all used algorithms.}
 
 \openingdate{16 Mar 2013}
-\version{0.15}
+\version{0.16}
 \status{pre-alpha}
-\filename{bysiekm-business-analysis.pdf}
+\filename{bysiekm-technical-analysis.pdf}
 
 \input{../../includes/footer}
 
@@ -45,8 +45,9 @@ user interface requirements, and all used algorithms.}
 \usepackage{multicol} %use \begin{multicols}{#} for # columns
 \usepackage{enumitem} %remove vertical space in itemize with: [noitemsep,nolistsep]
 \usepackage{tikz}
-\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
+%\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
 \usepackage{tabularx}
+\usepackage{../../includes/pgf-umlcd}
 
 \usetikzlibrary{arrows,positioning,automata}
 
@@ -260,115 +261,176 @@ This section goes through the most important classes used in the project.
 
 \subsection{Regular expression}
 Numerous classes are required to store regular expression from its raw form up to completely parsed
-form. First of all, enumeration of tags used to tag the input character sequence:
+form.
 
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public enum InputSymbolTag
-	{
-		Letter, Union, KleeneStar, KleenePlus, OpeningParenthesis, ClosingParenthesis, EmptyWord
-	}
-\end{minted}
+\begin{enumerate}
 
-An object that stores all the data about the regular expression:
+  \item First of all, \verb|PartialExpressionRole|, enumeration of roles that a given part of the
+  expression can assume.
 
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public class RegularExpression
-	{
-		public static readonly KeyValuePair<string, InputSymbolTag>[] ReservedSymbols;
+  \item \verb|UnaryOperator|, enumeration of unary operators that a given part of the expression can
+  be affected by.
 
-		public static readonly Dictionary<InputSymbolTag, string> TagsStrings;
+  \item \verb|PartialExpression|, a single node of a parse tree that stores the actual
+  expression as a generative grammar.
 
-		public static readonly string[] IgnoredSymbols;
+  \item Enumeration of tags used to tag the input character sequence named \verb|InputSymbolTag|.
 
-		public static readonly string[] ForbiddenSymbols;
+  \item Finally, \verb|RegularExpression|, an object that stores all the data about the regular expression.
 
-		public string Input;
+\end{enumerate}
 
-		public ReadOnlyCollection<string> Alphabet;
+% \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+% 	public class RegularExpression
+% 	{
+% 		public static readonly KeyValuePair<string, InputSymbolTag>[] ReservedSymbols;
+% 
+% 		public static readonly Dictionary<InputSymbolTag, string> TagsStrings;
+% 	}
+% \end{minted}
 
-		private List<KeyValuePair<string, InputSymbolTag>> taggedInput;
+% \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
+% 	public enum PartialExpressionRole
+% 	{
+% 		EmptyWord, Letter, Concatenation, Union, Undetermined
+% 	}
+% \end{minted}
 
-		private Dictionary<InputSymbolTag, uint> tagCount;
+\begin{figure}[ht!]
+  \centering
+  \begin{tikzpicture}
 
-		private PartialExpression parsedInput;
+    \begin{class}[text width=8cm]{PartialExpression}{0,0}
+      %\attribute{+ Role : PartialExpressionRole}
+      \attribute{+ Root : PartialExpression}
+      \attribute{+ Parts : ReadOnlyCollection<PartialExpression>}
+      \attribute{+ Value : string}
+      %\attribute{+ Operator : UnaryOperator}
+  
+      \operation{+ Optimize() : void}
+      \operation{+ Derive(removedLetter : string) : void}
+      \operation{+ GeneratesEmptyWord() : bool}
+    \end{class}
 
-		private void TagInput();
+    \begin{enumeration}[text width=4cm]{PartialExpressionRole}{10,2}
+      \attribute{EmptyWord}
+      \attribute{Letter}
+      \attribute{Concatenation}
+      \attribute{Union}
+      \attribute{Undetermined}
+    \end{enumeration}
 
-		private void CountTags();
+    \begin{enumeration}[text width=3cm]{UnaryOperator}{12,-2}
+      \attribute{None}
+      \attribute{KleeneStar}
+      \attribute{KleenePlus}
+    \end{enumeration}
 
-		private void ParseInput();
+    \aggregation{PartialExpressionRole}{+ Role}{1}{PartialExpression}
 
-		public void Optimize();
+    \aggregation{UnaryOperator}{+ UnaryOperator}{1}{PartialExpression}
 
-		public RegularExpression Derive(string removedLetter);
+    \begin{class}[text width=11cm]{RegularExpression}{2,-7}
+      \attribute{- taggedInput : List<KeyValuePair<string, InputSymbolTag> >}
+      \attribute{- tagCount : Dictionary<InputSymbolTag, uint>}
+      \attribute{+ Alphabet : ReadOnlyCollection<string>}
+      \attribute{+ Input : string}
 
-		public bool GeneratesEmptyWord();
-	}
-\end{minted}
+      \operation{+ EvaluateInput() : void}
+      \operation{- TagInput() : void}
+      \operation{- CountTags() : void}
+      \operation{- ParseInput() : void}
+      \operation{+ Optimize() : void}
+      \operation{+ Derive(removedLetter : string) : RegularExpression}
+      \operation{+ GeneratesEmptyWord() : bool}
+    \end{class}
 
-Enumeration of roles that a given part of the expression can assume.
+    \composition{PartialExpression}{- parsedInput}{1}{RegularExpression}
 
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public enum PartialExpressionRole
-	{
-		EmptyWord, Letter, Concatenation, Union, Undetermined
-	}
-\end{minted}
+    \begin{enumeration}[text width=4cm]{InputSymbolTag}{11,-5}
+      \attribute{Letter}
+      \attribute{Union}
+      \attribute{KleeneStar}
+      \attribute{KleenePlus}
+      \attribute{OpeningParenthesis}
+      \attribute{ClosingParenthesis}
+      \attribute{EmptyWord}
+    \end{enumeration}
 
-Enumeration of unary operators that a given part of the expression can be affected by:
+    \aggregation{InputSymbolTag}{}{1..*}{RegularExpression}
 
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public enum UnaryOperator
-	{
-		None, KleeneStar, KleenePlus
-	}
-\end{minted}
+  \end{tikzpicture}
+  \caption{diagram of classes related to regular expression parsing}
+\end{figure}
 
-A single node of a tree that stores the actual expression in its parsed form:
-
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public class PartialExpression
-	{
-		public PartialExpressionRole Role;
-
-		public PartialExpression Root;
-
-		public ReadOnlyCollection<PartialExpression> Parts;
-
-		public string Value;
-
-		public UnaryOperator Operator;
-
-		public void Optimize();
-
-		public void Derive(string removedLetter);
-
-		public bool GeneratesEmptyWord();
-	}
-\end{minted}
+\newpage
 
 \subsection{Finite-state machine}
 Few classes are required to store information about the constructed finite-state machine, because
-most of the computational complexity is on the side of PartialExpression class.
+most of the computational complexity is on the side of \verb|PartialExpression| class.
 
-A place to store all information about a single finite-state machine:
+\begin{enumerate}
 
-\begin{minted}[mathescape,linenos,numbersep=5pt,gobble=1,tabsize=3,framesep=2mm]{csharp}
-	public class FiniteStateMachine
-	{
-		public RegularExpression Input;
+  \item \verb|MachineTransition|, that stores information about a single transition from a certain
+  state to another.
 
-		public ReadOnlyCollection<RegularExpression> States;
+  \item Finally, \verb|FiniteStateMachine|, a place to store all information about a single
+  finite-state machine.
 
-		public ReadOnlyCollection<Tuple<RegularExpression, string, RegularExpression>> Transitions;
+\end{enumerate}
 
-		public ReadOnlyCollection<RegularExpression> FinalStates;
+\begin{figure}[ht!]
+  \centering
+  \begin{tikzpicture}
 
-		private void FindTransitions();
+    \begin{class}[text width=13cm]{FiniteStateMachine}{0,0}
+      \attribute{+ Input : RegularExpression}
+      \attribute{+ InitialState : RegularExpression}
+      \attribute{- notLabeled : List<RegularExpression>}
+      \attribute{- notDerivedIds : List<int>}
+      \attribute{- equivalentStatesGroups : List<KeyValuePair<int, List<RegularExpression> > >}
+      \attribute{- notOptimizedTransitions : List<Tuple<int, string, RegularExpression> >}
+      \attribute{+ States : ReadOnlyCollection<RegularExpression>}
+      %\attribute{+ Transitions : ReadOnlyCollection<MachineTransition>}
+      \attribute{+ FinalStates : ReadOnlyCollection<RegularExpression>}
 
-		private void FindFinalStates();
-	}
-\end{minted}
+      \operation{+ Construct(numberOfSteps : int) : void}
+      \operation{- InitializeEvaluation() : void}
+      \operation{+ LabelNextExpression() : bool}
+      \operation{+ DeriveNextExpression() : bool}
+      \operation{+ IsConstructionFinished() : bool}
+    \end{class}
+    
+    \begin{class}[text width=4cm]{Tuple}{-1,6}
+      \attribute{+ Item1 : int}
+      \attribute{+ Item2 : List<string>}
+      \attribute{+ Item3 : int}
+    \end{class}
+
+    \begin{class}[text width=5cm]{MachineTransition}{7,6}
+      \inherit{Tuple}
+ 
+      \operation{+ AddLetter(letter : string) : void}
+      \operation{+ AddAllLetters(letters : IEnumerable<string>) : void}
+    \end{class}
+
+    \composition{MachineTransition}{+ Transitions}{0..*}{FiniteStateMachine}
+    %\unidirectionalAssociation{RegularExpression}{Input}{1}{FiniteStateMachine}
+
+  \end{tikzpicture}
+  \caption{diagram of classes needed for finite-state machine related tasks}
+\end{figure}
+
+The development team must preserve the types and names of all public properties of all types
+mentioned in the two above sections. The names and return types of pulbic methods also have to be
+preserved. The names of all listed classes and enumerations also have to be exactly as specified.
+All public properties must be treated as read-only - some backing fields should be created and used
+for processing.
+
+Other names and types can be changed, added or removed at will, provided that this is a properly
+justified decision, and all of the names still carry a meaning corresponding to their true role. The
+development team may also add some other classes that are used internally during the processing. One
+exception: the \verb|parsedInput| field cannot be removed or changed.
 
 \newpage
 
@@ -394,7 +456,8 @@ First step is to tag the input data accordingly. This is done for several reason
   \item As the input is tagged, it becomes much easier to detect which parts of it belong together.
 
   \item The validation and therefore stopping in case of some mistakes like open bracket without a
-  corresponding closing one, or placing a unary operator after an opening bracket, etc. is simplified.
+  corresponding closing one, or placing a unary operator after an opening bracket, etc. is
+  simplified.
 
 \end{enumerate}
 
@@ -464,10 +527,6 @@ Role & Symbol & Root & result \\ \hline
 1) Role is set to \verb|Concatenation| \newline
 2) and a new part with role \verb|Letter| and value of the Symbol is added to parts of Part \\
 
-%\verb|Undetermined| & \verb|ClosingParenthesis| & $*$ &
-
-%\\
-
 \verb|Concatenation| & \verb|EmptyWord| & $*$ &
 
 a new part with role \verb|EmptyWord| is added \\
@@ -519,11 +578,14 @@ implementation of the above algorithm ensures data integrity i.e. ensures that t
 tree will be built.
 
 \subsubsection{Optimization}
-The fourth and the last phase is to optimize the parse tree i.e. eliminate any useless productions.
-This step is optional, but highly recommended.
+The fourth and the last phase is to optimize the parse tree i.e. eliminate any redundant productions
+and useless symbols. This step is optional, but highly recommended.
 
-Useless productions are understood here as expression parts that are not optimal, and are defined as
-those that are of one of the following kinds:
+Parse tree has redundant productions if its underlying grammar can generate the same word using more
+than one set of productions. Eliminating the redundant productions means that the grammar still
+generates the same language, but fewer (or no) productions are redundant.
+
+Below is the list of patterns that are considered not optimal, together with methods of optimization:
 \begin{enumerate}
 
   \item A part that has role of \verb|Concatenation| or \verb|Union|, and has only one part - it
@@ -568,12 +630,14 @@ those that are of one of the following kinds:
   \begin{tabular}{c|c|c}
   initial operator & operator & resulting operator \\
   of the remaining part & of removed part & of the remaining part \\ \hline
+  \verb|KleeneStar| & \verb|KleeneStar| & \verb|KleeneStar| \\
   \verb|KleeneStar| & \verb|KleenePlus| & \verb|KleenePlus| \\
+  \verb|KleenePlus| & \verb|KleenePlus| & \verb|KleenePlus| \\
   \verb|KleenePlus| & \verb|KleeneStar| & \verb|KleenePlus| \\
   \end{tabular}
   
-  \vspace{10pt}
-  and cases where operators are identical is covered by point 2. of this list.
+  %\vspace{10pt}
+  %and cases where operators are identical are covered by point 2. of this list.
 
   \item If we have a pair of parts of a \verb|Union|, which are placed anywhere in the union, that
   satisfy all of the following conditions:
@@ -601,7 +665,25 @@ those that are of one of the following kinds:
   \end{tabular}
   
   \vspace{10pt}
-  and cases where operators are identical is covered by point 3. of this list.
+  and cases where operators are identical are covered by point 3. of this list.
+
+  \item If some part $x$ is a is a \verb|Concatenation|, it has no operator, and it is a part of
+  another \verb|Concatenation| $y$, which also has no operator, then all parts of $x$ can be moved
+  into $y$.
+
+  For example: $y = ay$, $x = bc$, then, instead of having $y = a(bc)$, we can safely have $y = abc$
+
+  \item If some part $x$ is a is a \verb|Union|, it has no operator, and it is a part of another
+  \verb|Union| $y$, which also has no operator, then all parts of $x$ can be moved into $y$.
+
+  For example: $y = a+y$, $x = b+c$, then, instead of having $y = a+(b+c)$, we can safely have $y =
+  a+b+c$
+
+  \item If some partial expression is a \verb|Union| and has \verb|KleeneStar|, then every its part
+  that is a \verb|EmptyWord| can be safely deleted, beceause the empty word will be generated
+  anyway.
+
+  For instance: $(a+\epsilon+b)^* \equiv (a+b)^*$
 
 \end{enumerate}
 
@@ -633,11 +715,172 @@ set to run without interruption.
 
 \subsubsection*{Labeling step}
 
-\writehere
+\begin{enumerate}
+
+  \item The first element from \verb|notLabeled| list is taken, it becomes the current element:
+  ``Element''.
+
+  \item If \verb|equivalentStatesGroups| is empty:
+
+  \begin{itemize}
+    \item the Element is added to that list with $key = 0$
+  \end{itemize}
+
+  else:
+
+  \begin{enumerate}
+
+    \item The \verb|equivalentStatesGroups| list is checked whether it contains Element. If it does,
+    the algorithm goes to point 3.
+
+    \item if it does not, then the algorithm breaks and the user is prompted to provide his opinion
+    regarding the Element, i.e. if in user's opinion some state from \verb|States| is equivalent to
+    the Element.
+
+    \item When the user answers false, the algorithm continues and adds new entry to
+    \verb|equivalentStatesGroups|, with new $key = $\verb|equivalentStatesGroups.Count| and goes to point 3.
+
+    \item When the users indicates to what already labeled state the Element is equivalent, the
+    algorithms adds a new state to the list of states with $key$ equal to the user indicated state
+    number - in the field \verb|equivalentStatesGroups|.
+
+  \end{enumerate}
+
+  \item Algorithm iterates through \verb|notOptimizedTransitions| and for each its entry that has
+  the resulting state equal to Element.
+
+  \begin{enumerate}
+
+    \item Adds a new \verb|MachineTransition| to \verb|Transitions| with the corresponding ids and
+    letter(s).
+
+    \item Removes the entry from \verb|notOptimizedTransitions|.
+
+  \end{enumerate}
+
+  \item The Element is removed from \verb|notLabeled| list.
+
+\end{enumerate}
 
 \subsubsection*{Derivation step}
 
-\writehere
+\begin{enumerate}
+
+  \item The first element from \verb|notDerivedIds| list is taken, then its corresponding element from
+  \verb|equivalentStatesGroups| is taken and it becomes the derived element: ``Element''.
+
+  \item The Element is derived for each letter that exist in its alphabet. The derivation procedure
+  is as follows:
+  
+  \begin{enumerate}
+
+    \item A copy of parse tree of Element is made, this copy becomes the currently processed tree.
+
+    \item Currently processed tree is alwayes labeled ``Tree''.
+
+    \item The Tree is processed using the rules contained in the tables that follow. In that tables:
+    Role is simply the role of Tree, Operator is the Tree's unary operator.
+    
+    \item At first the transformations from the first table are applied, then those from the second.
+
+    \item A new \verb|RegularExpression| object is created from a transformed Tree, and it
+    becomes the derived element.
+
+  \end{enumerate}
+
+  \item for each derived element:
+
+  \begin{itemize}
+
+    \item if derivation is not null (that is equivalent to entering the rejecting state), a new
+    entry is added to a list of not optimized transactions: \verb|notOptimizedTransitions|, and that
+    entry has: a) the id from \verb|notDerivedIds| corresponding to Element (exactly the same as in
+    step 1.), b) the letter by which the derivation was made, and of course c) the result of
+    derivation
+
+  \end{itemize}
+
+  \item the id of Element is removed from \verb|notDerivedIds|
+
+\end{enumerate}
+
+The first table with transformations:
+
+\vspace{10pt}
+\noindent
+\begin{tabularx}{\textwidth}{l|X}
+
+Operator & actions \\ \hline
+
+\verb|None| & none \\ \hline
+
+\verb|KleeneStar| &
+
+1) new part with copy of Tree is created, but copy's operator is set to \verb|None|; \newline
+2) new part with copy of Tree is created; \newline
+3) a \verb|Concatenation| of parts from 1) and 2) is created; \newline
+4) new part that is an \verb|EmptyWord| is created; \newline
+5) Role is set to \verb|Union|; \newline
+6) Operator is set to \verb|None|; \newline
+7) All Tree parts are removed; \newline
+8) part from 4) is added to Tree parts; \newline
+9) part from 3) is appended to Tree parts \\ \hline
+
+\verb|KleenePlus| &
+
+1) new part with copy of Tree is created, but copy's operator is set to \verb|None|; \newline
+2) new part with copy of Tree is created, but copy's operator is set to \verb|KleeneStar|; \newline
+%3) a \verb|Concatenation| of parts from 1) and 2) is created; \newline
+%4) new part that is an \verb|EmptyWord| is created; \newline
+3) Role is set to \verb|Concatenation|; \newline
+4) Operator is set to \verb|None|; \newline
+5) All Tree parts are removed; \newline
+6) part from 1) is added to Tree parts; \newline
+7) part from 2) is appended to Tree parts \\
+
+\end{tabularx}
+
+\vspace{10pt}
+The second table with transformations:
+
+\vspace{10pt}
+\noindent
+\begin{tabularx}{\textwidth}{l|X}
+
+Role & actions \\ \hline
+
+\verb|EmptyWord| &
+
+Role is set to \verb|Invalid| \\ \hline
+
+\verb|Letter| &
+
+if value equals to that of derived letter, Role is set to \verb|EmptyWord|, otherwise Role is set to
+\verb|Invalid| \\ \hline
+
+\verb|Concatenation| &
+
+\textbf{if} 1st part is a union that has empty word:
+
+?
+
+\vspace{5pt}
+\textbf{else if} 1st part has a \verb|KleeneStar| operator:
+
+?
+
+\vspace{5pt}
+\textbf{else}:
+
+for the first part of Tree, launch the derivation sub-procedure where only steps from 2.(b) to 2.(d)
+are executed \\ \hline
+
+\verb|Union| &
+
+for each part in Tree parts, launch a derivation sub-procedure where only steps from 2.(b) to 2.(d)
+are executed \\
+
+\end{tabularx}
 
 \subsubsection{Ending the computation}
 
