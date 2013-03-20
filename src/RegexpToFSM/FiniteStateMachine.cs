@@ -16,7 +16,7 @@ namespace Phinite
 		/// <summary>
 		/// Original input expression that was used to generate this machine.
 		/// </summary>
-		public RegularExpression Input { get { return Input; } }
+		public RegularExpression Input { get { return input; } }
 		private RegularExpression input;
 
 		/// <summary>
@@ -43,8 +43,8 @@ namespace Phinite
 		{
 			get
 			{
-				//return states == null ? null : new ReadOnlyCollection<RegularExpression>(states);
 				if (equivalentStatesGroups == null)
+					//return new ReadOnlyCollection<RegularExpression>(new List<RegularExpression>());
 					return null;
 				var states = new List<RegularExpression>();
 				foreach (var stateGroup in equivalentStatesGroups)
@@ -75,8 +75,11 @@ namespace Phinite
 		{
 			get
 			{
-				return transitions == null
-					? null : new ReadOnlyCollection<MachineTransition>(transitions);
+				if (transitions == null)
+					//return new ReadOnlyCollection<MachineTransition>(new List<MachineTransition>());
+					return null;
+
+				return new ReadOnlyCollection<MachineTransition>(transitions);
 			}
 		}
 		private List<MachineTransition> transitions;
@@ -88,8 +91,8 @@ namespace Phinite
 		{
 			get
 			{
-				//return finalStates == null ? null : new ReadOnlyCollection<RegularExpression>(finalStates);
 				if (finalStatesIds == null)
+					//return new ReadOnlyCollection<RegularExpression>(new List<RegularExpression>());
 					return null;
 
 				var finalStates = new List<RegularExpression>();
@@ -104,7 +107,6 @@ namespace Phinite
 				return new ReadOnlyCollection<RegularExpression>(finalStates);
 			}
 		}
-		//private List<RegularExpression> finalStates;
 		private List<int> finalStatesIds;
 
 		/// <summary>
@@ -134,11 +136,11 @@ namespace Phinite
 			//FindFinalStates();
 			while (numberOfSteps > 0 && !IsConstructionFinished())
 			{
-				if (!LabelNextExpression())
+				if (!LabelNextExpression() && notLabeled.Count > 0)
 				{
 					// automatically handle uncertain cases
 				}
-				if (!DeriveNextExpression())
+				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
 				{
 					// automatically handle uncertain cases
 				}
@@ -170,7 +172,7 @@ namespace Phinite
 			return notLabeled.Count == 0 && notDerivedIds.Count == 0 && notOptimizedTransitions.Count == 0;
 		}
 
-		public bool LabelNextExpression()
+		public bool LabelNextExpression(bool breakOnNotFound = false)
 		{
 			if (notLabeled.Count == 0)
 				return false;
@@ -196,14 +198,17 @@ namespace Phinite
 						// found an exact duplicate, returning
 						notLabeled.RemoveAt(0);
 						return true;
-						//foundNew = true;
+						//foundNew = false;
 						//break;
 					}
 				}
 				//TODO: handle the unsure situation here!
-
-				// this looks like a new state, but it may as well be not clearly but still
-				// equivalent of one existing state
+				if (breakOnNotFound)
+				{
+					// this looks like a new state, but it may as well be still equivalent of one existing state
+					// because equivalence checking is not perfect
+					return false;
+				}
 
 				foundNew = true;
 			}
@@ -231,6 +236,11 @@ namespace Phinite
 			return foundNew;
 		}
 
+		public void ManuallyLabelNextExpression(RegularExpression equivalentToExpression)
+		{
+			throw new NotImplementedException();
+		}
+
 		public bool DeriveNextExpression()
 		{
 			if (notDerivedIds.Count == 0)
@@ -246,9 +256,17 @@ namespace Phinite
 				if (derived == null)
 					continue;
 
-				notLabeled.Add(derived);
+				var derivedId = equivalentStatesGroups.FindIndex(x => x.Value.Any(y => y.Equals(derived)));
 
-				notOptimizedTransitions.Add(new Tuple<int, string, RegularExpression>(currentId, letter, derived));
+				if (derivedId >= 0)
+				{
+					transitions.Add(new MachineTransition(currentId, letter, derivedId));
+				}
+				else
+				{
+					notLabeled.Add(derived);
+					notOptimizedTransitions.Add(new Tuple<int, string, RegularExpression>(currentId, letter, derived));
+				}
 
 				//if (states.Any(x => x.IsEqual(current)))
 				//	continue;

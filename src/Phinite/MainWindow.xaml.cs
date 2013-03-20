@@ -41,7 +41,8 @@ namespace Phinite
 				{"Binary numbers", "0+1(0+1)^*"},
 				{"3 digit hexadecimal numbers", "(1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)"},
 				{"Example from BA", "a^+b^+ + ab^+c"},
-				{"Hard", "(a+ab+abc+abcd+abcde+abcdef)^*"},
+				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
+				{"Hard 2", "(a+.)^*b"},
 				{"Harder", "(f+ef+def+cdef+bcdef+abcdef)^*"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 			};
@@ -62,6 +63,7 @@ namespace Phinite
 
 		private RegularExpression regexp;
 
+		private object fsm_lock = new object();
 		private FiniteStateMachine fsm;
 
 		private Status status;
@@ -85,7 +87,7 @@ namespace Phinite
 					PropertyChanged(this, new PropertyChangedEventArgs("InputText"));
 			}
 		}
-		private string inputText = Examples["Harder"];
+		private string inputText = Examples["Hard 2"];
 
 		public string StatusText
 		{
@@ -374,7 +376,7 @@ namespace Phinite
 		//	//t.SetApartmentState(ApartmentState.STA);
 		//	//t.Start();
 
-			
+
 		//}
 
 		private void PerformOneStepOfFSMConstruction()
@@ -391,8 +393,15 @@ namespace Phinite
 
 			try
 			{
-				Thread.Sleep(500); // perform one step of computation
-				fsm.Construct(1);
+				//Thread.Sleep(500); // perform one step of computation
+				lock (fsm_lock)
+				{
+					if (fsm == null)
+					{
+						return;
+					}
+					fsm.Construct(1);
+				}
 			}
 			//catch (StackOverflowException e) // this cannot be caught since .NET 2.0
 			//{
@@ -426,37 +435,43 @@ namespace Phinite
 
 		private void ComputationStepEnded()
 		{
-			Thread.Sleep(500); // put intermediate results into AreaForIntermediateResult
+			//Thread.Sleep(500); // put intermediate results into AreaForIntermediateResult
 
 			var data = new List<Tuple<RegularExpression, string, string>>();
 			int i = 0;
-			var final = fsm.FinalStates;
-			var states = fsm.States;
-			foreach (var state in states)
+			lock (fsm_lock)
 			{
-				StringBuilder s = new StringBuilder();
-				if (i == 0)
-					s.Append("initial state");
-				if (final.Contains(state))
-				{
-					if (i == 0)
-						s.Append(", ");
-					s.Append("final state");
-				}
-				data.Add(new Tuple<RegularExpression, string, string>(state, String.Format("q{0}", i), s.ToString()));
-				++i;
-			}
-			LabeledExpressionsData = data;
+				if (fsm == null)
+					return;
 
-			var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
-			foreach (var transition in fsm.Transitions)
-			{
-				data2.Add(new Tuple<RegularExpression, string, string, string, RegularExpression>(
-					states[transition.Item1], String.Format("q{0}", transition.Item1),
-					String.Join(", ", transition.Item2),
-					String.Format("q{0}", transition.Item3), states[transition.Item3]));
+				var final = fsm.FinalStates;
+				var states = fsm.States;
+				foreach (var state in states)
+				{
+					StringBuilder s = new StringBuilder();
+					if (i == 0)
+						s.Append("initial state");
+					if (final.Contains(state))
+					{
+						if (i == 0)
+							s.Append(", ");
+						s.Append("final state");
+					}
+					data.Add(new Tuple<RegularExpression, string, string>(state, String.Format("q{0}", i), s.ToString()));
+					++i;
+				}
+				LabeledExpressionsData = data;
+
+				var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
+				foreach (var transition in fsm.Transitions)
+				{
+					data2.Add(new Tuple<RegularExpression, string, string, string, RegularExpression>(
+						states[transition.Item1], String.Format("q{0}", transition.Item1),
+						String.Join(", ", transition.Item2),
+						String.Format("q{0}", transition.Item3), states[transition.Item3]));
+				}
+				TransitionsData = data2;
 			}
-			TransitionsData = data2;
 
 			SetUIVisibilityState(UIVisibility.IntermediateResult);
 
@@ -471,9 +486,14 @@ namespace Phinite
 
 		private void ComputationEnded()
 		{
-			Thread.Sleep(500); // generate tex code for resulting graph
+			//Thread.Sleep(500); // generate tex code for resulting graph
 
-			LatexOutputText = LatexWriter.GenerateFullLatex(inputText, regexp, fsm, true, true);
+			lock (fsm_lock)
+			{
+				if (fsm == null)
+					return;
+				LatexOutputText = LatexWriter.GenerateFullLatex(inputText, regexp, fsm, true, true);
+			}
 
 			ChangeStatus(Status.ReadyForNextStep);
 
@@ -654,8 +674,11 @@ namespace Phinite
 		{
 			ChangeStatus(Status.Busy);
 
-			fsm = null;
-			regexp = null;
+			lock (fsm_lock)
+			{
+				fsm = null;
+				regexp = null;
+			}
 
 			SetUIVisibilityState(UIVisibility.Input);
 

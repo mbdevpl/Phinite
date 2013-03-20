@@ -76,13 +76,39 @@ namespace Phinite.Test
 			ConstructAndCompareRegexp("a+b^*+c", "c+.+b^++a", true);
 		}
 
+		[TestMethod]
+		public void Parenthesis1_Test()
+		{
+			ConstructAndCompareRegexp("a(bc)", "(ab)c", true);
+		}
+
+		[TestMethod]
+		public void Parenthesis2_Test()
+		{
+			ConstructAndCompareRegexp("a+(b+c)", "(a+b)+c", true);
+		}
+
+		[TestMethod]
+		public void Parenthesis3_Test()
+		{
+			ConstructAndCompareRegexp("a(b+c)", "(a+b)c", false);
+		}
+
+		[TestMethod]
+		public void Parenthesis4_Test()
+		{
+			ConstructAndCompareRegexp("a+(bc)", "(ab)+c", false);
+		}
+
 		private void ConstructAndCompareRegexp(string input1, string input2, bool expectedEqual)
 		{
 			//Arrange
 
 			//Act
 			exp1 = new RegularExpression(input1, true);
+			Console.Out.WriteLine("{0} optimized into {1}", input1, exp1);
 			exp2 = new RegularExpression(input2, true);
+			Console.Out.WriteLine("{0} optimized into {1}", input2, exp2);
 
 			//Assert
 			Assert.AreEqual(expectedEqual, exp1.Equals(exp2),
