@@ -70,7 +70,7 @@ namespace Phinite
 			IgnoredSymbols = new string[] { " ", "\t" };
 			IgnoredSymbolMaxLength = 1;
 
-			ForbiddenSymbols = new string[] { "*" };
+			ForbiddenSymbols = new string[] { "^", "*" };
 			ForbiddenSymbolMaxLength = 1;
 		}
 
@@ -163,16 +163,11 @@ namespace Phinite
 			taggedInput = new List<KeyValuePair<string, InputSymbolTag>>();
 			for (int i = 0; i < input.Length; ++i)
 			{
-				for (int n = 0; n < ForbiddenSymbols.Length; ++n)
-					if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) == i)
-						throw new ArgumentException(String.Format("error at character {0} of input: "
-							+ "use of the symbol \"{1}\" is forbidden here", i, ForbiddenSymbols[n]));
-
 				bool tagged = false;
 				for (int n = 0; n < IgnoredSymbols.Length; ++n)
 					if (input.IndexOf(IgnoredSymbols[n], i, Math.Min(IgnoredSymbolMaxLength, input.Length - i)) == i)
 					{
-						tagged = true;
+						tagged = true; // in this case it means: "not to be tagged"
 						break;
 					}
 
@@ -180,74 +175,85 @@ namespace Phinite
 					continue;
 
 				for (int n = 0; n < ReservedSymbols.Length; ++n)
-					if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) == i)
+				{
+					if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) != i)
+						continue;
+
+					var current = ReservedSymbols[n].Value;
+					if (taggedInput.Count > 0)
 					{
-						var current = ReservedSymbols[n].Value;
-						if (taggedInput.Count > 0)
-						{
-							var previous = taggedInput[taggedInput.Count - 1].Value;
+						var previous = taggedInput[taggedInput.Count - 1].Value;
 
+						if ((
+								previous.Equals(InputSymbolTag.Union)
+								|| previous.Equals(InputSymbolTag.OpeningParenthesis)
+								) && (
+								current.Equals(InputSymbolTag.Union)
+								|| current.Equals(InputSymbolTag.KleeneStar)
+								|| current.Equals(InputSymbolTag.KleenePlus)
+							))
+							throw new ArgumentException(String.Format("error at character {0} of input: "
+								+ "union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol", i));
+
+						if ((
+								previous.Equals(InputSymbolTag.KleeneStar)
+								|| previous.Equals(InputSymbolTag.KleenePlus)
+								) && (
+								current.Equals(InputSymbolTag.KleeneStar)
+								|| current.Equals(InputSymbolTag.KleenePlus)
+							))
+							throw new ArgumentException(String.Format("error at character {0} of input: "
+								+ "kleene star and kleene plus symbols cannot be stacked", i));
+
+						if (previous.Equals(InputSymbolTag.OpeningParenthesis)
+							&& current.Equals(InputSymbolTag.ClosingParenthesis))
+							throw new ArgumentException(String.Format("error at character {0} of input: "
+								+ "it is illegal to use an empty pair of perentheses", i));
+
+						if (taggedInput.Count > 1)
+						{
+							var previous2 = taggedInput[taggedInput.Count - 2].Value;
 							if ((
-									previous.Equals(InputSymbolTag.Union)
-									|| previous.Equals(InputSymbolTag.OpeningParenthesis)
+									previous2.Equals(InputSymbolTag.OpeningParenthesis)
+									&& previous.Equals(InputSymbolTag.ClosingParenthesis)
 									) && (
 									current.Equals(InputSymbolTag.Union)
 									|| current.Equals(InputSymbolTag.KleeneStar)
 									|| current.Equals(InputSymbolTag.KleenePlus)
 								))
 								throw new ArgumentException(String.Format("error at character {0} of input: "
-									+ "union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol", i));
-
-							if ((
-									previous.Equals(InputSymbolTag.KleeneStar)
-									|| previous.Equals(InputSymbolTag.KleenePlus)
-									) && (
-									current.Equals(InputSymbolTag.KleeneStar)
-									|| current.Equals(InputSymbolTag.KleenePlus)
-								))
-								throw new ArgumentException(String.Format("error at character {0} of input: "
-									+ "kleene star and kleene plus symbols cannot be stacked", i));
-
-							if (previous.Equals(InputSymbolTag.OpeningParenthesis)
-								&& current.Equals(InputSymbolTag.ClosingParenthesis))
-								throw new ArgumentException(String.Format("error at character {0} of input: "
-									+ "it is illegal to use an empty pair of perentheses", i));
-
-							if (taggedInput.Count > 1)
-							{
-								var previous2 = taggedInput[taggedInput.Count - 2].Value;
-								if ((
-										previous2.Equals(InputSymbolTag.OpeningParenthesis)
-										&& previous.Equals(InputSymbolTag.ClosingParenthesis)
-										) && (
-										current.Equals(InputSymbolTag.Union)
-										|| current.Equals(InputSymbolTag.KleeneStar)
-										|| current.Equals(InputSymbolTag.KleenePlus)
-									))
-									throw new ArgumentException(String.Format("error at character {0} of input: "
-										+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", i));
-							}
+									+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", i));
 						}
-						else
-						{
-							if (
-									current.Equals(InputSymbolTag.Union)
-									|| current.Equals(InputSymbolTag.KleeneStar)
-									|| current.Equals(InputSymbolTag.KleenePlus)
-									|| current.Equals(InputSymbolTag.ClosingParenthesis)
-								)
-								throw new ArgumentException(String.Format("error at character {0} of input: "
-									+ "the expression can start only with letter or opening parenthesis", i));
-						}
-
-						taggedInput.Add(ReservedSymbols[n]);
-						if (ReservedSymbols[n].Key.Length > 1)
-							i += ReservedSymbols[n].Key.Length - 1;
-						tagged = true;
-						break;
 					}
+					else
+					{
+						if (
+								current.Equals(InputSymbolTag.Union)
+								|| current.Equals(InputSymbolTag.KleeneStar)
+								|| current.Equals(InputSymbolTag.KleenePlus)
+								|| current.Equals(InputSymbolTag.ClosingParenthesis)
+							)
+							throw new ArgumentException(String.Format("error at character {0} of input: "
+								+ "the expression can start only with letter or opening parenthesis", i));
+					}
+
+					taggedInput.Add(ReservedSymbols[n]);
+					if (ReservedSymbols[n].Key.Length > 1)
+						i += ReservedSymbols[n].Key.Length - 1;
+					tagged = true;
+					break;
+				}
 				if (tagged)
 					continue;
+
+				for (int n = 0; n < ForbiddenSymbols.Length; ++n)
+				{
+					if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
+						continue;
+					throw new ArgumentException(String.Format("error at character {0} of input: "
+						+ "use of the symbol \"{1}\" is forbidden here", i, ForbiddenSymbols[n]));
+				}
+
 				var letter = input[i].ToString();
 				if (!alphabet.Contains(letter))
 					alphabet.Add(letter);
@@ -476,8 +482,20 @@ namespace Phinite
 			if (input.Equals(regexp.input))
 				return true;
 
-			if (parsedInput == null || regexp.parsedInput == null)
-				throw new ArgumentException("cannot compare regular expressions that were not evaluated");
+			if (alphabet == null || taggedInput == null || tagCount == null)
+				TagInput();
+			if (regexp.alphabet == null || regexp.taggedInput == null || regexp.tagCount == null)
+				regexp.TagInput();
+
+			if (alphabet.Count != regexp.alphabet.Count || alphabet.Count != alphabet.Intersect(regexp.alphabet).Count())
+				return false;
+
+			if (parsedInput == null)
+				ParseInput();
+			if (regexp.parsedInput == null)
+				regexp.ParseInput();
+			//throw new ArgumentException("cannot compare regular expressions that were not evaluated");
+			// this is easily handled
 
 			return parsedInput.Equals(regexp.parsedInput);
 		}

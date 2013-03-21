@@ -6,7 +6,7 @@ using System.Text;
 namespace Phinite
 {
 	/// <summary>
-	/// Used to generate LaTeX code used as a final output of the application.
+	/// Used to generate LaTeX code used as a accepting output of the application.
 	/// </summary>
 	public static class LatexWriter
 	{
@@ -20,6 +20,7 @@ namespace Phinite
 			+ "\\usepackage[usenames,dvipsnames,svgnames]{xcolor}\n"
 			+ "\\usepackage{tikz}\n"
 			+ "\\usetikzlibrary{arrows,positioning,automata}\n"
+			+ "\\usepackage{textcomp}\n"
 			+ "\n"
 			+ "\\begin{document}\n"
 			+ "\n"
@@ -44,8 +45,10 @@ namespace Phinite
 			}
 
 			s.AppendLine(@"\section{Summary}");
-			s.AppendLine("This document illustrates process of construction of a finite-state machine that"
-				+ " is equivalent to a given regular expression.");
+			s.AppendLine(@"This document illustrates process of construction of a finite-state machine that");
+			s.AppendLine(@"is equivalent to a given regular expression.");
+			s.AppendLine(@"This document and its \LaTeX{} source code are \textcopyleft{} copyleft - you are free");
+			s.AppendLine(@"to use them in any way.");
 			s.AppendLine();
 
 			s.AppendLine(@"\section{Input}");
@@ -55,12 +58,14 @@ namespace Phinite
 			s.AppendLine(@"\end{dmath*}");
 			s.AppendLine();
 
-			s.AppendLine(@"\noindent Input expression after optimizations and with ambiguity safeguards:");
+			s.AppendLine(@"\noindent");
+			s.AppendLine(@"Input expression after optimizations and with ambiguity safeguards:");
 			s.AppendLine(@"\begin{dmath*}");
 			s.AppendLine(regexp.ToString().Replace(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord], @"\epsilon"));
 			s.AppendLine(@"\end{dmath*}");
 			s.AppendLine();
 
+			s.AppendLine(@"\noindent");
 			s.AppendLine(@"Further calculations are based on the preprocessed (i.e. second) expression.");
 			s.AppendLine();
 
@@ -86,15 +91,17 @@ namespace Phinite
 			s.AppendLine();
 
 			s.AppendLine(@"\subsection{Transitions}");
-			//s.AppendLine(@"");
+			s.AppendLine(@"The table lists all transitions that do not lead to rejecting state.");
 			s.AppendLine();
 
-			//s.AppendLine(@"\vspace{10pt}");
+			s.AppendLine(@"\vspace{10pt}");
 			s.AppendLine(TransitionsTable(fsm));
 			s.AppendLine();
 
 			s.AppendLine(@"\subsection{Graph}");
 			s.AppendLine(@"The figure below shows a deterministic finite-state machine that is equivalent to the given input.");
+			s.AppendLine(@"For simplification, the rejecting state is not drawn. If for any state for any letter of the alphabet,");
+			s.AppendLine(@"there is an edge missing, it means that such transition leads to rejecting state.");
 			s.AppendLine();
 
 			s.AppendLine(DrawGraph(fsm));
@@ -118,7 +125,7 @@ namespace Phinite
 			s.AppendLine(@"\hline");
 			s.AppendLine(@"Expression & State & Remarks \\");
 			var states = fsm.States;
-			var final = fsm.FinalStates;
+			var accepting = fsm.AcceptingStates;
 			var initial = fsm.InitialState;
 			int i = 0;
 			foreach (var state in states)
@@ -127,11 +134,11 @@ namespace Phinite
 				s.Append(@"$").Append(state).Append(@"$ & $").Append(@"q_{").Append(i++).Append(@"}$ &");
 				if (state == initial)
 					s.Append(" initial state");
-				if (final.Any(x => x == state))
+				if (accepting.Any(x => x == state))
 				{
 					if (state == initial)
 						s.Append(",");
-					s.Append(" final state");
+					s.Append(" accepting state");
 				}
 				s.AppendLine(@" \\");
 			}
@@ -155,9 +162,9 @@ namespace Phinite
 				s.AppendLine(@"\hline");
 				s.AppendLine(@"$");
 				s.Append(states[transition.Item1]).Append(@"$ & $q_{").Append(transition.Item1);
-				s.Append(@"}$ & ");
+				s.Append(@"}$ & $");
 				s.Append(String.Join(@", \; ", transition.Item2));
-				s.Append(@" & $q_{");
+				s.Append(@"$ & $q_{");
 				s.Append(transition.Item3).Append(@"}$ & $").Append(states[transition.Item3]);
 				s.Append(@"$ \\");
 			}
@@ -188,7 +195,7 @@ namespace Phinite
 				if (i == 0)
 					s.Append(@"initial,");
 				s.Append(@"state");
-				if (fsm.FinalStates.Contains(state))
+				if (fsm.AcceptingStates.Contains(state))
 					s.Append(@",accepting");
 				s.Append(@"] (q").Append(i).Append(@")");
 				if (i > 0)
@@ -228,7 +235,7 @@ namespace Phinite
 			s.AppendLine(@"    ;");
 			s.AppendLine();
 			s.AppendLine(@"  \end{tikzpicture}");
-			s.AppendLine(@"  \caption{graphical representation of the final answer}");
+			s.AppendLine(@"  \caption{graphical representation of the solution}");
 			s.Append(@"\end{figure}");
 
 			return s.ToString();

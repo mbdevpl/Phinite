@@ -43,6 +43,9 @@ namespace Phinite
 				{"Example from BA", "a^+b^+ + ab^+c"},
 				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
 				{"Hard 2", "(a+.)^*b"},
+				{"Hard 3", "(a(a+.)b^*)^*"},
+				{"Hard 4", "(ab^*)^*"},
+				{"Hard 5", "(((b)^*)((a((b)^*))^*))"},
 				{"Harder", "(f+ef+def+cdef+bcdef+abcdef)^*"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 			};
@@ -87,7 +90,7 @@ namespace Phinite
 					PropertyChanged(this, new PropertyChangedEventArgs("InputText"));
 			}
 		}
-		private string inputText = Examples["Hard 2"];
+		private string inputText = Examples["Hard 3"];
 
 		public string StatusText
 		{
@@ -290,7 +293,7 @@ namespace Phinite
 		{
 			try
 			{
-				Thread.Sleep(500);
+				//Thread.Sleep(500);
 				regexp = new RegularExpression(InputText);
 				regexp.EvaluateInput();
 			}
@@ -324,7 +327,7 @@ namespace Phinite
 
 			try
 			{
-				Thread.Sleep(500);
+				//Thread.Sleep(500);
 				//if (fsm == null)
 				fsm = new FiniteStateMachine(regexp);
 				//fsm.EvaluateInput();
@@ -444,18 +447,18 @@ namespace Phinite
 				if (fsm == null)
 					return;
 
-				var final = fsm.FinalStates;
+				var accepting = fsm.AcceptingStates;
 				var states = fsm.States;
 				foreach (var state in states)
 				{
 					StringBuilder s = new StringBuilder();
 					if (i == 0)
 						s.Append("initial state");
-					if (final.Contains(state))
+					if (accepting.Contains(state))
 					{
 						if (i == 0)
 							s.Append(", ");
-						s.Append("final state");
+						s.Append("accepting state");
 					}
 					data.Add(new Tuple<RegularExpression, string, string>(state, String.Format("q{0}", i), s.ToString()));
 					++i;
@@ -693,9 +696,18 @@ namespace Phinite
 			t.Start();
 		}
 
-		//private void OptionDiscardResult_Click(object sender, RoutedEventArgs e)
-		//{
-		//}
+		protected override void OnClosing(CancelEventArgs e)
+		{
+			ChangeStatus(Status.Busy);
+
+			lock (fsm_lock)
+			{
+				fsm = null;
+				regexp = null;
+			}
+
+			base.OnClosing(e);
+		}
 
 	}
 }

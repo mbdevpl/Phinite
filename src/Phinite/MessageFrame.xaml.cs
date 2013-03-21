@@ -210,5 +210,12 @@ namespace Phinite
 			ToggleHelp = toggleHelp;
 		}
 
+		protected override void OnSourceInitialized(EventArgs e)
+		{
+			IconHelper.RemoveIcon(this);
+
+			base.OnSourceInitialized(e);
+		}
+
 	}
 }

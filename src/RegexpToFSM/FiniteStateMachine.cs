@@ -9,7 +9,7 @@ namespace Phinite
 {
 	/// <summary>
 	/// Stores all information about a finite-state machine: states and transitions, also about
-	/// initial and final states. 
+	/// initial and accepting states.
 	/// </summary>
 	public class FiniteStateMachine
 	{
@@ -85,29 +85,29 @@ namespace Phinite
 		private List<MachineTransition> transitions;
 
 		/// <summary>
-		/// A read-only collection of final states of the machine.
+		/// A read-only collection of accepting states of the machine.
 		/// </summary>
-		public ReadOnlyCollection<RegularExpression> FinalStates
+		public ReadOnlyCollection<RegularExpression> AcceptingStates
 		{
 			get
 			{
-				if (finalStatesIds == null)
+				if (acceptingStatesIds == null)
 					//return new ReadOnlyCollection<RegularExpression>(new List<RegularExpression>());
 					return null;
 
-				var finalStates = new List<RegularExpression>();
-				foreach (var id in finalStatesIds)
+				var acceptingStates = new List<RegularExpression>();
+				foreach (var id in acceptingStatesIds)
 				{
 					var stateGroup = equivalentStatesGroups[id].Value;
 					if (stateGroup.Count == 0)
 						throw new ArgumentException("an equivalent state group must have at least member state");
 					// TODO: use state with shortest string representation instead of the 1st state
-					finalStates.Add(stateGroup[0]);
+					acceptingStates.Add(stateGroup[0]);
 				}
-				return new ReadOnlyCollection<RegularExpression>(finalStates);
+				return new ReadOnlyCollection<RegularExpression>(acceptingStates);
 			}
 		}
-		private List<int> finalStatesIds;
+		private List<int> acceptingStatesIds;
 
 		/// <summary>
 		/// Creates a new finite-state machine from a given regular expression.
@@ -164,7 +164,7 @@ namespace Phinite
 
 			transitions = new List<MachineTransition>();
 
-			finalStatesIds = new List<int>();
+			acceptingStatesIds = new List<int>();
 		}
 
 		public bool IsConstructionFinished()
@@ -221,7 +221,7 @@ namespace Phinite
 				equivalentStatesGroups[labeledId].Value.Add(labeled);
 
 				if (labeled.GeneratesEmptyWord())
-					finalStatesIds.Add(labeledId);
+					acceptingStatesIds.Add(labeledId);
 
 				notDerivedIds.Add(labeledId);
 
@@ -229,7 +229,15 @@ namespace Phinite
 				{
 					var transitionsForOptimization = notOptimizedTransitions.FindAll(x => x.Item3.Equals(labeled));
 
-					transitionsForOptimization.ForEach(x => transitions.Add(new MachineTransition(x.Item1, x.Item2, labeledId)));
+					transitionsForOptimization.ForEach(x =>
+					{
+						var foundTransition = transitions.FindIndex(y => y.Item1 == x.Item1 && y.Item3 == labeledId);
+						if (foundTransition >= 0)
+							// this can happen if more than one transition is optimized in this step
+							transitions[foundTransition].AddLetter(x.Item2);
+						else
+							transitions.Add(new MachineTransition(x.Item1, x.Item2, labeledId));
+					});
 					transitionsForOptimization.ForEach(x => notOptimizedTransitions.Remove(x));
 				}
 			}
@@ -260,7 +268,11 @@ namespace Phinite
 
 				if (derivedId >= 0)
 				{
-					transitions.Add(new MachineTransition(currentId, letter, derivedId));
+					var foundTransition = transitions.FindIndex(x => x.Item1 == currentId && x.Item3 == derivedId);
+					if (foundTransition >= 0)
+						transitions[foundTransition].AddLetter(letter);
+					else
+						transitions.Add(new MachineTransition(currentId, letter, derivedId));
 				}
 				else
 				{
