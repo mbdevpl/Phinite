@@ -31,7 +31,7 @@ expression \newline and for simulating machine's evaluation of a given word}
 \documentsummary{Author of the document analyses the problem of designing an application for solving
 a well defined language\mbox{-}theory related problem, doing it from the developer team leader
 perspective, i.e. providing definitions of expected application environment, developer environment,
-user interface requirements, and all used algorithms.}
+user interface requirements, and all relevant algorithms.}
 
 \openingdate{16 Mar 2013}
 \version{0.16}
@@ -59,7 +59,14 @@ user interface requirements, and all used algorithms.}
 
 \section*{Abstract}
 
-\writehere
+This is a technical analysis of problem of creating an application for building finite-state machine
+that is equivalent to a given regular expression and for simulating machine's evaluation of a given
+word.
+Author of the document analyses the problem of designing an application for solving a well defined
+language\mbox{-}theory related problem, doing it from the developer team leader perspective, i.e.
+providing definitions of expected application environment, developer environment, user interface
+requirements, and all algorithms used to perform the regular expression and finite-state machine
+related tasks.
 
 \section{The runtime environment}
 
@@ -391,7 +398,7 @@ most of the computational complexity is on the side of \verb|PartialExpression| 
       \attribute{- equivalentStatesGroups : List<KeyValuePair<int, List<RegularExpression> > >}
       \attribute{- notOptimizedTransitions : List<Tuple<int, string, RegularExpression> >}
       \attribute{+ States : ReadOnlyCollection<RegularExpression>}
-      \attribute{+ FinalStates : ReadOnlyCollection<RegularExpression>}
+      \attribute{+ AcceptingStates : ReadOnlyCollection<RegularExpression>}
 
       \operation{+ Construct(numberOfSteps : int) : void}
       \operation{- InitializeEvaluation() : void}
@@ -697,11 +704,20 @@ is why the implementation of optimization is not mandatory.
 
 \subsection{Conversion of RegularExpression object into FiniteStateMachine object}
 
-\writehere
+\subsubsection{Graphics}
 
-\subsubsection{Initialization}
+At the begining, a screen is displayed where input word is shown, and two empty tables are
+displayed: one for list of labeled states and another for discovered transitions. In each step,
+entries in tables may be added if in a given step some new state is labeled or is derived.
 
-\writehere
+Moreover, there is a place reserved (in a scroll box) to display a graphical representation of those
+two tables in their current state. This representation will follow coloring of the example in
+business analysis.
+
+Moreover, the states derived in the last step have changed their border colors to gray. And, the
+state labeled in latest step is highlighted by having its background changed to gray.
+
+All states that exist longer that since latest step follow the usual coloring scheme.
 
 \subsubsection{Step-by-step construction}
 
@@ -839,6 +855,8 @@ Operator & actions \\ \hline
 
 \end{tabularx}
 
+\newpage
+
 \vspace{10pt}
 The second table with transformations:
 
@@ -859,14 +877,38 @@ if value equals to that of derived letter, Role is set to \verb|EmptyWord|, othe
 
 \verb|Concatenation| &
 
-\textbf{if} 1st part is a union that has empty word:
+\textbf{if} 1st part has a \verb|KleeneStar| operator:
 
-?
+1) new partial expression is created as a copy of this 1st part, but operator of the copy is set to
+\verb|None|;
+
+2) new partial expression is created as a copy of Tree, and 1st part of this copy is removed;
+
+3) yet another partial expression is created as a copy of Tree, and 1st part of this copy is set to
+expression created in 1);
+
+4) Role is set to \verb|Union|; \newline
+5) All Tree parts are removed; \newline
+6) part from 2) is added to Tree parts; \newline
+7) part from 3) is appended to Tree parts
 
 \vspace{5pt}
-\textbf{else if} 1st part has a \verb|KleeneStar| operator:
+\textbf{else if} 1st part is a union that has empty word:
 
-?
+1) new partial expression is created as a copy of this 1st part; \newline
+2) all parts of this copy that are empty words are removed;
+%, but operator of the copy is set to
+%\verb|None|;
+
+3) another partial expression is created as a copy of Tree, and 1st part of this copy is set to
+expression created in 1-2);
+
+4) new partial expression is created as a copy of Tree, and 1st part of this copy is removed;
+
+5) Role is set to \verb|Union|; \newline
+6) All Tree parts are removed; \newline
+7) part from 3) is added to Tree parts; \newline
+8) part from 4) is appended to Tree parts
 
 \vspace{5pt}
 \textbf{else}:
@@ -886,8 +928,65 @@ are executed \\
 Computation is regarded as complete when after the derivation step, both \verb|notLabeled| and
 \verb|notDerived| lists are empty.
 
+\subsubsection*{LaTeX output}
+
+There will be a feature that consists of constructing a latex soure and pdf file from that source.
+The latex code is created if user selects a relevant option. This option is made available only
+after the machine is fully constructed. The latex file will contain two tables: with labeled states
+and with transitions. It will also contain a code that, after processing by pdf-latex software, will
+generate a simple graphical representation of the answer. This representation must follow standard
+formatting and coloring used in mathematics to draw finite-state machine. The representation may
+differ from the one presented in the graphical user interface.
+
+After the pdf file is generated, it should be automatically displayed to the user. If ther are any
+errors in the processing or creating the latex code, or displaying the made pdf file, the user must
+be notified via a message box.
+
+\newpage
+
 \subsection{Evaluation of a given word using FiniteStateMachine object}
 
-\writehere
+As the input, the algorithm takes fully constructed finite-state machine, and a word. Algorithm goes
+through the word from beginning to the end, letter by letter.
+
+Remark:
+
+User can use any characters to form the word, but if he/she uses some symbols that are used as
+special symbols in the process of constructing the machine, such as parentheses, the word will be
+always rejected, because no machine constructed by the application has transition over letter
+\verb|(| or\verb|)|.
+
+\subsubsection{Graphics}
+
+The word evaluation algorithm will use the same graphical representation of the machine as it was
+used for its construction. The only difference is that the machine does not change in current
+algorithm - only the highlighted state changes.
+
+\subsubsection{Procedure}
+
+\begin{enumerate}
+
+  \item All characters of input are marked as not processed.
+
+  \item Current state of machine is set to its \verb|InitialState|. Current state is always
+  highlighted by either interchanging background color with text color, or by changing background to
+  gray. Only one highlight scheme must be chosen, and has to remain the same at all steps.
+
+  \item A loop starts.
+
+  \item If there are no not processed letters, go to one step before the last. 
+
+  \item If there are, check if there is a transition from current state to some state, over the
+  currently processed letter of input. If there is, change current state and mark the letter as
+  processed. If there is no such transition, highlight current state in oragne and go to the last step.
+
+  \item Loop ends, go back to step 3.
+
+  \item If current state is on the list of \verb|AcceptingStates|, the current state is highlighted
+  in green. Otherwise, it is highlighted in orange.
+
+  \item Algorithm ends. 
+
+\end{enumerate}
 
 \end{document}
