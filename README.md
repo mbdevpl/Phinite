@@ -13,12 +13,13 @@ of a given word.
 
 ## Features
 
-
+See documentation.
 
 ## Timeline
 
 - 28 Feb 2013 - project started
 - 14 Mar 2013 - business analysis
+- 21 Mar 2013 - technical analysis
 
 ## License
 
@@ -33,4 +34,4 @@ of a given word.
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	along with this program.  If not, see  http://www.gnu.org/licenses/ .

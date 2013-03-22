@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -50,30 +51,24 @@ namespace Phinite
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 			};
 
-		public static readonly Dictionary<Status, string> StatusTexts
-			= new Dictionary<Status, string>
-			{
-				{Status.Busy,"busy"},
-				{Status.Ready,"ready"},
-				{Status.ReadyForNextStep,"ready for next step"},
-				{Status.AwaitingUserInput,"waiting for user input"},
-				{Status.ValidatingInput,"validating input expression"},
-				
-				{Status.Computing,"computing"},
-				{Status.NotComputing,"not computing"},
-				{Status.Invalid,"invalid"}
-			};
-
+		private object regexpAndFsmLock = new object();
 		private RegularExpression regexp;
-
-		private object fsm_lock = new object();
 		private FiniteStateMachine fsm;
 
-		private Status status;
-
-		private Status previousStatus;
+		private object uiStateLock = new object();
+		private UIState uiState;
 
 		private bool stepByStep;
+
+		private string pdflatexCommand
+			//= @"MiKTeX\miktex\bin\pdflatex";
+			= @"pdflatex";
+
+		private bool useSystemDefaultPdfViewer
+			//= false;
+			= true;
+
+		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -106,16 +101,6 @@ namespace Phinite
 			}
 		}
 		private string statusText = "busy";
-
-		private string pdflatexCommand
-			//= @"MiKTeX\miktex\bin\pdflatex";
-			= @"pdflatex";
-
-		private bool useSystemDefaultPdfViewer
-			//= false;
-			= true;
-
-		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
 
 		public string LatexOutputText
 		{
@@ -172,137 +157,300 @@ namespace Phinite
 
 			InitializeComponent();
 
-			SetUIVisibilityState(UIVisibility.Input);
-
-			foreach (string key in Examples.Keys)
-			{
-				var item = new MenuItem();
-				item.Header = key;
-				item.Click += OptionExample_Click;
-				MenuExamples.Items.Add(item);
-			}
-
-			ChangeStatus(Status.Ready);
+			SetUIState(UIState.Loading);
+			CallMethodInNewThread(WindowInitializationWorker, "WindowInitialization");
 		}
 
-		private void ChangeStatus(Status newStatus)
+		//private void ChangeStatus(Status newStatus)
+		//{
+		//	if (status == newStatus)
+		//		return;
+
+		//	StatusText = StatusTexts[newStatus];
+		//	previousStatus = status;
+		//	status = newStatus;
+
+		//	if ((previousStatus & Status.Computing) != Status.Invalid &&
+		//		(status & Status.Computing) != Status.Invalid)
+		//		return;
+
+		//	bool enabledState = true;
+		//	if ((status & Status.Computing) != Status.Invalid)
+		//		enabledState = false;
+		//	else if ((status & Status.NotComputing) != Status.Invalid)
+		//		enabledState = true;
+		//	else
+		//		throw new ArgumentException("failed to enter an invalid status", "status");
+
+		//	UIEnabled enabled = enabledState ? UIEnabled.Yes : UIEnabled.No;
+		//	SetUIEnabled(enabled);
+		//}
+
+		//private void SetUIEnabled(UIEnabled enabled)
+		//{
+		//	SetEnabledStateDel del = new SetEnabledStateDel(SetUIEnabledDirectly);
+		//	if (!Dispatcher.CheckAccess())
+		//		Dispatcher.BeginInvoke(del, DispatcherPriority.Normal, enabled);
+		//	else
+		//		SetUIEnabledDirectly(enabled);
+		//}
+
+		//private delegate void SetEnabledStateDel(UIEnabled enabled);
+
+		//private void SetUIEnabledDirectly(UIEnabled enabled)
+		//{
+		//	if (enabled == UIEnabled.Yes || enabled == UIEnabled.No)
+		//	{
+		//		bool enabledState = enabled == UIEnabled.Yes ? true : false;
+
+		//		Input.IsEnabled = enabledState;
+		//		MenuExamples.IsEnabled = enabledState;
+		//		OptionStepByStep.IsEnabled = enabledState;
+		//		OptionImmediate.IsEnabled = enabledState;
+		//	}
+		//	else
+		//		throw new NotImplementedException("partial ui disabling is not implemented");
+		//}
+
+		//private void SetUIVisibilityState(UIVisibility visibility)
+		//{
+		//	//Action a = new Action<UIVisibility>(
+		//	//	method(UIVisibility visibility){
+		//	//		if (visibility == UIVisibility.Input)
+		//	//		{
+		//	//			AreaForIntermediateResult.Visibility = Visibility.Hidden;
+		//	//			AreaForFinalResult.Visibility = Visibility.Hidden;
+		//	//			AreaForInput.Visibility = Visibility.Visible;
+		//	//		}
+		//	//	}
+		//	//);
+
+		//	if (!Dispatcher.CheckAccess())
+		//		Dispatcher.BeginInvoke(new Action<UIVisibility>(SetUIVisibilityStateDirectly),
+		//			DispatcherPriority.Normal, visibility);
+		//	else
+		//		SetUIVisibilityStateDirectly(visibility);
+		//}
+
+		private void SetUIState(UIState newUiState)
 		{
-			if (status == newStatus)
-				return;
-
-			StatusText = StatusTexts[newStatus];
-			previousStatus = status;
-			status = newStatus;
-
-			if ((previousStatus & Status.Computing) != Status.Invalid &&
-				(status & Status.Computing) != Status.Invalid)
-				return;
-
-			bool enabledState = true;
-			if ((status & Status.Computing) != Status.Invalid)
-				enabledState = false;
-			else if ((status & Status.NotComputing) != Status.Invalid)
-				enabledState = true;
-			else
-				throw new ArgumentException("failed to enter an invalid status", "status");
-
-			UIEnabled enabled = enabledState ? UIEnabled.Yes : UIEnabled.No;
-			SetUIEnabled(enabled);
-		}
-
-		private void SetUIEnabled(UIEnabled enabled)
-		{
-			SetEnabledStateDel del = new SetEnabledStateDel(SetUIEnabledDirectly);
 			if (!Dispatcher.CheckAccess())
-				Dispatcher.BeginInvoke(del, DispatcherPriority.Normal, enabled);
+				Dispatcher.BeginInvoke(new Action<UIState>(SetUIStateDirectly),
+					DispatcherPriority.Normal, newUiState);
 			else
-				SetUIEnabledDirectly(enabled);
+				SetUIStateDirectly(newUiState);
 		}
 
-		private delegate void SetEnabledStateDel(UIEnabled enabled);
-
-		private void SetUIEnabledDirectly(UIEnabled enabled)
+		private void SetUIStateDirectly(UIState newUiState)
 		{
-			if (enabled == UIEnabled.Yes || enabled == UIEnabled.No)
+			lock (uiStateLock)
 			{
-				bool enabledState = enabled == UIEnabled.Yes ? true : false;
+				if (uiState == newUiState)
+					return;
+				if ((newUiState & UIState.Loading) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
 
-				Input.IsEnabled = enabledState;
-				MenuExamples.IsEnabled = enabledState;
-				OptionStepByStep.IsEnabled = enabledState;
-				OptionImmediate.IsEnabled = enabledState;
+					MenuMain.IsEnabled = false;
+				}
+				else if ((newUiState & UIState.InputPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Visible;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+
+					MenuMain.IsEnabled = true;
+					MenuExamples.IsEnabled = true;
+
+					if (newUiState == UIState.ReadyForNewInputAfterInvalidInput)
+					{
+						InvalidExpressionBorder.BorderBrush = Brushes.Red;
+						OptionStepByStep.IsEnabled = false;
+						OptionImmediate.IsEnabled = false;
+					}
+					else
+					{
+						InvalidExpressionBorder.BorderBrush = Brushes.Transparent;
+						OptionStepByStep.IsEnabled = true;
+						OptionImmediate.IsEnabled = true;
+					}
+
+					Input.IsEnabled = true;
+				}
+				else if ((newUiState & UIState.ValidationPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Visible;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+
+					MenuExamples.IsEnabled = false;
+
+					Input.IsEnabled = false;
+					OptionStepByStep.IsEnabled = false;
+					OptionImmediate.IsEnabled = false;
+				}
+				else if ((newUiState & UIState.ValidationResultsPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Visible;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+
+					MenuExamples.IsEnabled = false;
+				}
+				else if ((newUiState & UIState.ConstructionPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Visible;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+				}
+				else if ((newUiState & UIState.ConstructionResultsPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Visible;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+				}
+				else if ((newUiState & UIState.LatexResultPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Visible;
+					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+
+					if (newUiState == UIState.BusyGeneratingPdf)
+					{
+						OptionGeneratePDF.IsEnabled = false;
+						OptionBackToFSM.IsEnabled = false;
+					}
+					else
+					{
+						OptionGeneratePDF.IsEnabled = true;
+						OptionBackToFSM.IsEnabled = true;
+					}
+				}
+				else if ((newUiState & UIState.EvaluationPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Visible;
+				}
+				else if ((newUiState & UIState.EvaluationResultsPhase) > 0)
+				{
+					AreaForInput.Visibility = Visibility.Hidden;
+					AreaForParseTree.Visibility = Visibility.Hidden;
+					AreaForMachineCreation.Visibility = Visibility.Hidden;
+					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+					AreaForWordEvaluation.Visibility = Visibility.Visible;
+				}
+
+				string newStatusText;
+				if (UIStateInfo.Status.TryGetValue(newUiState, out newStatusText))
+					StatusText = newStatusText;
+				else
+					StatusText = "no status description for " + newUiState.ToString();
+				uiState = newUiState;
 			}
-			else
-				throw new NotImplementedException("partial ui disabling is not implemented");
 		}
 
-		private void SetUIVisibilityState(UIVisibility visibility)
+		//private void SetUIVisibilityStateDirectly(UIVisibility visibility)
+		//{
+		//	if (visibility == UIVisibility.Input)
+		//	{
+		//		AreaForIntermediateResult.Visibility = Visibility.Hidden;
+		//		AreaForFinalResult.Visibility = Visibility.Hidden;
+		//		AreaForInput.Visibility = Visibility.Visible;
+		//	}
+		//	else if (visibility == UIVisibility.IntermediateResult)
+		//	{
+		//		AreaForInput.Visibility = Visibility.Hidden;
+		//		AreaForFinalResult.Visibility = Visibility.Hidden;
+		//		AreaForIntermediateResult.Visibility = Visibility.Visible;
+		//	}
+		//	else if (visibility == UIVisibility.FinalResult)
+		//	{
+		//		AreaForInput.Visibility = Visibility.Hidden;
+		//		AreaForIntermediateResult.Visibility = Visibility.Hidden;
+		//		AreaForFinalResult.Visibility = Visibility.Visible;
+		//	}
+		//}
+
+		private void CallMethodInNewThread(ThreadStart method, string name)
 		{
-			//Action a = new Action<UIVisibility>(
-			//	method(UIVisibility visibility){
-			//		if (visibility == UIVisibility.Input)
-			//		{
-			//			AreaForIntermediateResult.Visibility = Visibility.Hidden;
-			//			AreaForFinalResult.Visibility = Visibility.Hidden;
-			//			AreaForInput.Visibility = Visibility.Visible;
-			//		}
-			//	}
-			//);
-
-			if (!Dispatcher.CheckAccess())
-				Dispatcher.BeginInvoke(new Action<UIVisibility>(SetUIVisibilityStateDirectly),
-					DispatcherPriority.Normal, visibility);
-			else
-				SetUIVisibilityStateDirectly(visibility);
-		}
-
-		private void SetUIVisibilityStateDirectly(UIVisibility visibility)
-		{
-			if (visibility == UIVisibility.Input)
-			{
-				AreaForIntermediateResult.Visibility = Visibility.Hidden;
-				AreaForFinalResult.Visibility = Visibility.Hidden;
-				AreaForInput.Visibility = Visibility.Visible;
-			}
-			else if (visibility == UIVisibility.IntermediateResult)
-			{
-				AreaForInput.Visibility = Visibility.Hidden;
-				AreaForFinalResult.Visibility = Visibility.Hidden;
-				AreaForIntermediateResult.Visibility = Visibility.Visible;
-			}
-			else if (visibility == UIVisibility.FinalResult)
-			{
-				AreaForInput.Visibility = Visibility.Hidden;
-				AreaForIntermediateResult.Visibility = Visibility.Hidden;
-				AreaForFinalResult.Visibility = Visibility.Visible;
-			}
-		}
-
-		private void InitializeValidation()
-		{
-			ChangeStatus(Status.ValidatingInput);
-
-			Thread t = new Thread(ValidationWorker);
-			t.Name = "ValidationThread";
+			Thread t = new Thread(method);
+			t.Name = name + "Thread";
 			//t.Priority = ThreadPriority.BelowNormal;
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
+		}
+
+		//private void InitializeValidation()
+		//{
+		//	ChangeStatus(Status.ValidatingInput);
+
+		//	Thread t = new Thread(ValidationWorker);
+		//	t.Name = "ValidationThread";
+		//	//t.Priority = ThreadPriority.BelowNormal;
+		//	t.SetApartmentState(ApartmentState.STA);
+		//	t.Start();
+		//}
+
+		private void WindowInitializationWorker()
+		{
+			foreach (string key in Examples.Keys)
+			{
+				Dispatcher.BeginInvoke((Action)delegate
+				{
+					var item = new MenuItem();
+					item.Header = key;
+					item.Click += OptionExample_Click;
+					MenuExamples.Items.Add(item);
+				});
+			}
+
+			lock (regexpAndFsmLock)
+			{
+				// this is to force loading dlls
+				regexp = new RegularExpression("abc+def", true);
+				fsm = new FiniteStateMachine(regexp, true);
+				regexp = null;
+				fsm = null;
+			}
+
+			SetUIState(UIState.ReadyForRegexpInput);
 		}
 
 		private void ValidationWorker()
 		{
 			try
 			{
-				//Thread.Sleep(500);
-				regexp = new RegularExpression(InputText);
-				regexp.EvaluateInput();
+				lock (regexpAndFsmLock)
+				{
+					regexp = new RegularExpression(InputText);
+					regexp.EvaluateInput();
+				}
 			}
-			catch (ArgumentException e)
+			catch (ArgumentException /*e*/)
 			{
-				new MessageFrame("Phinite/Regexp error", "Regular expression validation failed",
-					String.Format("Given regular expression is not valid: {0}.", e.Message)
-					).ShowDialog();
-				ChangeStatus(Status.Ready);
+				//new MessageFrame("Phinite/Regexp error", "Regular expression validation failed",
+				//	String.Format("Given regular expression is not valid: {0}.", e.Message)
+				//	).ShowDialog();
+				SetUIState(UIState.ReadyForNewInputAfterInvalidInput);
 				return;
 			}
 			catch (Exception e)
@@ -310,47 +458,56 @@ namespace Phinite
 				new MessageFrame("Phinite/Regexp error", "Regular expression validation failed",
 					String.Format("There was some unexpected error while evaluating the input: {0}.", e.Message)
 					).ShowDialog();
-				ChangeStatus(Status.Ready);
+				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
 
-			//Thread t = new Thread(ValidationEnded);
-			//t.Name = "ValidationEndingThread";
-			////t.Priority = ThreadPriority.BelowNormal;
-			//t.SetApartmentState(ApartmentState.STA);
-			//t.Start();
-
-			Dispatcher.BeginInvoke((Action)delegate { OriginalInput.Text = regexp.Input; });
-			Dispatcher.BeginInvoke((Action)delegate { ValidatedInput.Text = regexp.ToString(); });
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				lock (regexpAndFsmLock)
+				{
+					OriginalInput.Text = regexp.Input;
+				}
+			});
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				lock (regexpAndFsmLock)
+				{
+					ValidatedInput.Text = regexp.ToString();
+				}
+			});
 			LabeledExpressionsData = null;
 			TransitionsData = null;
 
 			try
 			{
-				//Thread.Sleep(500);
-				//if (fsm == null)
-				fsm = new FiniteStateMachine(regexp);
-				//fsm.EvaluateInput();
+				lock (regexpAndFsmLock)
+				{
+					if (regexp == null)
+					{
+						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+						return;
+					}
+					fsm = new FiniteStateMachine(regexp);
+				}
 			}
 			catch (Exception e)
 			{
 				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
 					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
 					).ShowDialog();
-				ChangeStatus(Status.ReadyForNextStep);
+				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
-
-			SetUIVisibilityState(UIVisibility.IntermediateResult);
 
 			if (stepByStep)
 			{
-				ChangeStatus(Status.ReadyForNextStep);
+				SetUIState(UIState.ReadyForConstruction);
 				return;
 			}
 
-			PerformOneStepOfFSMConstruction();
-			//InitializeComputation();
+			SetUIState(UIState.BusyConstructing);
+			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
 		//private void ValidationEnded()
@@ -382,25 +539,23 @@ namespace Phinite
 
 		//}
 
-		private void PerformOneStepOfFSMConstruction()
-		{
-			Thread t = new Thread(ComputationStepWorker/*, int.MaxValue*/);
-			t.Name = "ComputationStepThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
-		}
+		//private void PerformOneStepOfFSMConstruction()
+		//{
+		//	Thread t = new Thread(ConstructionStepWorker/*, int.MaxValue*/);
+		//	t.Name = "ComputationStepThread";
+		//	t.SetApartmentState(ApartmentState.STA);
+		//	t.Start();
+		//}
 
-		private void ComputationStepWorker()
+		private void ConstructionStepWorker()
 		{
-			ChangeStatus(Status.Busy);
-
 			try
 			{
-				//Thread.Sleep(500); // perform one step of computation
-				lock (fsm_lock)
+				lock (regexpAndFsmLock)
 				{
 					if (fsm == null)
 					{
+						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
 						return;
 					}
 					fsm.Construct(1);
@@ -420,93 +575,118 @@ namespace Phinite
 				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
 					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
 					).ShowDialog();
-				ChangeStatus(Status.ReadyForNextStep);
+				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
 
-			if (fsm.IsConstructionFinished())
-			{
-				ComputationEnded();
-				return;
-			}
-
-			Thread t = new Thread(ComputationStepEnded);
-			t.Name = "ComputationStepEndingThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			CallMethodInNewThread(ConstructionStepResultsWorker, "ConstructionStepResults");
 		}
 
-		private void ComputationStepEnded()
+		private void ConstructionStepResultsWorker()
 		{
 			//Thread.Sleep(500); // put intermediate results into AreaForIntermediateResult
 
-			var data = new List<Tuple<RegularExpression, string, string>>();
-			int i = 0;
-			lock (fsm_lock)
+			ReadOnlyCollection<RegularExpression> accepting = null;
+			ReadOnlyCollection<RegularExpression> states = null;
+			ReadOnlyCollection<MachineTransition> transitions = null;
+			lock (regexpAndFsmLock)
 			{
 				if (fsm == null)
+				{
+					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
 					return;
-
-				var accepting = fsm.AcceptingStates;
-				var states = fsm.States;
-				foreach (var state in states)
-				{
-					StringBuilder s = new StringBuilder();
-					if (i == 0)
-						s.Append("initial state");
-					if (accepting.Contains(state))
-					{
-						if (i == 0)
-							s.Append(", ");
-						s.Append("accepting state");
-					}
-					data.Add(new Tuple<RegularExpression, string, string>(state, String.Format("q{0}", i), s.ToString()));
-					++i;
 				}
-				LabeledExpressionsData = data;
 
-				var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
-				foreach (var transition in fsm.Transitions)
-				{
-					data2.Add(new Tuple<RegularExpression, string, string, string, RegularExpression>(
-						states[transition.Item1], String.Format("q{0}", transition.Item1),
-						String.Join(", ", transition.Item2),
-						String.Format("q{0}", transition.Item3), states[transition.Item3]));
-				}
-				TransitionsData = data2;
+				accepting = fsm.AcceptingStates;
+				states = fsm.States;
+				transitions = fsm.Transitions;
 			}
 
-			SetUIVisibilityState(UIVisibility.IntermediateResult);
+			var data = new List<Tuple<RegularExpression, string, string>>();
+			int i = 0;
+			foreach (var state in states)
+			{
+				StringBuilder s = new StringBuilder();
+				if (i == 0)
+					s.Append("initial state");
+				if (accepting.Contains(state))
+				{
+					if (i == 0)
+						s.Append(", ");
+					s.Append("accepting state");
+				}
+				data.Add(new Tuple<RegularExpression, string, string>(state, String.Format("q{0}", i), s.ToString()));
+				++i;
+			}
+
+			LabeledExpressionsData = data;
+
+			var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
+			foreach (var transition in transitions)
+			{
+				data2.Add(new Tuple<RegularExpression, string, string, string, RegularExpression>(
+					states[transition.Item1], String.Format("q{0}", transition.Item1),
+					String.Join(", ", transition.Item2),
+					String.Format("q{0}", transition.Item3), states[transition.Item3]));
+			}
+			TransitionsData = data2;
+
+			lock (regexpAndFsmLock)
+			{
+				if (fsm == null)
+				{
+					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+					return;
+				}
+				if (fsm.IsConstructionFinished())
+				{
+					SetUIState(UIState.ReadyForEvaluation);
+					return;
+				}
+			}
 
 			if (stepByStep)
 			{
-				ChangeStatus(Status.ReadyForNextStep);
+				SetUIState(UIState.ReadyForNextConstructionStep);
 				return;
 			}
 
-			PerformOneStepOfFSMConstruction();
+			SetUIState(UIState.BusyConstructing);
+			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
-		private void ComputationEnded()
-		{
-			//Thread.Sleep(500); // generate tex code for resulting graph
+		//private void ComputationEnded()
+		//{
+		//	//Thread.Sleep(500); // generate tex code for resulting graph
 
-			lock (fsm_lock)
+
+		//	ChangeStatus(Status.ReadyForNextStep);
+
+		//	SetUIVisibilityState(UIVisibility.FinalResult);
+		//}
+
+		private void LatexGenerationWorker()
+		{
+			RegularExpression r = null;
+			FiniteStateMachine f = null;
+
+			lock (regexpAndFsmLock)
 			{
-				if (fsm == null)
+				if (regexp == null || fsm == null)
+				{
+					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
 					return;
-				LatexOutputText = LatexWriter.GenerateFullLatex(inputText, regexp, fsm, true, true);
+				}
+				r = regexp;
+				f = fsm;
 			}
 
-			ChangeStatus(Status.ReadyForNextStep);
-
-			SetUIVisibilityState(UIVisibility.FinalResult);
+			LatexOutputText = LatexWriter.GenerateFullLatex(inputText, r, f, true, true);
+			SetUIState(UIState.ReadyForLatexProcessing);
 		}
 
-		private void LatexWorker()
+		private void PdfGenerationWorker()
 		{
-			ChangeStatus(Status.Busy);
-
 			DateTime dt = DateTime.Now;
 			string filename = "phinite-result_" + dt.ToString("yyyy-MM-dd_HH-mm-ss");
 			string generatedTex = filename + ".tex";
@@ -528,7 +708,8 @@ namespace Phinite
 					new MessageFrame("Phinite/LaTeX error", "Error while starting LaTeX",
 								String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions)
 								).ShowDialog();
-					throw new ThreadStateException();
+					SetUIState(UIState.PdfGenerationError);
+					return;
 				}
 
 				if (!p.WaitForExit(30000))
@@ -536,7 +717,8 @@ namespace Phinite
 					new MessageFrame("Phinite/LaTeX error", "LaTeX timeout",
 								"It takes more than 30 seconds to build PDF file, Phinite will not wait for this to finish. The PDF file will not be opened automatically, even if it is finally created."
 								).ShowDialog();
-					throw new ThreadStateException();
+					SetUIState(UIState.PdfGenerationError);
+					return;
 				}
 
 				if (p.ExitCode != 0)
@@ -549,7 +731,8 @@ namespace Phinite
 						new MessageFrame("Phinite/LaTeX error", "Severe errors in LaTeX execution",
 							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem."
 							).ShowDialog();
-					throw new ThreadStateException();
+					SetUIState(UIState.PdfGenerationError);
+					return;
 				}
 
 				File.Delete(filename + ".log");
@@ -564,38 +747,25 @@ namespace Phinite
 				new MessageFrame("Phinite/LaTeX/PDF error", "Error in Phinite configuration",
 							String.Format("There is no LaTeX executable at this path:\n\n{0}\n\nAnd/or there is no PDF viewer at this path:\n\n", pdflatexCommand, pdfViewerCommand)
 							).ShowDialog();
+				SetUIState(UIState.PdfGenerationError);
+				return;
 			}
 			catch (ThreadStateException)
 			{
 				// silent catch
 			}
 
-			Thread t = new Thread(LatexEnded);
-			t.Name = "LatexAndPdfGenerationEndingThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			SetUIState(UIState.PdfGenerated);
+			//Thread t = new Thread(LatexEnded);
+			//t.Name = "LatexAndPdfGenerationEndingThread";
+			//t.SetApartmentState(ApartmentState.STA);
+			//t.Start();
 		}
 
-		private void LatexEnded()
-		{
-			ChangeStatus(Status.ReadyForNextStep);
-		}
-
-		#region input screen handlers
-
-		private void OptionImmediate_Click(object sender, RoutedEventArgs e)
-		{
-			stepByStep = false;
-			InitializeValidation();
-		}
-
-		private void OptionStepByStep_Click(object sender, RoutedEventArgs e)
-		{
-			stepByStep = true;
-			InitializeValidation();
-		}
-
-		#endregion
+		//private void LatexEnded()
+		//{
+		//	ChangeStatus(Status.ReadyForNextStep);
+		//}
 
 		#region main menu handlers
 
@@ -661,46 +831,113 @@ namespace Phinite
 
 		#endregion
 
+		#region input screen handlers
+
+		private void InputTextChanged(object sender, TextChangedEventArgs e)
+		{
+			if (uiState == UIState.ReadyForNewInputAfterInvalidInput)
+				SetUIState(UIState.ReadyForRegexpInput);
+		}
+
+		private void OptionImmediate_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ValidatingInputExpression);
+			stepByStep = false;
+			CallMethodInNewThread(ValidationWorker, "Validation");
+		}
+
+		private void OptionStepByStep_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ValidatingInputExpression);
+			stepByStep = true;
+			CallMethodInNewThread(ValidationWorker, "Validation");
+		}
+
+		#endregion
+
+		#region fsm buttons handlers
+
 		private void OptionNextStep_Click(object sender, RoutedEventArgs e)
 		{
-			PerformOneStepOfFSMConstruction();
+			SetUIState(UIState.BusyConstructing);
+			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
 		private void OptionFinalResult_Click(object sender, RoutedEventArgs e)
 		{
 			stepByStep = false;
 
-			PerformOneStepOfFSMConstruction();
+			SetUIState(UIState.BusyConstructing);
+			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
 		private void OptionAbort_Click(object sender, RoutedEventArgs e)
 		{
-			ChangeStatus(Status.Busy);
-
-			lock (fsm_lock)
+			lock (regexpAndFsmLock)
 			{
 				fsm = null;
 				regexp = null;
 			}
 
-			SetUIVisibilityState(UIVisibility.Input);
-
-			ChangeStatus(Status.Ready);
+			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
 		}
+
+		private void GenerateLatex_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.BusyGeneratingLatex);
+			CallMethodInNewThread(LatexGenerationWorker, "LatexGeneration");
+		}
+
+		#endregion
+
+		#region latex buttons handlers
 
 		private void OptionGenerateAndViewPDF_Click(object sender, RoutedEventArgs e)
 		{
-			Thread t = new Thread(LatexWorker);
-			t.Name = "LatexAndPdfGenerationThread";
-			t.SetApartmentState(ApartmentState.STA);
-			t.Start();
+			SetUIState(UIState.BusyGeneratingPdf);
+			CallMethodInNewThread(PdfGenerationWorker, "PdfGeneration");
 		}
+
+		private void OptionBackToFSM_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ReadyForEvaluation);
+		}
+
+		#endregion
+
+		#region information messages
+
+		private void Info_Input(object sender, RoutedEventArgs e)
+		{
+			var s = new StringBuilder();
+
+			s.Append("Enter here an expression that is a valid regular expression.");
+			s.Append(" You can use any symbol,\nbut remember that spaces will be ignored and some symbols have special meaning:");
+			s.Append("\n\"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]);
+			s.Append("\" - empty word\n\"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.Union]);
+			s.Append("\" - union\n\"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]);
+			s.Append("\" - Kleene star\n\"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]);
+			s.Append("\" - Kleene plus\n\"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]);
+			s.Append("\" and \"");
+			s.Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]);
+			s.Append("\" -  parentheses\n\n");
+			s.Append("If you are unsure, load one of the example expressions to see how it works.");
+
+			new MessageFrame("Phinite information", "Regular expression input", s.ToString()).ShowDialog();
+		}
+
+		#endregion
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
-			ChangeStatus(Status.Busy);
+			SetUIState(UIState.Loading);
 
-			lock (fsm_lock)
+			lock (regexpAndFsmLock)
 			{
 				fsm = null;
 				regexp = null;

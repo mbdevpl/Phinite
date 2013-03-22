@@ -68,8 +68,8 @@
       <SubType>Code</SubType>
       <DependentUpon>MessageFrame.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Status.cs" />
-    <Compile Include="UIEnums.cs" />
+    <Compile Include="UIState.cs" />
+    <Compile Include="UIStateInfo.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

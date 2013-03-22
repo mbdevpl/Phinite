@@ -8,6 +8,10 @@
 			<Setter Property="Margin" Value="2,2,2,2" />
 			<Setter Property="Padding" Value="10,1,10,1" />
 		</Style>
+		<Style TargetType="Button" x:Key="Info">
+			<Setter Property="Margin" Value="3,0,0,0" />
+			<Setter Property="Padding" Value="6,1,6,1" />
+		</Style>
 		<Style TargetType="Label">
 			<Setter Property="FontWeight" Value="Bold" />
 		</Style>
@@ -18,7 +22,7 @@
 			<RowDefinition />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<Menu>
+		<Menu Name="MenuMain">
 			<MenuItem Name="MenuExamples" Header="Load example" />
 			<Separator />
 			<MenuItem Name="OptionAbout" Header="About" Click="OptionAbout_Click" />
@@ -37,20 +41,61 @@
 			<!--<Image.LayoutTransform>
 			</Image.LayoutTransform>-->
 		</Image>
-		<StackPanel Name="AreaForInput" Grid.Row="1" Visibility="Hidden"
-				HorizontalAlignment="Center" VerticalAlignment="Center">
-			<TextBlock Text="Enter a valid regular expression:" />
-			<TextBox Name="Input" Text="{Binding InputText}" />
-			<Separator Height="5" />
-			<!--<TextBlock Text="Spaces will be ignored. Legend:&#013;+ union&#013;^* Kleene star&#013;^+ Kleene plus&#013;Use parentheses for more complex expressions." />
-			<Separator />-->
-			<TextBlock Text="Select computation method:" />
-			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-				<Button Name="OptionStepByStep" Content="Step by step" Click="OptionStepByStep_Click" />
-				<Button Name="OptionImmediate" Content="Immediate solution" Click="OptionImmediate_Click" />
+		<Grid Name="AreaForInput" Grid.Row="1" Visibility="Visible">
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+				<TextBlock Text="Enter a valid regular expression:" />
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition/>
+						<ColumnDefinition Width="Auto"/>
+					</Grid.ColumnDefinitions>
+					<Border Name="InvalidExpressionBorder"
+							BorderBrush="Transparent" BorderThickness="2">
+						<!-- Margin="-2,-2,-2,-2" -->
+						<TextBox Grid.Column="0" Name="Input"
+								Text="{Binding InputText}" TextChanged="InputTextChanged" />
+					</Border>
+					<Button Grid.Column="1" Style="{StaticResource ResourceKey=Info}" Content="?" Click="Info_Input" />
+				</Grid>
+				<Separator Height="5" />
+				<TextBlock Text="Select computation method:" />
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+					<Button Name="OptionStepByStep" Content="Step by step" Click="OptionStepByStep_Click" />
+					<Button Name="OptionImmediate" Content="Immediate solution" Click="OptionImmediate_Click" />
+				</StackPanel>
 			</StackPanel>
-		</StackPanel>
-		<Grid Name="AreaForIntermediateResult" Grid.Row="1" Visibility="Visible">
+		</Grid>
+		<Grid Name="AreaForParseTree" Grid.Row="1" Visibility="Hidden">
+			<Grid.RowDefinitions>
+				<RowDefinition />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+			<Canvas Name="ParseTreeCanvas">
+				<Path Stroke="Black" StrokeThickness="1">
+					<Path.Data>
+						<PathGeometry>
+							<PathGeometry.Figures>
+								<PathFigureCollection>
+									<PathFigure StartPoint="0,0">
+										<PathFigure.Segments>
+											<PathSegmentCollection>
+												<PolyBezierSegment Points="100,0 200,100 200,200" />
+											</PathSegmentCollection>
+										</PathFigure.Segments>
+									</PathFigure>
+								</PathFigureCollection>
+							</PathGeometry.Figures>
+						</PathGeometry>
+					</Path.Data>
+				</Path>
+			</Canvas>
+			<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+				<Button Content="Fist step of machine construction" Click="OptionNextStep_Click" />
+				<Button Content="To final result" Click="OptionFinalResult_Click" />
+				<Button Content="Abort computation" Click="OptionAbort_Click" />
+			</StackPanel>
+		</Grid>
+		<Grid Name="AreaForMachineCreation" Grid.Row="1" Visibility="Hidden">
 			<Grid.RowDefinitions>
 				<RowDefinition />
 				<RowDefinition Height="Auto" />
@@ -95,10 +140,12 @@
 			<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
 				<Button Name="OptionNextStep" Content="Next step" Click="OptionNextStep_Click" />
 				<Button Name="OptionFinalResult" Content="To final result" Click="OptionFinalResult_Click" />
+				<Button Content="Go to word evaluation" Click="OptionNextStep_Click" />
+				<Button Content="Generete LaTeX code" Click="GenerateLatex_Click" />
 				<Button Name="OptionAbort" Content="Abort computation" Click="OptionAbort_Click" />
 			</StackPanel>
 		</Grid>
-		<Grid Name="AreaForFinalResult" Grid.Row="1" Visibility="Hidden">
+		<Grid Name="AreaForGeneratedLatex" Grid.Row="1" Visibility="Hidden">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition />
@@ -112,8 +159,13 @@
 			</ScrollViewer>
 			<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
 				<Button Name="OptionGeneratePDF" Content="Save LaTeX, then generate and view PDF" Click="OptionGenerateAndViewPDF_Click" />
-				<Button Name="OptionDiscardResult" Content="Discard result" Click="OptionAbort_Click" />
+				<Button Name="OptionBackToFSM" Content="Back to construction results" Click="OptionBackToFSM_Click" />
 			</StackPanel>
+		</Grid>
+		<Grid Name="AreaForWordEvaluation" Grid.Row="1" Visibility="Hidden">
+			<Canvas Name="WordEvaluationCanvas">
+				<Image />
+			</Canvas>
 		</Grid>
 		<StatusBar Grid.Row="2">
 			<StatusBar.Items>

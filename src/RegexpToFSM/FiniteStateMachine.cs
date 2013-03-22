@@ -129,12 +129,13 @@ namespace Phinite
 		/// 
 		/// The method may end prematurely when the machine is already constructed.
 		/// </summary>
-		/// <param name="numberOfSteps">maximum number of steps that will be taken, zero for complete construction</param>
+		/// <param name="numberOfSteps">maximum number of steps that will be taken,
+		/// when set to zero or a negative number, the construction is performed until it has completed</param>
 		public void Construct(int numberOfSteps)
 		{
-			//FindTransitions();
-			//FindFinalStates();
-			while (numberOfSteps > 0 && !IsConstructionFinished())
+			if (numberOfSteps <= 0)
+				numberOfSteps = -1;
+			while (numberOfSteps != 0 && !IsConstructionFinished())
 			{
 				if (!LabelNextExpression() && notLabeled.Count > 0)
 				{
