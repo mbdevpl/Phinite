@@ -108,6 +108,7 @@ namespace Phinite
 		/// 
 		/// This variable is a result of parsing process.
 		/// </summary>
+		public PartialExpression ParseTree { get { return new PartialExpression(parsedInput); } }
 		private PartialExpression parsedInput;
 
 		/// <summary>

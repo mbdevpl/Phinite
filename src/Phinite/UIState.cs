@@ -14,11 +14,11 @@ namespace Phinite
 	{
 		Loading = 1 << 20,
 
-		InputPhase = 1 << 21,
-		ReadyForRegexpInput = InputPhase | 1,
-		ReadyForNewInputAfterError = InputPhase | 1 << 1,
-		ReadyForNewInputAfterAbortedComputation = InputPhase | 1 << 2,
-		ReadyForNewInputAfterInvalidInput = InputPhase | 1 << 3,
+		RegexpInputPhase = 1 << 21,
+		ReadyForRegexpInput = RegexpInputPhase | 1,
+		ReadyForNewInputAfterError = RegexpInputPhase | 1 << 1,
+		ReadyForNewInputAfterAbortedComputation = RegexpInputPhase | 1 << 2,
+		ReadyForNewInputAfterInvalidInput = RegexpInputPhase | 1 << 3,
 
 		ValidationPhase = 1 << 22,
 		ValidatingInputExpression = ValidationPhase | 1,
@@ -42,11 +42,14 @@ namespace Phinite
 		PdfGenerated = LatexResultPhase | 1 << 2,
 		PdfGenerationError = LatexResultPhase | 1 << 3,
 
-		EvaluationPhase = 1 << 28,
+		WordInputPhase = 1 << 28,
+		ReadyForNewWord = WordInputPhase | 1,
+
+		EvaluationPhase = 1 << 29,
 		BusyEvaluating = EvaluationPhase | 1,
 		ReadyForNextEvaluationStep = EvaluationPhase | 1 << 1,
 
-		EvaluationResultsPhase = 1 << 29,
+		EvaluationResultsPhase = 1 << 30,
 		WordWasAccepted = EvaluationResultsPhase | 1,
 		WordWasRejected = EvaluationResultsPhase | 1 << 1,
 

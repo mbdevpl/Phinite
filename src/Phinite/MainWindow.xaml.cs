@@ -72,21 +72,63 @@ namespace Phinite
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public string InputText
+		/// <summary>
+		/// Plain text input to be converted to a regular expression
+		/// </summary>
+		public string InputRegexpText
 		{
-			get { return inputText; }
+			get { return inputRegexpText; }
 			set
 			{
-				if (inputText == value)
+				if (inputRegexpText == value)
 					return;
-				inputText = value;
+				inputRegexpText = value;
 
 				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("InputText"));
+					PropertyChanged(this, new PropertyChangedEventArgs("InputRegexpText"));
 			}
 		}
-		private string inputText = Examples["Hard 3"];
+		private string inputRegexpText = Examples["Hard 3"];
 
+		/// <summary>
+		/// Plain text that represents a preprocessed (validated and optimized) regular expression.
+		/// </summary>
+		public string ValidatedRegexpText
+		{
+			get { return validatedRegexpText; }
+			set
+			{
+				if (validatedRegexpText == value)
+					return;
+				validatedRegexpText = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("ValidatedRegexpText"));
+			}
+		}
+		private string validatedRegexpText = String.Empty;
+
+		/// <summary>
+		/// Plain text to be evaluated as an input word for a finite-state machine.
+		/// </summary>
+		public string InputWordText
+		{
+			get { return inputWordText; }
+			set
+			{
+				if (inputWordText == value)
+					return;
+				inputWordText = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("InputWordText"));
+			}
+		}
+		private string inputWordText = String.Empty;
+
+		/// <summary>
+		/// Text visible in the status bar.
+		/// </summary>
 		public string StatusText
 		{
 			get { return statusText; }
@@ -149,10 +191,6 @@ namespace Phinite
 
 		public MainWindow()
 		{
-			//some dummy calls to load dlls:
-			//var var1 = new RegularExpression("a", true);
-			//var var2 = new FiniteStateMachine(var1, true);
-
 			DataContext = this;
 
 			InitializeComponent();
@@ -220,7 +258,7 @@ namespace Phinite
 		//	//		{
 		//	//			AreaForIntermediateResult.Visibility = Visibility.Hidden;
 		//	//			AreaForFinalResult.Visibility = Visibility.Hidden;
-		//	//			AreaForInput.Visibility = Visibility.Visible;
+		//	//			AreaForRegexpInput.Visibility = Visibility.Visible;
 		//	//		}
 		//	//	}
 		//	//);
@@ -232,16 +270,16 @@ namespace Phinite
 		//		SetUIVisibilityStateDirectly(visibility);
 		//}
 
-		private void SetUIState(UIState newUiState)
+		private void SetUIState(UIState newUiState, string overrideStatusText = null)
 		{
 			if (!Dispatcher.CheckAccess())
-				Dispatcher.BeginInvoke(new Action<UIState>(SetUIStateDirectly),
-					DispatcherPriority.Normal, newUiState);
+				Dispatcher.BeginInvoke(new Action<UIState, string>(SetUIStateDirectly),
+					DispatcherPriority.Normal, newUiState, overrideStatusText);
 			else
-				SetUIStateDirectly(newUiState);
+				SetUIStateDirectly(newUiState, overrideStatusText);
 		}
 
-		private void SetUIStateDirectly(UIState newUiState)
+		private void SetUIStateDirectly(UIState newUiState, string overrideStatusText)
 		{
 			lock (uiStateLock)
 			{
@@ -249,21 +287,13 @@ namespace Phinite
 					return;
 				if ((newUiState & UIState.Loading) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(null);
 
 					MenuMain.IsEnabled = false;
 				}
-				else if ((newUiState & UIState.InputPhase) > 0)
+				else if ((newUiState & UIState.RegexpInputPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Visible;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForRegexpInput);
 
 					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = true;
@@ -285,12 +315,9 @@ namespace Phinite
 				}
 				else if ((newUiState & UIState.ValidationPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Visible;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForRegexpInput);
 
+					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = false;
 
 					Input.IsEnabled = false;
@@ -299,96 +326,140 @@ namespace Phinite
 				}
 				else if ((newUiState & UIState.ValidationResultsPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Visible;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForParseTree);
 
+					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = false;
 				}
 				else if ((newUiState & UIState.ConstructionPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Visible;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForMachineCreation);
+
+					MenuMain.IsEnabled = true;
+					MenuExamples.IsEnabled = false;
+
+					if (newUiState == UIState.BusyConstructing)
+					{
+						OptionAbort.IsEnabled = true;
+						OptionNextStep.IsEnabled = false;
+						OptionFinalResult.IsEnabled = false;
+						OptionLatex.IsEnabled = false;
+						OptionEvaluate.IsEnabled = false;
+					}
+				}
+				else if ((newUiState & UIState.ConstructionStepResultsPhase) > 0)
+				{
+					SetUIVisibility(AreaForMachineCreation);
+
+					if (newUiState == UIState.ReadyForNextConstructionStep)
+					{
+						OptionAbort.IsEnabled = true;
+						OptionNextStep.IsEnabled = true;
+						OptionFinalResult.IsEnabled = true;
+						OptionLatex.IsEnabled = false;
+						OptionEvaluate.IsEnabled = false;
+					}
 				}
 				else if ((newUiState & UIState.ConstructionResultsPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Visible;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForMachineCreation);
+
+					if (newUiState == UIState.ReadyForEvaluation)
+					{
+						OptionAbort.IsEnabled = true;
+						OptionNextStep.IsEnabled = false;
+						OptionFinalResult.IsEnabled = false;
+						OptionLatex.IsEnabled = true;
+						OptionEvaluate.IsEnabled = true;
+					}
+					else if (newUiState == UIState.BusyGeneratingLatex)
+					{
+						OptionAbort.IsEnabled = false;
+						OptionNextStep.IsEnabled = false;
+						OptionFinalResult.IsEnabled = false;
+						OptionLatex.IsEnabled = false;
+						OptionEvaluate.IsEnabled = false;
+					}
 				}
 				else if ((newUiState & UIState.LatexResultPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Visible;
-					AreaForWordEvaluation.Visibility = Visibility.Hidden;
+					SetUIVisibility(AreaForGeneratedLatex);
 
 					if (newUiState == UIState.BusyGeneratingPdf)
 					{
-						OptionGeneratePDF.IsEnabled = false;
+						OptionBackToInput.IsEnabled = false;
 						OptionBackToFSM.IsEnabled = false;
+						OptionGeneratePDF.IsEnabled = false;
 					}
 					else
 					{
-						OptionGeneratePDF.IsEnabled = true;
+						OptionBackToInput.IsEnabled = true;
 						OptionBackToFSM.IsEnabled = true;
+						OptionGeneratePDF.IsEnabled = true;
 					}
+				}
+				else if ((newUiState & UIState.WordInputPhase) > 0)
+				{
+					SetUIVisibility(AreaForWordInput);
+
+					OptionStepByStepEvaluation.IsEnabled = false;
+					OptionImmediateEvaluation.IsEnabled = false;
 				}
 				else if ((newUiState & UIState.EvaluationPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Visible;
+					SetUIVisibility(AreaForWordEvaluation);
 				}
 				else if ((newUiState & UIState.EvaluationResultsPhase) > 0)
 				{
-					AreaForInput.Visibility = Visibility.Hidden;
-					AreaForParseTree.Visibility = Visibility.Hidden;
-					AreaForMachineCreation.Visibility = Visibility.Hidden;
-					AreaForGeneratedLatex.Visibility = Visibility.Hidden;
-					AreaForWordEvaluation.Visibility = Visibility.Visible;
+					SetUIVisibility(AreaForWordEvaluation);
 				}
 
-				string newStatusText;
-				if (UIStateInfo.Status.TryGetValue(newUiState, out newStatusText))
-					StatusText = newStatusText;
+				if (overrideStatusText == null)
+				{
+					string newStatusText;
+					if (UIStateInfo.Status.TryGetValue(newUiState, out newStatusText))
+						StatusText = newStatusText;
+					else
+						StatusText = "no status description for " + newUiState.ToString();
+				}
 				else
-					StatusText = "no status description for " + newUiState.ToString();
+					StatusText = overrideStatusText;
 				uiState = newUiState;
 			}
 		}
 
-		//private void SetUIVisibilityStateDirectly(UIVisibility visibility)
-		//{
-		//	if (visibility == UIVisibility.Input)
-		//	{
-		//		AreaForIntermediateResult.Visibility = Visibility.Hidden;
-		//		AreaForFinalResult.Visibility = Visibility.Hidden;
-		//		AreaForInput.Visibility = Visibility.Visible;
-		//	}
-		//	else if (visibility == UIVisibility.IntermediateResult)
-		//	{
-		//		AreaForInput.Visibility = Visibility.Hidden;
-		//		AreaForFinalResult.Visibility = Visibility.Hidden;
-		//		AreaForIntermediateResult.Visibility = Visibility.Visible;
-		//	}
-		//	else if (visibility == UIVisibility.FinalResult)
-		//	{
-		//		AreaForInput.Visibility = Visibility.Hidden;
-		//		AreaForIntermediateResult.Visibility = Visibility.Hidden;
-		//		AreaForFinalResult.Visibility = Visibility.Visible;
-		//	}
-		//}
+		private void SetUIVisibility(UIElement visibleElem)
+		{
+			if (visibleElem == AreaForRegexpInput)
+				AreaForRegexpInput.Visibility = Visibility.Visible;
+			else
+				AreaForRegexpInput.Visibility = Visibility.Hidden;
+
+			if (visibleElem == AreaForParseTree)
+				AreaForParseTree.Visibility = Visibility.Visible;
+			else
+				AreaForParseTree.Visibility = Visibility.Hidden;
+
+			if (visibleElem == AreaForMachineCreation)
+				AreaForMachineCreation.Visibility = Visibility.Visible;
+			else
+				AreaForMachineCreation.Visibility = Visibility.Hidden;
+
+			if (visibleElem == AreaForGeneratedLatex)
+				AreaForGeneratedLatex.Visibility = Visibility.Visible;
+			else
+				AreaForGeneratedLatex.Visibility = Visibility.Hidden;
+
+			if (visibleElem == AreaForWordInput)
+				AreaForWordInput.Visibility = Visibility.Visible;
+			else
+				AreaForWordInput.Visibility = Visibility.Hidden;
+
+			if (visibleElem == AreaForWordEvaluation)
+				AreaForWordEvaluation.Visibility = Visibility.Visible;
+			else
+				AreaForWordEvaluation.Visibility = Visibility.Hidden;
+		}
 
 		private void CallMethodInNewThread(ThreadStart method, string name)
 		{
@@ -398,17 +469,6 @@ namespace Phinite
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
 		}
-
-		//private void InitializeValidation()
-		//{
-		//	ChangeStatus(Status.ValidatingInput);
-
-		//	Thread t = new Thread(ValidationWorker);
-		//	t.Name = "ValidationThread";
-		//	//t.Priority = ThreadPriority.BelowNormal;
-		//	t.SetApartmentState(ApartmentState.STA);
-		//	t.Start();
-		//}
 
 		private void WindowInitializationWorker()
 		{
@@ -425,7 +485,7 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				// this is to force loading dlls
+				// dummy calls to force loading dlls
 				regexp = new RegularExpression("abc+def", true);
 				fsm = new FiniteStateMachine(regexp, true);
 				regexp = null;
@@ -441,16 +501,14 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					regexp = new RegularExpression(InputText);
+					regexp = new RegularExpression(InputRegexpText);
 					regexp.EvaluateInput();
 				}
 			}
-			catch (ArgumentException /*e*/)
+			catch (ArgumentException e)
 			{
-				//new MessageFrame("Phinite/Regexp error", "Regular expression validation failed",
-				//	String.Format("Given regular expression is not valid: {0}.", e.Message)
-				//	).ShowDialog();
-				SetUIState(UIState.ReadyForNewInputAfterInvalidInput);
+				SetUIState(UIState.ReadyForNewInputAfterInvalidInput,
+					String.Format("input is invalid ({0}); ready for new input", e.Message));
 				return;
 			}
 			catch (Exception e)
@@ -462,20 +520,11 @@ namespace Phinite
 				return;
 			}
 
-			Dispatcher.BeginInvoke((Action)delegate
+			lock (regexpAndFsmLock)
 			{
-				lock (regexpAndFsmLock)
-				{
-					OriginalInput.Text = regexp.Input;
-				}
-			});
-			Dispatcher.BeginInvoke((Action)delegate
-			{
-				lock (regexpAndFsmLock)
-				{
-					ValidatedInput.Text = regexp.ToString();
-				}
-			});
+				ValidatedRegexpText = regexp.ToString();
+			}
+
 			LabeledExpressionsData = null;
 			TransitionsData = null;
 
@@ -502,6 +551,9 @@ namespace Phinite
 
 			if (stepByStep)
 			{
+				Dispatcher.BeginInvoke((Action)delegate { ParseTreeCanvas.Children.Clear(); });
+				DrawParseTree(regexp.ParseTree, 10, 10);
+
 				SetUIState(UIState.ReadyForConstruction);
 				return;
 			}
@@ -509,43 +561,6 @@ namespace Phinite
 			SetUIState(UIState.BusyConstructing);
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
-
-		//private void ValidationEnded()
-		//{
-		//}
-
-		//private void InitializeComputation()
-		//{
-		//	Thread t = new Thread(ComputationInitializationWorker);
-		//	t.Name = "ComputationInitializationThread";
-		//	t.SetApartmentState(ApartmentState.STA);
-		//	t.Start();
-		//}
-
-		//private void ComputationInitializationWorker()
-		//{
-		//	ChangeStatus(Status.Busy);
-
-		//	//if (stepByStep)
-		//	//{
-		//	//	//return;
-		//	//}
-
-		//	//Thread t = new Thread(ComputationEnded);
-		//	//t.Name = "ComputationEndingThread";
-		//	//t.SetApartmentState(ApartmentState.STA);
-		//	//t.Start();
-
-
-		//}
-
-		//private void PerformOneStepOfFSMConstruction()
-		//{
-		//	Thread t = new Thread(ConstructionStepWorker/*, int.MaxValue*/);
-		//	t.Name = "ComputationStepThread";
-		//	t.SetApartmentState(ApartmentState.STA);
-		//	t.Start();
-		//}
 
 		private void ConstructionStepWorker()
 		{
@@ -655,15 +670,82 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
-		//private void ComputationEnded()
-		//{
-		//	//Thread.Sleep(500); // generate tex code for resulting graph
+		private void DrawParseTree(PartialExpression parseTree, double x, double y)
+		{
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				//var e = new Ellipse();
+				var elem = new TextBlock();
+				elem.TextAlignment = TextAlignment.Center;
+				elem.Width = 50;
+				elem.Height = 15;
 
+				if (parseTree.Role == PartialExpressionRole.EmptyWord)
+					elem.Text = ".";
+				else if (parseTree.Role == PartialExpressionRole.Letter)
+					elem.Text = parseTree.Value;
+				else if (parseTree.Role == PartialExpressionRole.Concatenation)
+				{
+					elem.Text = "concat";
+					double yy = y;
+					foreach (var part in parseTree.Parts)
+					{
+						DrawParseTree(part, x + elem.Width * 2, yy);
 
-		//	ChangeStatus(Status.ReadyForNextStep);
+						var poly = new Polyline();
+						poly.Stroke = Brushes.Black;
+						poly.StrokeThickness = 1;
+						poly.Points.Add(new Point(x + elem.Width + 2, y + elem.Height / 2));
+						poly.Points.Add(new Point(x + elem.Width * 2 - 2, yy + elem.Height / 2));
+						ParseTreeCanvas.Children.Add(poly);
 
-		//	SetUIVisibilityState(UIVisibility.FinalResult);
-		//}
+						int width = part.CalculateTreeWidth();
+						yy += (elem.Height + 5) * width;
+					}
+				}
+				else if (parseTree.Role == PartialExpressionRole.Union)
+				{
+					elem.Text = "union";
+					double yy = y;
+					foreach (var part in parseTree.Parts)
+					{
+						DrawParseTree(part, x + elem.Width * 2, yy);
+
+						var poly = new Polyline();
+						poly.Stroke = Brushes.Black;
+						poly.StrokeThickness = 1;
+						poly.Points.Add(new Point(x + elem.Width + 2, y + elem.Height / 2));
+						poly.Points.Add(new Point(x + elem.Width * 2 - 2, yy + elem.Height / 2));
+						ParseTreeCanvas.Children.Add(poly);
+
+						int width = part.CalculateTreeWidth();
+						yy += (elem.Height + 5) * width;
+					}
+				}
+				if (parseTree.Operator != UnaryOperator.None)
+					elem.Text += RegularExpression.TagsStrings[(InputSymbolTag)parseTree.Operator];
+
+				ParseTreeCanvas.Children.Add(elem);
+				Canvas.SetLeft(elem, x);
+				Canvas.SetTop(elem, y);
+
+				var rect = new Rectangle();
+				rect.Stroke = Brushes.Gray;
+				rect.StrokeThickness = 1;
+				rect.Width = elem.Width + 2;
+				rect.Height = elem.Height + 2;
+
+				ParseTreeCanvas.Children.Add(rect);
+				Canvas.SetLeft(rect, x - 1);
+				Canvas.SetTop(rect, y - 1);
+			});
+		}
+
+		private void DrawSubParseTree(PartialExpression parseTree)
+		{
+
+			//ParseTreeCanvas.Children.Add();
+		}
 
 		private void LatexGenerationWorker()
 		{
@@ -681,7 +763,7 @@ namespace Phinite
 				f = fsm;
 			}
 
-			LatexOutputText = LatexWriter.GenerateFullLatex(inputText, r, f, true, true);
+			LatexOutputText = LatexWriter.GenerateFullLatex(inputRegexpText, r, f, true, true);
 			SetUIState(UIState.ReadyForLatexProcessing);
 		}
 
@@ -762,11 +844,6 @@ namespace Phinite
 			//t.Start();
 		}
 
-		//private void LatexEnded()
-		//{
-		//	ChangeStatus(Status.ReadyForNextStep);
-		//}
-
 		#region main menu handlers
 
 		private void OptionExample_Click(object sender, RoutedEventArgs e)
@@ -774,7 +851,7 @@ namespace Phinite
 			if (sender is HeaderedItemsControl == false)
 				return;
 			var item = (HeaderedItemsControl)sender;
-			InputText = Examples[item.Header.ToString()];
+			InputRegexpText = Examples[item.Header.ToString()];
 		}
 
 		private void OptionAbout_Click(object sender, RoutedEventArgs e)
@@ -831,7 +908,7 @@ namespace Phinite
 
 		#endregion
 
-		#region input screen handlers
+		#region regexp input screen handlers
 
 		private void InputTextChanged(object sender, TextChangedEventArgs e)
 		{
@@ -857,6 +934,17 @@ namespace Phinite
 
 		#region fsm buttons handlers
 
+		private void OptionAbort_Click(object sender, RoutedEventArgs e)
+		{
+			lock (regexpAndFsmLock)
+			{
+				fsm = null;
+				regexp = null;
+			}
+
+			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+		}
+
 		private void OptionNextStep_Click(object sender, RoutedEventArgs e)
 		{
 			SetUIState(UIState.BusyConstructing);
@@ -871,21 +959,15 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
-		private void OptionAbort_Click(object sender, RoutedEventArgs e)
-		{
-			lock (regexpAndFsmLock)
-			{
-				fsm = null;
-				regexp = null;
-			}
-
-			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
-		}
-
 		private void GenerateLatex_Click(object sender, RoutedEventArgs e)
 		{
 			SetUIState(UIState.BusyGeneratingLatex);
 			CallMethodInNewThread(LatexGenerationWorker, "LatexGeneration");
+		}
+
+		private void OptionEvaluate_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ReadyForNewWord);
 		}
 
 		#endregion
@@ -901,6 +983,30 @@ namespace Phinite
 		private void OptionBackToFSM_Click(object sender, RoutedEventArgs e)
 		{
 			SetUIState(UIState.ReadyForEvaluation);
+		}
+
+		#endregion
+
+		#region word input screen handlers
+
+		private void InputWord_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			//if (uiState == UIState.ReadyForNewInputAfterInvalidInput)
+			//	SetUIState(UIState.ReadyForRegexpInput);
+		}
+
+		private void OptionStepByStepEvaluation_Click(object sender, RoutedEventArgs e)
+		{
+			//SetUIState(UIState.ValidatingInputExpression);
+			//stepByStep = true;
+			//CallMethodInNewThread(ValidationWorker, "Validation");
+		}
+
+		private void OptionImmediateEvaluation_Click(object sender, RoutedEventArgs e)
+		{
+			//SetUIState(UIState.ValidatingInputExpression);
+			//stepByStep = false;
+			//CallMethodInNewThread(ValidationWorker, "Validation");
 		}
 
 		#endregion
@@ -927,6 +1033,28 @@ namespace Phinite
 			s.Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]);
 			s.Append("\" -  parentheses\n\n");
 			s.Append("If you are unsure, load one of the example expressions to see how it works.");
+
+			new MessageFrame("Phinite information", "Regular expression input", s.ToString()).ShowDialog();
+		}
+
+		private void Info_InputWord(object sender, RoutedEventArgs e)
+		{
+			var s = new StringBuilder();
+
+			s.Append("Enter a word.");
+			s.Append(" You can use any symbols,\nbut remember that spaces will be ignored and some symbols are forbidden:");
+			s.Append("\n");
+			foreach (var symbol in RegularExpression.ForbiddenSymbols)
+			{
+				s.Append("\"");
+				s.Append(symbol);
+				s.Append("\"\n");
+			}
+			s.Append("\n");
+			s.Append("Leave the field blank to evaluate (i.e. check if the machine accepts) the empty word.");
+			s.Append("\n");
+			s.Append("If you are unsure, just start computing without any input\n");
+			s.Append("or write just a single letter to see how the basic case works.");
 
 			new MessageFrame("Phinite information", "Regular expression input", s.ToString()).ShowDialog();
 		}

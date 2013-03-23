@@ -16,7 +16,7 @@ namespace Phinite
 			{
 				{UIState.Loading, "loading"},
 
-				// InputPhase
+				// RegexpInputPhase
 				{UIState.ReadyForRegexpInput, "ready"},
 				{UIState.ReadyForNewInputAfterError, "computation aborted due to an error; ready for new input"},
 				{UIState.ReadyForNewInputAfterAbortedComputation, "computation aborted by the user; ready for new input"},
@@ -26,13 +26,13 @@ namespace Phinite
 				{UIState.ValidatingInputExpression, "validating input expression"},
 
 				// ValidationResultsPhase
-				{UIState.ReadyForConstruction, "ready for next step"},
+				{UIState.ReadyForConstruction, "ready for machine construction"},
 
 				// ConstructionPhase
 				{UIState.BusyConstructing, "busy"},
 
 				// ConstructionStepResultsPhase
-				{UIState.ReadyForNextConstructionStep, "ready for next step"},
+				{UIState.ReadyForNextConstructionStep, "ready for next step of construction"},
 
 				// ConstructionResultsPhase
 				{UIState.ReadyForEvaluation, "ready for word evaluation"},
@@ -43,6 +43,8 @@ namespace Phinite
 				{UIState.BusyGeneratingPdf, "generating pdf"},
 				{UIState.PdfGenerated, "pdf generated succesfully; ready for other tasks"},
 				{UIState.PdfGenerationError, "errors in pdf generation; ready for other tasks"},
+
+				// WordInputPhase
 
 				// EvaluationPhase
 				{UIState.BusyEvaluating, "busy"},

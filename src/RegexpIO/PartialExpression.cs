@@ -698,5 +698,18 @@ namespace Phinite
 			return s.ToString();
 		}
 
+		public int CalculateTreeWidth()
+		{
+			if (role == PartialExpressionRole.Undetermined)
+				return 0;
+			if ((role & PartialExpressionRole.Leaf) > 0)
+				return 1;
+
+			if ((role & PartialExpressionRole.InternalNode) > 0)
+				return parts.Sum(x => x.CalculateTreeWidth());
+
+			return -1;
+		}
+
 	}
 }
