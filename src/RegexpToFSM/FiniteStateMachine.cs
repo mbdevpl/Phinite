@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using QuickGraph;
+using QuickGraph.Algorithms;
+//using GraphSharp.Algorithms.Layout.Simple.Tree;
+//using GraphSharp.Algorithms.Layout.Simple.FDP;
+using GraphSharp.Algorithms.Layout.Compound;
+using GraphSharp.Algorithms.Layout.Compound.FDP;
+using System.Threading;
 
 namespace Phinite
 {
@@ -331,16 +338,224 @@ namespace Phinite
 		//	}
 		//}
 
-		//private void FindFinalStates()
-		//{
-		//	finalStates = new List<RegularExpression>();
+		public bool IsAccepting(int stateIndex)
+		{
+			return acceptingStatesIds.Any(x => x == stateIndex);
+		}
 
-		//	foreach (var state in states)
-		//	{
-		//		if (state.GeneratesEmptyWord())
-		//			finalStates.Add(state);
-		//	}
-		//}
+		private Dictionary<int, double> GetStatesTooCloseToEdge(Dictionary<int, Point> layout, int stateId1, int stateId2, double threshold)
+		{
+			if (stateId1 == stateId2)
+				return null;
+
+			if (!transitions.Any(x => x.Item1 == stateId1 && x.Item3 == stateId2))
+				return null;
+
+			var p1 = layout[stateId1];
+			var p2 = layout[stateId2];
+
+			Dictionary<int, double> results = null;
+			foreach (var key in layout.Keys)
+			{
+				if (key == stateId1 || key == stateId2)
+					continue;
+
+				double dist = layout[key].DistanceToLine(p1, p2);
+
+				if (dist < threshold)
+				{
+					if (results == null)
+						results = new Dictionary<int, double>();
+					results.Add(key, dist);
+				}
+			}
+			return results;
+		}
+
+		/// <summary>
+		/// Returns a score of a given layout.
+		/// 
+		/// This score is relative, and unless it is zero (perfect score),
+		/// there needs to be another layout for comparison in order for any conclusions to be drawn.
+		/// Zero means that if the machine is drawn using this layout, it will be very easy for human eye
+		/// to analyse it, and that humans in generally will think of it as a clear and understandable drawing.
+		/// For example, you can receive -1000, and think this is bad, but new layout may receive -10^6.
+		/// Also if you receive -0.001 yo may think this is good, but new layout can still receive -10^-6.
+		/// 
+		/// Score is based on number of intersecting edges, number of nodes that lay on some edge,
+		/// number of nodes that are very close to each other, etc.
+		/// </summary>
+		/// <returns>zero if layout is perfect, negative value if it is not</returns>
+		private double CalculateLayoutScore(Dictionary<int, Point> layout)
+		{
+			if (layout == null || layout.Count <= 1)
+				return 0;
+
+			double nodesDistanceScore = 0;
+			double nodesOnEdgesScore = 0;
+			double edgeIntersectionsScore = 0;
+
+			// check if point are too close to each other
+			foreach (var key1 in layout.Keys)
+				foreach (var key2 in layout.Keys)
+				{
+					if (key1 == key2)
+						continue;
+
+					var p1 = layout[key1];
+					var p2 = layout[key2];
+
+					double dist = p1.Distance(p2);
+					if (dist < 100)
+						nodesDistanceScore -= Math.Sqrt(100 - dist) + 1;
+				}
+
+			// check if edges between connected points are obstructed by any state
+			foreach (var key1 in layout.Keys)
+				foreach (var key2 in layout.Keys)
+				{
+					if (key1 == key2)
+						continue;
+					if (!transitions.Any(x => x.Item1 == key1 && x.Item3 == key2))
+						continue;
+
+					var p1 = layout[key1];
+					var p2 = layout[key2];
+
+					foreach (var key in layout.Keys)
+					{
+						if (key == key1 || key == key2)
+							continue;
+
+						double dist = layout[key].DistanceToLine(p1, p2);
+
+						if (dist < 30)
+							nodesOnEdgesScore -= Math.Sqrt(30 - dist) * 2 + 1;
+					}
+
+				}
+
+			// check if any edges intersect
+			foreach (var key1 in layout.Keys)
+				foreach (var key2 in layout.Keys)
+				{
+					if (key1 == key2)
+						continue;
+					if (!transitions.Any(x => x.Item1 == key1 && x.Item3 == key2))
+						continue;
+
+					var p1 = layout[key1];
+					var p2 = layout[key2];
+				}
+
+			return nodesDistanceScore + nodesOnEdgesScore + edgeIntersectionsScore;
+		}
+
+		public Dictionary<int, Point> LayOut()
+		{
+			var layout = new Dictionary<int, Point>();
+
+			//Random rand = new Random();
+
+			//double x = 20, y = 100;
+			//foreach (var stateGroup in equivalentStatesGroups)
+			//{
+			//	layout.Add(stateGroup.Key, new Point(x, y));
+
+			//	var list = transitions.FindAll(t => t.Item3 == stateGroup.Key && t.Item1 != t.Item3 && t.Item1 < stateGroup.Key);
+			//	foreach (var elem in list)
+			//	{
+			//		var bad = GetStatesTooCloseToEdge(layout, elem.Item1, stateGroup.Key, 30);
+			//		if (bad == null)
+			//			continue;
+			//		layout[stateGroup.Key] = new Point(x, y + 100 * (rand.Next() % 2 == 0 ? 1 : -1));
+			//		break;
+			//	}
+
+			//	//list = transitions.FindAll(t => t.Item1 != t.Item3 && t.Item1 == stateGroup.Key);
+			//	//foreach (var elem in list)
+			//	//{
+			//	//	var bad = GetStatesTooCloseToEdge(layout, stateGroup.Key, elem.Item1, 30);
+			//	//	if (bad == null)
+			//	//		continue;
+			//	//	layout[stateGroup.Key] = new Point(x, y - 50);
+			//	//	break;
+			//	//}
+
+			//	x += 100;
+			//	y += 0;
+			//}
+
+			#region GraphSharp graph construction
+
+			var graph = new BidirectionalGraph<string, Edge<string>>();
+			string[] vertices = new string[equivalentStatesGroups.Count];
+			//Dictionary<string, Point> vertexPositions = new Dictionary<string, Point>();
+			Dictionary<string, Size> vertexSizes = new Dictionary<string, Size>();
+			Dictionary<string, Thickness> vertexBorders = new Dictionary<string, Thickness>();
+			
+			//int i = 0;
+			for(int i = 0; i < equivalentStatesGroups.Count; ++i)
+			//foreach (var stateGroup in equivalentStatesGroups)
+			{
+				vertices[i] = i/*stateGroup.Key*/.ToString();
+				//vertexPositions.Add(vertices[i], new Point(i * 100, i * 100));
+				vertexSizes.Add(vertices[i], new Size(32, 32));
+				vertexBorders.Add(vertices[i], new Thickness(20, 20, 20, 20));
+				//i++;
+			}
+			graph.AddVertexRange(vertices);
+			foreach (var transition in transitions)
+				if (transition.Item1 != transition.Item3)
+					graph.AddEdge(new Edge<string>(vertices[transition.Item1], vertices[transition.Item3]));
+
+			#endregion
+
+			double lastScore = 1;
+			for (int i = 0; i < 32; ++i)
+			{
+				#region running GraphSharp algorithm
+
+				var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+						graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
+				algo4.Compute();
+				while (algo4.State != ComputationState.Finished)
+					Thread.Sleep(250);
+
+				#endregion
+
+				layout = new Dictionary<int, Point>();
+				double minX = 1000, minY = 1000;
+				foreach (var pos in algo4.VertexPositions)
+				{
+					var location = pos.Value;
+					if (location.X < minX) minX = location.X;
+					if (location.Y < minY) minY = location.Y;
+					layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
+				}
+
+				minX -= 40;
+				minY -= 40;
+
+				for (int key = 0; key < layout.Count; ++key)
+				{
+					layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
+				}
+
+				double score = CalculateLayoutScore(layout);
+				if (lastScore > 0)
+					lastScore = score;
+
+				if (score == 0 || (i > 16 && score > lastScore))
+					break;
+			}
+			return layout;
+
+			//var results = new Dictionary<RegularExpression, Point>();
+			//foreach (var pair in dictionary)
+			//	results.Add(equivalentStatesGroups[pair.Key].Value.First(), pair.Value);
+			//return results;
+		}
 
 	}
 }

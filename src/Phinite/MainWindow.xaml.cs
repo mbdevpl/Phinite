@@ -42,6 +42,7 @@ namespace Phinite
 				{"Binary numbers", "0+1(0+1)^*"},
 				{"3 digit hexadecimal numbers", "(1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)"},
 				{"Example from BA", "a^+b^+ + ab^+c"},
+				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
 				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
 				{"Hard 2", "(a+.)^*b"},
 				{"Hard 3", "(a(a+.)b^*)^*"},
@@ -49,6 +50,7 @@ namespace Phinite
 				{"Hard 5", "(((b)^*)((a((b)^*))^*))"},
 				{"Harder", "(f+ef+def+cdef+bcdef+abcdef)^*"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
+				
 			};
 
 		private object regexpAndFsmLock = new object();
@@ -63,6 +65,8 @@ namespace Phinite
 		private string pdflatexCommand
 			//= @"MiKTeX\miktex\bin\pdflatex";
 			= @"pdflatex";
+
+		private int pdflatexTimeout = 2;
 
 		private bool useSystemDefaultPdfViewer
 			//= false;
@@ -198,77 +202,6 @@ namespace Phinite
 			SetUIState(UIState.Loading);
 			CallMethodInNewThread(WindowInitializationWorker, "WindowInitialization");
 		}
-
-		//private void ChangeStatus(Status newStatus)
-		//{
-		//	if (status == newStatus)
-		//		return;
-
-		//	StatusText = StatusTexts[newStatus];
-		//	previousStatus = status;
-		//	status = newStatus;
-
-		//	if ((previousStatus & Status.Computing) != Status.Invalid &&
-		//		(status & Status.Computing) != Status.Invalid)
-		//		return;
-
-		//	bool enabledState = true;
-		//	if ((status & Status.Computing) != Status.Invalid)
-		//		enabledState = false;
-		//	else if ((status & Status.NotComputing) != Status.Invalid)
-		//		enabledState = true;
-		//	else
-		//		throw new ArgumentException("failed to enter an invalid status", "status");
-
-		//	UIEnabled enabled = enabledState ? UIEnabled.Yes : UIEnabled.No;
-		//	SetUIEnabled(enabled);
-		//}
-
-		//private void SetUIEnabled(UIEnabled enabled)
-		//{
-		//	SetEnabledStateDel del = new SetEnabledStateDel(SetUIEnabledDirectly);
-		//	if (!Dispatcher.CheckAccess())
-		//		Dispatcher.BeginInvoke(del, DispatcherPriority.Normal, enabled);
-		//	else
-		//		SetUIEnabledDirectly(enabled);
-		//}
-
-		//private delegate void SetEnabledStateDel(UIEnabled enabled);
-
-		//private void SetUIEnabledDirectly(UIEnabled enabled)
-		//{
-		//	if (enabled == UIEnabled.Yes || enabled == UIEnabled.No)
-		//	{
-		//		bool enabledState = enabled == UIEnabled.Yes ? true : false;
-
-		//		Input.IsEnabled = enabledState;
-		//		MenuExamples.IsEnabled = enabledState;
-		//		OptionStepByStep.IsEnabled = enabledState;
-		//		OptionImmediate.IsEnabled = enabledState;
-		//	}
-		//	else
-		//		throw new NotImplementedException("partial ui disabling is not implemented");
-		//}
-
-		//private void SetUIVisibilityState(UIVisibility visibility)
-		//{
-		//	//Action a = new Action<UIVisibility>(
-		//	//	method(UIVisibility visibility){
-		//	//		if (visibility == UIVisibility.Input)
-		//	//		{
-		//	//			AreaForIntermediateResult.Visibility = Visibility.Hidden;
-		//	//			AreaForFinalResult.Visibility = Visibility.Hidden;
-		//	//			AreaForRegexpInput.Visibility = Visibility.Visible;
-		//	//		}
-		//	//	}
-		//	//);
-
-		//	if (!Dispatcher.CheckAccess())
-		//		Dispatcher.BeginInvoke(new Action<UIVisibility>(SetUIVisibilityStateDirectly),
-		//			DispatcherPriority.Normal, visibility);
-		//	else
-		//		SetUIVisibilityStateDirectly(visibility);
-		//}
 
 		private void SetUIState(UIState newUiState, string overrideStatusText = null)
 		{
@@ -470,6 +403,233 @@ namespace Phinite
 			t.Start();
 		}
 
+		private Point DrawParseTree(PartialExpression parseTree, double x = 0, double y = 0)
+		{
+			var canvas = ParseTreeCanvas;
+			var canvasContent = canvas.Children;
+
+			bool root = x == 0 && y == 0;
+			if (root)
+			{
+				x = 15;
+				y = 10;
+				canvasContent.Clear();
+			}
+
+			double width = 50;
+			double height = 15;
+			string text = String.Empty;
+
+			var elem = new TextBlock();
+			elem.TextAlignment = TextAlignment.Center;
+			elem.Width = width;
+			elem.Height = height;
+
+			canvasContent.Add(elem);
+			Canvas.SetLeft(elem, x);
+			Canvas.SetTop(elem, y);
+
+			var border = new Ellipse();
+			border.Stroke = Brushes.Gray;
+			border.StrokeThickness = 1;
+			border.Width = elem.Width + 4;
+			border.Height = elem.Height * 2 + 4;
+
+			canvasContent.Add(border);
+			Canvas.SetLeft(border, x - 2);
+			Canvas.SetTop(border, y - elem.Height / 2);
+
+			int treeWidth = parseTree.CalculateTreeWidth();
+			if (treeWidth > 1)
+			{
+				Canvas.SetTop(elem, Canvas.GetTop(elem) + ((height * 2 + 6) * (treeWidth - 1)) / 2);
+				Canvas.SetTop(border, Canvas.GetTop(border) + ((height * 2 + 6) * (treeWidth - 1)) / 2);
+			}
+
+			if (parseTree.Role == PartialExpressionRole.EmptyWord)
+				text = "epsilon";
+			else if (parseTree.Role == PartialExpressionRole.Letter)
+				text = parseTree.Value;
+			else if ((parseTree.Role & PartialExpressionRole.InternalNode) > 0)
+			{
+				if (parseTree.Role == PartialExpressionRole.Concatenation)
+					text = "concat";
+				else if (parseTree.Role == PartialExpressionRole.Union)
+					text = "union";
+
+				double yy = y;
+				foreach (var part in parseTree.Parts)
+				{
+					var poly = new Polyline();
+					poly.Stroke = Brushes.Gray;
+					poly.StrokeThickness = 2;
+					poly.Points.Add(new Point(2, Canvas.GetTop(elem) + height / 2 + 2));
+					poly.Points.Add(new Point(width - 2, yy + height / 2 + 2));
+
+					canvasContent.Add(poly);
+					Canvas.SetLeft(poly, Canvas.GetLeft(elem) + width);
+					//Canvas.SetTop(poly, 0);
+
+					var rootPt = DrawParseTree(part, x + width * 2, yy);
+
+					int partWidth = part.CalculateTreeWidth();
+
+					if (partWidth > 1)
+					{
+						var pt = poly.Points[1];
+						poly.Points[1] = new Point(pt.X, rootPt.Y + height / 2 + 2);
+					}
+
+					yy += (height * 2 + 6) * partWidth;
+				}
+			}
+
+			if (parseTree.Operator != UnaryOperator.None)
+				text += RegularExpression.TagsStrings[(InputSymbolTag)parseTree.Operator];
+
+			elem.Text = text;
+
+			if (root)
+			{
+				var poly = new Polyline();
+				poly.Stroke = Brushes.Gray;
+				poly.StrokeThickness = 2;
+				poly.Points.Add(new Point(5, Canvas.GetTop(elem) + height / 2 + 2));
+				poly.Points.Add(new Point(x - 2, Canvas.GetTop(elem) + height / 2 + 2));
+				canvasContent.Add(poly);
+
+				canvas.Width = (parseTree.CalculateTreeHeight() - 1) * (width * 2) + width + x;
+				canvas.Height = treeWidth * (height * 2 + 6) + y;
+			}
+
+			return new Point(Canvas.GetLeft(elem), Canvas.GetTop(elem));
+		}
+
+		private void DrawFiniteStateMachine(FiniteStateMachine machine)
+		{
+			var canvas = ConstructedMachineCanvas;
+			var canvasContent = canvas.Children;
+
+			//var states = machine.States;
+			//var initial = machine.InitialState;
+			//var accepting = machine.AcceptingStates;
+			var transitions = machine.Transitions;
+			Dictionary<int, Point> layout = machine.LayOut();
+
+			canvasContent.Clear();
+
+			double maxX = 0;
+			double maxY = 0;
+
+			double stateDiameter = 32;
+
+			var poly = new Petzold.Media2D.ArrowLine();
+			//poly.Points.Add(new Point(0, 0));
+			//poly.Points.Add(new Point(stateDiameter, stateDiameter));
+			poly.X1 = 0;
+			poly.Y1 = 0;
+			var initPt2 = new Point(stateDiameter, stateDiameter).MoveTo(new Point(), stateDiameter / 2);
+			poly.X2 = initPt2.X;
+			poly.Y2 = initPt2.Y;
+
+			poly.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
+			poly.ArrowLength = 10;
+			poly.ArrowAngle = 60;
+
+			poly.Stroke = Brushes.Black;
+			poly.StrokeThickness = 1;
+
+			canvasContent.Add(poly);
+			Canvas.SetLeft(poly, layout[0].X - stateDiameter);
+			Canvas.SetTop(poly, layout[0].Y - stateDiameter);
+
+			string text = String.Empty;
+
+			//int i = 0;
+			//foreach (var pair in layout)
+			for (int i = 0; i < layout.Count; ++i)
+			{
+				var location = layout[i];
+
+				var border = new Ellipse();
+				border.Width = stateDiameter;
+				border.Height = stateDiameter;
+
+				border.Stroke = Brushes.Black;
+				border.StrokeThickness = 1;
+				border.Fill = Brushes.White;
+
+				var elem = new TextBlock();
+				elem.TextAlignment = TextAlignment.Center;
+				elem.Width = stateDiameter;
+				elem.Height = /*stateDiameter*/ 20;
+				elem.Text = "q" + i.ToString();
+
+				foreach (var transition in transitions)
+				{
+					if (transition.Item1 != i)
+						continue;
+
+					var target = layout[transition.Item3].Copy().MoveTo(location, stateDiameter / 2);
+
+					var edge = new Petzold.Media2D.ArrowLine();
+					//edge.Points.Add(new Point());
+					//edge.Points.Add(target.Copy().Offset(-location.X, -location.Y));
+					//edge.Points.Add(location);
+					//edge.Points.Add(target);
+
+					edge.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
+					edge.ArrowLength = 10;
+					edge.ArrowAngle = 60;
+					edge.X1 = location.X;
+					edge.Y1 = location.Y;
+					edge.X2 = target.X;
+					edge.Y2 = target.Y;
+
+					edge.StrokeThickness = 1;
+					edge.Stroke = Brushes.Black;
+
+					canvasContent.Add(edge);
+					Canvas.SetLeft(edge, 0);
+					Canvas.SetTop(edge, 0);
+					Canvas.SetZIndex(edge, -100);
+				}
+
+				canvasContent.Add(border);
+				Canvas.SetLeft(border, location.X - border.Width / 2);
+				Canvas.SetTop(border, location.Y - border.Height / 2);
+				Canvas.SetZIndex(border, 0);
+
+				if (machine.IsAccepting(i))
+				{
+					var border2 = new Ellipse();
+					border2.StrokeThickness = 1;
+					border2.Width = stateDiameter - 6;
+					border2.Height = stateDiameter - 6;
+
+					border2.Stroke = Brushes.Black;
+					border2.Fill = Brushes.White;
+
+					canvasContent.Add(border2);
+					Canvas.SetLeft(border2, location.X - border2.Width / 2);
+					Canvas.SetTop(border2, location.Y - border2.Height / 2);
+					Canvas.SetZIndex(border2, 0);
+				}
+
+				canvasContent.Add(elem);
+				Canvas.SetLeft(elem, location.X - elem.Width / 2);
+				Canvas.SetTop(elem, location.Y - elem.Height / 2);
+				Canvas.SetZIndex(elem, 0);
+
+				if (location.X > maxX) maxX = location.X;
+				if (location.Y > maxY) maxY = location.Y;
+
+				//++i;
+			}
+			canvas.Width = maxX + stateDiameter / 2 + 1;
+			canvas.Height = maxY + stateDiameter / 2 + 1;
+		}
+
 		private void WindowInitializationWorker()
 		{
 			foreach (string key in Examples.Keys)
@@ -551,8 +711,7 @@ namespace Phinite
 
 			if (stepByStep)
 			{
-				Dispatcher.BeginInvoke((Action)delegate { ParseTreeCanvas.Children.Clear(); });
-				DrawParseTree(regexp.ParseTree, 10, 10);
+				Dispatcher.BeginInvoke((Action)delegate { DrawParseTree(regexp.ParseTree); });
 
 				SetUIState(UIState.ReadyForConstruction);
 				return;
@@ -617,6 +776,14 @@ namespace Phinite
 				transitions = fsm.Transitions;
 			}
 
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				lock (regexpAndFsmLock)
+				{
+					DrawFiniteStateMachine(fsm);
+				}
+			});
+
 			var data = new List<Tuple<RegularExpression, string, string>>();
 			int i = 0;
 			foreach (var state in states)
@@ -670,82 +837,11 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
-		private void DrawParseTree(PartialExpression parseTree, double x, double y)
-		{
-			Dispatcher.BeginInvoke((Action)delegate
-			{
-				//var e = new Ellipse();
-				var elem = new TextBlock();
-				elem.TextAlignment = TextAlignment.Center;
-				elem.Width = 50;
-				elem.Height = 15;
+		//private void DrawSubParseTree(PartialExpression parseTree, double x = 0, double y = 0)
+		//{
 
-				if (parseTree.Role == PartialExpressionRole.EmptyWord)
-					elem.Text = ".";
-				else if (parseTree.Role == PartialExpressionRole.Letter)
-					elem.Text = parseTree.Value;
-				else if (parseTree.Role == PartialExpressionRole.Concatenation)
-				{
-					elem.Text = "concat";
-					double yy = y;
-					foreach (var part in parseTree.Parts)
-					{
-						DrawParseTree(part, x + elem.Width * 2, yy);
-
-						var poly = new Polyline();
-						poly.Stroke = Brushes.Black;
-						poly.StrokeThickness = 1;
-						poly.Points.Add(new Point(x + elem.Width + 2, y + elem.Height / 2));
-						poly.Points.Add(new Point(x + elem.Width * 2 - 2, yy + elem.Height / 2));
-						ParseTreeCanvas.Children.Add(poly);
-
-						int width = part.CalculateTreeWidth();
-						yy += (elem.Height + 5) * width;
-					}
-				}
-				else if (parseTree.Role == PartialExpressionRole.Union)
-				{
-					elem.Text = "union";
-					double yy = y;
-					foreach (var part in parseTree.Parts)
-					{
-						DrawParseTree(part, x + elem.Width * 2, yy);
-
-						var poly = new Polyline();
-						poly.Stroke = Brushes.Black;
-						poly.StrokeThickness = 1;
-						poly.Points.Add(new Point(x + elem.Width + 2, y + elem.Height / 2));
-						poly.Points.Add(new Point(x + elem.Width * 2 - 2, yy + elem.Height / 2));
-						ParseTreeCanvas.Children.Add(poly);
-
-						int width = part.CalculateTreeWidth();
-						yy += (elem.Height + 5) * width;
-					}
-				}
-				if (parseTree.Operator != UnaryOperator.None)
-					elem.Text += RegularExpression.TagsStrings[(InputSymbolTag)parseTree.Operator];
-
-				ParseTreeCanvas.Children.Add(elem);
-				Canvas.SetLeft(elem, x);
-				Canvas.SetTop(elem, y);
-
-				var rect = new Rectangle();
-				rect.Stroke = Brushes.Gray;
-				rect.StrokeThickness = 1;
-				rect.Width = elem.Width + 2;
-				rect.Height = elem.Height + 2;
-
-				ParseTreeCanvas.Children.Add(rect);
-				Canvas.SetLeft(rect, x - 1);
-				Canvas.SetTop(rect, y - 1);
-			});
-		}
-
-		private void DrawSubParseTree(PartialExpression parseTree)
-		{
-
-			//ParseTreeCanvas.Children.Add();
-		}
+		//	//ParseTreeCanvas.Children.Add();
+		//}
 
 		private void LatexGenerationWorker()
 		{
@@ -778,8 +874,11 @@ namespace Phinite
 			File.AppendAllText(generatedTex, LatexOutputText);
 
 			string latexExecutable = pdflatexCommand;
-			string latexOptions = "-shell-escape -interaction=nonstopmode"
-				+ " \"" + generatedTexDir + "/" + generatedTex + "\"";
+			string latexOptions = new StringBuilder()
+				.Append(@"-shell-escape ")
+				.Append(@"-interaction=batchmode ")
+				//.Append(@" -interaction=nonstopmode")
+				.Append('"').Append(generatedTexDir).Append('/').Append(generatedTex).Append('"').ToString();
 
 			Process p = new Process();
 			p.StartInfo = new ProcessStartInfo(latexExecutable, latexOptions);
@@ -794,11 +893,23 @@ namespace Phinite
 					return;
 				}
 
-				if (!p.WaitForExit(30000))
+				bool userWaitsForTimeout = true;
+				var timeoutMessageFormat = new StringBuilder()
+					.Append("It takes more than {0} seconds to build PDF file.")
+					.Append(" Do you want Phinite to wait for another {1} seconds to finish?")
+					.Append(" If not, the PDF file will not be opened automatically, even when it is finally created.")
+					.ToString();
+				while (userWaitsForTimeout)
 				{
-					new MessageFrame("Phinite/LaTeX error", "LaTeX timeout",
-								"It takes more than 30 seconds to build PDF file, Phinite will not wait for this to finish. The PDF file will not be opened automatically, even if it is finally created."
-								).ShowDialog();
+					if (p.WaitForExit(1000 * pdflatexTimeout))
+						break;
+
+					if (new MessageFrame("Phinite/LaTeX error", "LaTeX timeout",
+							String.Format(timeoutMessageFormat, pdflatexTimeout, pdflatexTimeout),
+							null, true, true, false, "Yes", "No").ShowDialog() == true)
+						continue;
+
+					userWaitsForTimeout = false;
 					SetUIState(UIState.PdfGenerationError);
 					return;
 				}
@@ -806,19 +917,26 @@ namespace Phinite
 				if (p.ExitCode != 0)
 				{
 					if (File.Exists(generatedPdf))
-						new MessageFrame("Phinite/LaTeX error", "Minor errors in LaTeX execution",
+						new MessageFrame("Phinite/LaTeX warning", "Minor errors in LaTeX execution",
 							"PDF file was created, but there were some errors and the result may not look as good as expected."
 							).ShowDialog();
 					else
+					{
 						new MessageFrame("Phinite/LaTeX error", "Severe errors in LaTeX execution",
 							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem."
 							).ShowDialog();
-					SetUIState(UIState.PdfGenerationError);
-					return;
+						SetUIState(UIState.PdfGenerationError);
+						return;
+					}
+				}
+				else
+				{
+					try { File.Delete(filename + ".log"); }
+					catch (IOException) { }
+					try { File.Delete(filename + ".aux"); }
+					catch (IOException) { }
 				}
 
-				File.Delete(filename + ".log");
-				File.Delete(filename + ".aux");
 				if (useSystemDefaultPdfViewer)
 					Process.Start(generatedPdf);
 				else
@@ -852,6 +970,10 @@ namespace Phinite
 				return;
 			var item = (HeaderedItemsControl)sender;
 			InputRegexpText = Examples[item.Header.ToString()];
+		}
+
+		private void OptionSettings_Click(object sender, RoutedEventArgs e)
+		{
 		}
 
 		private void OptionAbout_Click(object sender, RoutedEventArgs e)
@@ -899,6 +1021,10 @@ namespace Phinite
 			{
 				new MessageFrame("Phinite", "Missing content", "technical analysis file was not found").ShowDialog();
 			}
+		}
+
+		private void OptionViewUserGuide_Click(object sender, RoutedEventArgs e)
+		{
 		}
 
 		private void OptionExit_Click(object sender, RoutedEventArgs e)
@@ -1041,7 +1167,7 @@ namespace Phinite
 		{
 			var s = new StringBuilder();
 
-			s.Append("Enter a word.");
+			s.Append("Enter some word.");
 			s.Append(" You can use any symbols,\nbut remember that spaces will be ignored and some symbols are forbidden:");
 			s.Append("\n");
 			foreach (var symbol in RegularExpression.ForbiddenSymbols)
@@ -1056,7 +1182,7 @@ namespace Phinite
 			s.Append("If you are unsure, just start computing without any input\n");
 			s.Append("or write just a single letter to see how the basic case works.");
 
-			new MessageFrame("Phinite information", "Regular expression input", s.ToString()).ShowDialog();
+			new MessageFrame("Phinite information", "Word input", s.ToString()).ShowDialog();
 		}
 
 		#endregion

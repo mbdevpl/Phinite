@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Phinite
 {
@@ -39,7 +37,7 @@ namespace Phinite
 
 		/// <summary>
 		/// Those symbols cannot be used alone in the input. Sometimes they may be still allowed as parts
-		/// of longer, multi-character symbols.
+		/// of special symbols - possibly longer, multi-character ones.
 		/// </summary>
 		public static readonly string[] ForbiddenSymbols;
 
@@ -67,10 +65,10 @@ namespace Phinite
 			}
 			TagsStrings = reversedReservedSymbols;
 
-			IgnoredSymbols = new string[] { " ", "\t" };
+			IgnoredSymbols = new string[] { " ", "\t", "\n" };
 			IgnoredSymbolMaxLength = 1;
 
-			ForbiddenSymbols = new string[] { "^", "*" };
+			ForbiddenSymbols = new string[] { "^", "*", "+", ".", "(", ")", "ε" };
 			ForbiddenSymbolMaxLength = 1;
 		}
 

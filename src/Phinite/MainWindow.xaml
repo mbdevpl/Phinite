@@ -27,10 +27,13 @@
 		</Grid.RowDefinitions>
 		<Menu Name="MenuMain">
 			<MenuItem Name="MenuExamples" Header="Load example" />
+			<MenuItem Header="Settings" Click="OptionSettings_Click" />
 			<Separator />
 			<MenuItem Name="OptionAbout" Header="About" Click="OptionAbout_Click" />
 			<MenuItem Header="View BA" Click="OptionViewBA_Click" />
 			<MenuItem Header="View TA" Click="OptionViewTA_Click" />
+			<MenuItem Header="View user guide" Click="OptionViewUserGuide_Click" />
+			<Separator />
 			<MenuItem Header="Exit" Click="OptionExit_Click" />
 		</Menu>
 		<Image Name="PhiImage" Grid.Row="1" Source="Phi.png"
@@ -70,28 +73,38 @@
 		</Grid>
 		<Grid Name="AreaForParseTree" Grid.Row="1" Visibility="Hidden">
 			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
 				<RowDefinition />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
-			<StackPanel Grid.Row="0" Orientation="Vertical">
-				<Label Content="Input information" />
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Text="Original input: " />
-					<TextBlock Text="{Binding InputRegexpText}" />
+			<!--<ScrollViewer Grid.Row="0">-->
+			<Grid Grid.Row="0">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition />
+				</Grid.RowDefinitions>
+				<StackPanel Grid.Row="0" Orientation="Vertical">
+					<Label Content="Input information" />
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Original input: " />
+						<TextBlock Text="{Binding InputRegexpText}" />
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Validated and optimized input: " />
+						<TextBlock Text="{Binding ValidatedRegexpText}" />
+					</StackPanel>
+					<Separator />
+					<Label Content="Parse tree" />
 				</StackPanel>
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Text="Validated and optimized input: " />
-					<TextBlock Text="{Binding ValidatedRegexpText}" />
-				</StackPanel>
-			</StackPanel>
-			<Label Grid.Row="1" Content="Parse tree" />
-			<Canvas Grid.Row="2" Name="ParseTreeCanvas" />
-			<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Left">
+				<ScrollViewer Grid.Row="1"
+						HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+					<Canvas Name="ParseTreeCanvas" />
+				</ScrollViewer>
+			</Grid>
+			<!--</ScrollViewer>-->
+			<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left">
 				<Button Content="Cancel computation" Click="OptionAbort_Click" />
 			</StackPanel>
-			<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+			<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
 				<Button Content="Fist step of construction" Click="OptionNextStep_Click" />
 				<Button Content="Immediate construction" Click="OptionFinalResult_Click" />
 			</StackPanel>
@@ -103,7 +116,7 @@
 			</Grid.RowDefinitions>
 			<ScrollViewer Grid.Row="0">
 				<StackPanel Orientation="Vertical">
-					<Label Content="Input information" />
+					<!--<Label Content="Input information" />
 					<StackPanel Orientation="Horizontal">
 						<TextBlock Text="Original input: " />
 						<TextBlock Name="OriginalInput" Text="{Binding InputRegexpText}" />
@@ -112,10 +125,14 @@
 						<TextBlock Text="Validated and optimized input: " />
 						<TextBlock Name="ValidatedInput" Text="{Binding ValidatedRegexpText}" />
 					</StackPanel>
-					<Separator />
-					<!--x:Name="IntermediateResultLabel"-->
+					<Separator />-->
+					<Label Content="Depction of the machine" />
+					<ScrollViewer MinHeight="50"
+							HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+						<Canvas Name="ConstructedMachineCanvas" />
+					</ScrollViewer>
+					<Separator Height="5" />
 					<Label Content="Labeled expressions" />
-					<!--Name="LabeledExpressionsDataGrid" -->
 					<DataGrid ItemsSource="{Binding LabeledExpressionsData}" AutoGenerateColumns="False">
 						<DataGrid.Columns>
 							<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1}" Width="Auto" />
@@ -123,7 +140,7 @@
 							<DataGridTextColumn Header="Remarks" Binding="{Binding Item3}" Width="Auto" />
 						</DataGrid.Columns>
 					</DataGrid>
-					<Separator />
+					<Separator Height="5" />
 					<Label Content="Transitions" />
 					<ScrollViewer VerticalScrollBarVisibility="Hidden">
 						<DataGrid ItemsSource="{Binding TransitionsData}" AutoGenerateColumns="False">

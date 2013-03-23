@@ -113,7 +113,11 @@
 						</Binding.Converter>
 					</Binding>
 				</Button.Visibility>
-				<TextBlock Text="Ok" Style="{StaticResource ButtonContent}" />
+				<TextBlock Style="{StaticResource ButtonContent}">
+					<TextBlock.Text>
+						<Binding ElementName="windowSystemMessage" Path="TextOk" />
+					</TextBlock.Text>
+				</TextBlock>
 			</Button>
 			<Button Name="Cancel" Style="{StaticResource DialogButton}" Click="Cancel_Click">
 				<Button.Visibility>
@@ -134,7 +138,11 @@
 						</Binding.Converter>
 					</Binding>
 				</Button.Visibility>
-				<TextBlock Text="Cancel" Style="{StaticResource ButtonContent}" />
+				<TextBlock Style="{StaticResource ButtonContent}">
+					<TextBlock.Text>
+						<Binding ElementName="windowSystemMessage" Path="TextCancel" />
+					</TextBlock.Text>
+				</TextBlock>
 			</Button>
 			<Button Name="Help" Style="{StaticResource DialogButton}" Click="Help_Click">
 				<Button.Visibility>
@@ -155,7 +163,11 @@
 						</Binding.Converter>
 					</Binding>
 				</Button.Visibility>
-				<TextBlock Text="Help" Style="{StaticResource ButtonContent}" />
+				<TextBlock Style="{StaticResource ButtonContent}">
+					<TextBlock.Text>
+						<Binding ElementName="windowSystemMessage" Path="TextHelp" />
+					</TextBlock.Text>
+				</TextBlock>
 			</Button>
 		</StackPanel>
 	</Grid>

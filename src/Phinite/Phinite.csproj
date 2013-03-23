@@ -68,6 +68,11 @@
       <SubType>Code</SubType>
       <DependentUpon>MessageFrame.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Petzold\ArrowEnds.cs" />
+    <None Include="Petzold\ArrowheadsDemo.cs" />
+    <Compile Include="Petzold\ArrowLine.cs" />
+    <Compile Include="Petzold\ArrowLineBase.cs" />
+    <Compile Include="Petzold\ArrowPolyline.cs" />
     <Compile Include="UIState.cs" />
     <Compile Include="UIStateInfo.cs" />
     <Page Include="MainWindow.xaml">

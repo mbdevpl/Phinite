@@ -10,14 +10,16 @@ namespace Phinite
 	/// </summary>
 	public enum PartialExpressionRole
 	{
-		EmptyWord = 2 + 1,
-		Letter = 4 + 1,
-		Concatenation = 16 + 8,
-		Union = 32 + 8,
-
-		InternalNode = 8,
-		Leaf = 1,
 		Undetermined = 0,
-		Invalid = 1024
+
+		Leaf = 1 << 10,
+		EmptyWord = Leaf | 1,
+		Letter = Leaf | 1 << 1,
+
+		InternalNode = 1 << 11,
+		Concatenation = InternalNode | 1,
+		Union = InternalNode | 1 << 1,
+
+		Invalid = 1 << 20
 	}
 }

@@ -106,6 +106,21 @@ namespace Phinite
 			}
 		}
 
+		private string textOk;
+		public string TextOk
+		{
+			get { return textOk; }
+			set
+			{
+				if (textOk == value)
+					return;
+				textOk = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("TextOk"));
+			}
+		}
+
 		private bool toggleCancel;
 		public bool ToggleCancel
 		{
@@ -118,6 +133,21 @@ namespace Phinite
 
 				if (PropertyChanged != null)
 					PropertyChanged(this, new PropertyChangedEventArgs("ToggleCancel"));
+			}
+		}
+
+		private string textCancel;
+		public string TextCancel
+		{
+			get { return textCancel; }
+			set
+			{
+				if (textCancel == value)
+					return;
+				textCancel = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("TextCancel"));
 			}
 		}
 
@@ -136,6 +166,21 @@ namespace Phinite
 			}
 		}
 
+		private string textHelp;
+		public string TextHelp
+		{
+			get { return textHelp; }
+			set
+			{
+				if (textHelp == value)
+					return;
+				textHelp = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("TextHelp"));
+			}
+		}
+
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		public MessageFrame()
@@ -147,18 +192,19 @@ namespace Phinite
 		}
 
 		public MessageFrame(string windowTitle, string messageTitle, string messageText,
-				ImageSource image = null, bool toggleOk = true, bool toggleCancel = false,
-				bool toggleHelp = false)
+			ImageSource image = null,
+			bool toggleOk = true, bool toggleCancel = false, bool toggleHelp = false,
+			string captionOk = "Ok", string captionCancel = "Cancel", string captionHelp = "Help")
 		{
 			SetContent(windowTitle, messageTitle, messageText, image);
-			SetButtons(toggleOk, toggleCancel, toggleHelp);
+			SetButtons(toggleOk, toggleCancel, toggleHelp, captionOk, captionCancel, captionHelp);
 
 			InitializeComponent();
 		}
 
 		public MessageFrame(Exception ex, bool toggleOk = true, bool toggleCancel = false,
 				bool toggleHelp = false)
-			: this("Error information", String.Format("Exception was thrown: {0}", ex.GetType()), 
+			: this("Error information", String.Format("Exception was thrown: {0}", ex.GetType()),
 				ex.ToString(), null, toggleOk, toggleCancel, toggleHelp)
 		{
 			//nothing needed here
@@ -202,12 +248,16 @@ namespace Phinite
 			MessageImage = image;
 		}
 
-		private void SetButtons(bool toggleOk = true, bool toggleCancel = false,
-				bool toggleHelp = false)
+		private void SetButtons(bool toggleOk = true, bool toggleCancel = false, bool toggleHelp = false,
+			string captionOk = "Ok", string captionCancel = "Cancel", string captionHelp = "Help")
 		{
 			ToggleOk = toggleOk;
 			ToggleCancel = toggleCancel;
 			ToggleHelp = toggleHelp;
+
+			TextOk = captionOk;
+			TextCancel = captionCancel;
+			TextHelp = captionHelp;
 		}
 
 		protected override void OnSourceInitialized(EventArgs e)
