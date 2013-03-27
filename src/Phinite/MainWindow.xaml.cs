@@ -41,7 +41,9 @@ namespace Phinite
 				{"Parentheses", "(ab)^*+ab^*"},
 				{"Binary numbers", "0+1(0+1)^*"},
 				{"3 digit hexadecimal numbers", "(1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)"},
-				{"Example from BA", "a^+b^+ + ab^+c"},
+				{"Example from old BA", "a^+b^+ + ab^+c"},
+				{"Example from BA", "a(a+b)^*b"},
+				{"Example from TA", "a^+b^+ + ab^+c"},
 				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
 				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
 				{"Hard 2", "(a+.)^*b"},
@@ -73,6 +75,8 @@ namespace Phinite
 			= true;
 
 		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
+
+		private static readonly int fsmGraphTextHeight = 20;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -562,7 +566,7 @@ namespace Phinite
 				var elem = new TextBlock();
 				elem.TextAlignment = TextAlignment.Center;
 				elem.Width = stateDiameter;
-				elem.Height = /*stateDiameter*/ 20;
+				elem.Height = fsmGraphTextHeight;
 				elem.Text = "q" + i.ToString();
 
 				foreach (var transition in transitions)
@@ -570,7 +574,83 @@ namespace Phinite
 					if (transition.Item1 != i)
 						continue;
 
+					var letters = new TextBlock();
+					letters.Height = fsmGraphTextHeight;
+					//letters.Width = double.NaN; // Auto, goes to 100%
+					letters.Width = transition.Item2.Count * fsmGraphTextHeight;
+					letters.Text = String.Join(" ", transition.Item2);
+					letters.TextAlignment = TextAlignment.Center;
+
+					if (transition.Item3 == i)
+					{
+						// loop, i.e. directed edge to self
+
+						canvasContent.Add(letters);
+						Canvas.SetLeft(letters, location.X - letters.Width / 2);
+						Canvas.SetTop(letters, location.Y - stateDiameter - letters.Height);
+						Canvas.SetZIndex(letters, -1000);
+
+						double coefX = ((double)2) / 3;
+						double coefY = ((double)4) / 3;
+						var pt1Ctrl = location.Copy();
+						pt1Ctrl.Offset(-stateDiameter * coefX, -stateDiameter * coefY);
+						var pt2Ctrl = location.Copy();
+						pt2Ctrl.Offset(stateDiameter * coefX, -stateDiameter * coefY);
+						//pt2Ctrl.MoveTo(location, 20);
+
+						var bezier = new BezierSegment();
+						bezier.Point1 = pt1Ctrl;
+						bezier.Point2 = pt2Ctrl;
+						bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, stateDiameter / 2 + 1);
+
+						var arrow = new Petzold.Media2D.ArrowLine();
+						arrow.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
+						arrow.ArrowLength = 10;
+						arrow.ArrowAngle = 60;
+						var ptArr = location.Copy().MoveTo(pt2Ctrl, stateDiameter / 2);
+						arrow.X1 = bezier.Point3.X;
+						arrow.Y1 = bezier.Point3.Y;
+						arrow.X2 = ptArr.X;
+						arrow.Y2 = ptArr.Y;
+
+						arrow.StrokeThickness = 1;
+						arrow.Stroke = Brushes.Black;
+
+
+						var path = new PathFigure();
+						path.StartPoint = location.Copy().MoveTo(pt1Ctrl, stateDiameter / 2);
+						path.Segments.Add(bezier);
+
+						var loop = new System.Windows.Shapes.Path();
+						var geo = new PathGeometry();
+						loop.Data = geo;
+						geo.Figures = new PathFigureCollection();
+						geo.Figures.Add(path);
+
+						loop.Stroke = Brushes.Black;
+						loop.StrokeThickness = 1;
+
+						canvasContent.Add(arrow);
+						Canvas.SetLeft(arrow, 0);
+						Canvas.SetTop(arrow, 0);
+						Canvas.SetZIndex(arrow, -1000);
+
+						canvasContent.Add(loop);
+						Canvas.SetLeft(loop, 0);
+						Canvas.SetTop(loop, 0);
+						Canvas.SetZIndex(loop, -1000);
+
+						continue;
+					}
+
+					// directed edge
+
 					var target = layout[transition.Item3].Copy().MoveTo(location, stateDiameter / 2);
+
+					canvasContent.Add(letters);
+					Canvas.SetLeft(letters, (location.X + layout[transition.Item3].X) / 2 - letters.Width / 2);
+					Canvas.SetTop(letters, (location.Y + layout[transition.Item3].Y) / 2 - (transition.Item3 > i ? 1 : 0) * (letters.Height));
+					Canvas.SetZIndex(letters, -1000);
 
 					var edge = new Petzold.Media2D.ArrowLine();
 					//edge.Points.Add(new Point());
@@ -592,7 +672,7 @@ namespace Phinite
 					canvasContent.Add(edge);
 					Canvas.SetLeft(edge, 0);
 					Canvas.SetTop(edge, 0);
-					Canvas.SetZIndex(edge, -100);
+					Canvas.SetZIndex(edge, -1000);
 				}
 
 				canvasContent.Add(border);

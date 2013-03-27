@@ -1,5 +1,5 @@
 #TeXlipse project settings
-#Thu Mar 14 13:55:55 CET 2013
+#Mon Mar 25 11:29:28 CET 2013
 markTmpDer=true
 builderNum=2
 outputDir=
@@ -11,4 +11,4 @@ mainTexFile=bysiekm-technical-analysis.tex
 outputFile=bysiekm-technical-analysis.pdf
 langSpell=en
 markDer=true
-srcDir=tex
+srcDir=tex/

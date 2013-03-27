@@ -534,8 +534,8 @@ namespace Phinite
 					layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
 				}
 
-				minX -= 40;
-				minY -= 40;
+				minX -= 60;
+				minY -= 60;
 
 				for (int key = 0; key < layout.Count; ++key)
 				{
