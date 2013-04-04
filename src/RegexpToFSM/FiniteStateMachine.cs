@@ -11,6 +11,7 @@ using QuickGraph.Algorithms;
 using GraphSharp.Algorithms.Layout.Compound;
 using GraphSharp.Algorithms.Layout.Compound.FDP;
 using System.Threading;
+using System.Text;
 
 namespace Phinite
 {
@@ -116,6 +117,18 @@ namespace Phinite
 		}
 		private List<int> acceptingStatesIds;
 
+		public int CurrentState { get { return currentState; } }
+		private int currentState;
+
+		public string EvaluatedWordInput { get { return evaluatedWordInput; } }
+		private string evaluatedWordInput;
+
+		public string EvaluatedWordProcessedFragment { get { return evaluatedWordProcessedFragment; } }
+		private string evaluatedWordProcessedFragment;
+
+		public string EvaluatedWordRemainingFragment { get { return evaluatedWordRemainingFragment; } }
+		private string evaluatedWordRemainingFragment;
+
 		/// <summary>
 		/// Creates a new finite-state machine from a given regular expression.
 		/// </summary>
@@ -126,9 +139,11 @@ namespace Phinite
 		{
 			this.input = input;
 
-			InitializeEvaluation();
+			InitializeConstruction();
 			if (constructImmediately)
 				Construct(0);
+
+			InitializeEvaluation();
 		}
 
 		/// <summary>
@@ -138,7 +153,7 @@ namespace Phinite
 		/// </summary>
 		/// <param name="numberOfSteps">maximum number of steps that will be taken,
 		/// when set to zero or a negative number, the construction is performed until it has completed</param>
-		public void Construct(int numberOfSteps)
+		public void Construct(int numberOfSteps = 0)
 		{
 			if (numberOfSteps <= 0)
 				numberOfSteps = -1;
@@ -157,7 +172,7 @@ namespace Phinite
 			}
 		}
 
-		private void InitializeEvaluation()
+		private void InitializeConstruction()
 		{
 			notLabeled = new List<RegularExpression>();
 			notLabeled.Add(input);
@@ -294,6 +309,83 @@ namespace Phinite
 
 			notDerivedIds.RemoveAt(0);
 			return true;
+		}
+
+		private void InitializeEvaluation()
+		{
+			currentState = -1;
+			evaluatedWordInput = null;
+			evaluatedWordRemainingFragment = null;
+		}
+
+		public void BeginEvaluation(string word)
+		{
+			if (!IsConstructionFinished())
+				throw new InvalidOperationException("cannot evaluate word when the fsm is not yet completely constructed");
+
+			if (!IsEvaluationFinished())
+			{
+				// overwrite old eval variables
+			}
+
+			currentState = 0;
+			evaluatedWordInput = word;
+			evaluatedWordProcessedFragment = String.Empty;
+			evaluatedWordRemainingFragment = word;
+		}
+
+		public void Evaluate(int numberOfSteps = 0)
+		{
+			if (!IsConstructionFinished())
+				throw new InvalidOperationException("cannot evaluate word when the fsm is not yet completely constructed");
+
+			if (numberOfSteps <= 0)
+				numberOfSteps = -1;
+			while (numberOfSteps != 0 && !IsEvaluationFinished())
+			{
+				// remove single letter
+				var letter = evaluatedWordRemainingFragment[0].ToString();
+
+				MachineTransition transition = null;
+				try
+				{
+					transition = transitions.First(x => x.InitialStateId == currentState && x.ContainsLetter(letter));
+				}
+				catch (InvalidOperationException)
+				{
+					// silent catch
+				}
+
+				evaluatedWordProcessedFragment = new StringBuilder(evaluatedWordProcessedFragment)
+					.Append(letter).ToString();
+
+				evaluatedWordRemainingFragment = evaluatedWordRemainingFragment.Substring(1);
+
+				if (transition == null)
+				{
+					currentState = -1;
+					break;
+				}
+
+				currentState = transition.ResultingStateId;
+
+				if (numberOfSteps > 0)
+					--numberOfSteps;
+			}
+		}
+
+		public bool IsEvaluationFinished()
+		{
+			if (!IsConstructionFinished())
+				throw new InvalidOperationException("cannot check if evaluation finished, because fsm is not yet completely constructed");
+
+			if (evaluatedWordInput == null)
+				return true;
+
+			if (evaluatedWordRemainingFragment == null)
+				return true;
+
+			return evaluatedWordRemainingFragment.Length == 0 || currentState < 0;
 		}
 
 		//private void FindTransitions()
@@ -453,7 +545,9 @@ namespace Phinite
 
 		public Dictionary<int, Point> LayOut()
 		{
-			var layout = new Dictionary<int, Point>();
+			var layouts = new List<KeyValuePair<Dictionary<int, Point>, double>>();
+			int bestLayout = 0;
+			//layout = new Dictionary<int, Point>();
 
 			//Random rand = new Random();
 
@@ -493,15 +587,15 @@ namespace Phinite
 			//Dictionary<string, Point> vertexPositions = new Dictionary<string, Point>();
 			Dictionary<string, Size> vertexSizes = new Dictionary<string, Size>();
 			Dictionary<string, Thickness> vertexBorders = new Dictionary<string, Thickness>();
-			
+
 			//int i = 0;
-			for(int i = 0; i < equivalentStatesGroups.Count; ++i)
+			for (int i = 0; i < equivalentStatesGroups.Count; ++i)
 			//foreach (var stateGroup in equivalentStatesGroups)
 			{
 				vertices[i] = i/*stateGroup.Key*/.ToString();
 				//vertexPositions.Add(vertices[i], new Point(i * 100, i * 100));
 				vertexSizes.Add(vertices[i], new Size(32, 32));
-				vertexBorders.Add(vertices[i], new Thickness(20, 20, 20, 20));
+				vertexBorders.Add(vertices[i], new Thickness(50, 50, 50, 50));
 				//i++;
 			}
 			graph.AddVertexRange(vertices);
@@ -511,8 +605,8 @@ namespace Phinite
 
 			#endregion
 
-			double lastScore = 1;
-			for (int i = 0; i < 32; ++i)
+			//double lastScore = 1;
+			for (int i = 0; i < 50; ++i)
 			{
 				#region running GraphSharp algorithm
 
@@ -524,7 +618,8 @@ namespace Phinite
 
 				#endregion
 
-				layout = new Dictionary<int, Point>();
+				var layout = new Dictionary<int, Point>();
+
 				double minX = 1000, minY = 1000;
 				foreach (var pos in algo4.VertexPositions)
 				{
@@ -543,13 +638,20 @@ namespace Phinite
 				}
 
 				double score = CalculateLayoutScore(layout);
-				if (lastScore > 0)
-					lastScore = score;
+				layouts.Add(new KeyValuePair<Dictionary<int, Point>, double>(layout, score));
 
-				if (score == 0 || (i > 16 && score > lastScore))
-					break;
+				if (score == 0)
+					return layouts[layouts.Count - 1].Key;
+
+				if (score > layouts[bestLayout].Value)
+					bestLayout = layouts.Count - 1;
+
+				//if (lastScore > 0)
+				//	lastScore = score;
 			}
-			return layout;
+
+
+			return layouts[bestLayout].Key;
 
 			//var results = new Dictionary<RegularExpression, Point>();
 			//foreach (var pair in dictionary)

@@ -204,17 +204,14 @@ and its documentation will be developed.
 % 
 % \end{itemize}
 
-\newpage
+%\newpage
 
-\section{GUI mockup}
+\section{Graphical user interface}
+The application shall have all of its features accessible via a graphical user interface (GUI).
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics[width=.5\textwidth]{../../graphics/PhiniteGuiMockup.png}
-  \caption{schema of the graphical user interface}
-\end{figure}
+\subsection{Main idea}
 
-\subsection{Main menu}
+\subsubsection{Main menu}
 Main menu contains all general options that are required to be implemented, but are not connected
 with a specific step of calculation. Contents of the menu must not change during application
 operation, but its certain entries may be temporarily disabled during some phases of computation.
@@ -222,14 +219,14 @@ operation, but its certain entries may be temporarily disabled during some phase
 Main menu will contain, ex. exit option, %load option, 
 example selection option.
 
-\subsection{Main area}
+\subsubsection{Main area}
 Main area will contain frequently changing content, as it may have any of the following: a text
 field for entering a regular expression, button to proceed to the next step of computation, button
 to abort computation, button to display final result, a table with intermediate results, a final
 result, etc. Content of main area depends on context, i.e. previous actions of the user and current
 status of application.
 
-\subsection{Status bar}
+\subsubsection{Status bar}
 Status bar must contain one of three phrases at all times, unless there are equivalent indicators
 implemented (mentioned in each point):
 \begin{itemize}
@@ -262,6 +259,151 @@ implemented (mentioned in each point):
 
 Status bar may also temporarily contain some optional content that may help the user in completing
 the user interaction phase, provided that the main area is not a proper place for this content.
+
+\subsubsection{GUI mockup}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.6\textwidth]{../../graphics/PhiniteGuiMockup.png}
+  \caption{schema of the graphical user interface}
+\end{figure}
+
+\newpage
+
+\subsection{Regular expression input screen}
+This screen, apart from above mentioned elements, must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item the text box for regexp input,
+
+  \item information about how to write the expression; this information must include list of special
+  symbols and their meaning,
+
+  \item button that will invoke step-by-step computation,
+
+  \item button that will invoke computation up to final solution.
+
+\end{enumerate}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.9\textwidth]{../../graphics/Screen1.png}
+  \caption{regular expression input screen}
+\end{figure}
+
+\newpage
+
+\subsection{Validation results screen}
+This screen, in its main area, must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item the original expression given by the user,
+
+  \item the expression that is a result of parsing process,
+
+  \item depiction of the parse tree.
+
+\end{enumerate}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.9\textwidth]{../../graphics/Screen2.png}
+  \caption{validation results screen}
+\end{figure}
+
+\newpage
+
+\subsection{Machine creation screen}
+This screen, in its main area, must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item graph that represents the currently constructed fragment of the machine,
+
+  \item table that contains the list of labeled expressions,
+
+  \item table that contains the list of transitions between labeled expressions,
+
+  \item buttons that enable the user to control the computation, i.e. enable him/her to proceed to
+  the next step, go to final result, or abort computation,
+
+  \item button that enables the user to create \LaTeX{} source code and subsequentialy a PDF file,
+
+  \item button that enables the user to go to word evaluation phase.
+
+\end{enumerate}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.9\textwidth]{../../graphics/Screen3.png}
+  \caption{example of initial contents of machine creation screen}
+\end{figure}
+
+\newpage
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.9\textwidth]{../../graphics/Screen4.png}
+  \caption{example of final contents of machine creation screen}
+\end{figure}
+
+\newpage
+
+\subsection{Word input screen}
+This screen, in its main area, must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item a text box for input word,
+
+  \item information about all rules that apply to the entered word,
+
+  \item buttons for step-by-step and immediate solution.
+
+\end{enumerate}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.9\textwidth]{../../graphics/Screen5.png}
+  \caption{word input screen}
+\end{figure}
+
+\subsection{Evaluation screen}
+This screen, in its main area, must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item text block containing input word,
+
+  \item text block containing processed part of input,
+
+  \item text block containing remaining part of input,
+
+  \item graph that depicts the machine,
+
+  \item buttons to control the evaluation process: to proceed to next step, to go to final result,
+  and to abort evaluation.
+
+\end{enumerate}
+
+\subsection{Other screens}
+
+The application may contain other screens, which will be defined by the developing team. For
+example, there may be a special screen for user-assisted machine creation, as well as a screen that
+allows the user to edit \LaTeX{} source code before the PDF is created.
+
+\newpage
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.85\textwidth]{../../graphics/Screen6.png}
+  \caption{example of evaluation taking place}
+\end{figure}
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.85\textwidth]{../../graphics/Screen7.png}
+  \caption{example of completed evaluation}
+\end{figure}
+
+\newpage
 
 \section{Classes}
 This section goes through the most important classes used in the project.
@@ -710,8 +852,8 @@ At the begining, a screen is displayed where input word is shown, and two empty 
 displayed: one for list of labeled states and another for discovered transitions. In each step,
 entries in tables may be added if in a given step some new state is labeled or is derived.
 
-Moreover, there is a place reserved (in a scroll box) to display a graphical representation of those
-two tables in their current state. This representation will follow coloring of the example in
+Moreover, there is a place reserved (in a scroll box) to display a graph that represents those
+two tables in their current state. This graph will follow coloring of the example in
 business analysis.
 
 Moreover, the states derived in the last step have changed their border colors to gray. And, the
@@ -934,7 +1076,7 @@ There will be a feature that consists of constructing a latex soure and pdf file
 The latex code is created if user selects a relevant option. This option is made available only
 after the machine is fully constructed. The latex file will contain two tables: with labeled states
 and with transitions. It will also contain a code that, after processing by pdf-latex software, will
-generate a simple graphical representation of the answer. This representation must follow standard
+generate a simple graph that depicts the machine. This graph must follow standard
 formatting and coloring used in mathematics to draw finite-state machine. The representation may
 differ from the one presented in the graphical user interface.
 
@@ -958,7 +1100,7 @@ always rejected, because no machine constructed by the application has transitio
 
 \subsubsection{Graphics}
 
-The word evaluation algorithm will use the same graphical representation of the machine as it was
+The word evaluation algorithm will use the same rules for coloring and formatting of graph of the machine as it was
 used for its construction. The difference is that the tables are not displayed, and the input
 expression is substituted with the input word that is evaluated.
 

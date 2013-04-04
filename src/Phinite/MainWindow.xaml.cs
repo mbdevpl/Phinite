@@ -41,7 +41,7 @@ namespace Phinite
 				{"Parentheses", "(ab)^*+ab^*"},
 				{"Binary numbers", "0+1(0+1)^*"},
 				{"3 digit hexadecimal numbers", "(1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)"},
-				{"Example from old BA", "a^+b^+ + ab^+c"},
+				{"Example from old BA", "a^+c^+ + ab^+c"},
 				{"Example from BA", "a(a+b)^*b"},
 				{"Example from TA", "a^+b^+ + ab^+c"},
 				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
@@ -133,6 +133,51 @@ namespace Phinite
 			}
 		}
 		private string inputWordText = String.Empty;
+
+		public string ProcessedWordFragmentText
+		{
+			get { return processedWordFragmentText; }
+			set
+			{
+				if (processedWordFragmentText == value)
+					return;
+				processedWordFragmentText = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("ProcessedWordFragmentText"));
+			}
+		}
+		private string processedWordFragmentText = String.Empty;
+
+		public string RemainingWordFragmentText
+		{
+			get { return remainingWordFragmentText; }
+			set
+			{
+				if (remainingWordFragmentText == value)
+					return;
+				remainingWordFragmentText = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("RemainingWordFragmentText"));
+			}
+		}
+		private string remainingWordFragmentText = String.Empty;
+
+		public string CurrentStateText
+		{
+			get { return currentStateText; }
+			set
+			{
+				if (currentStateText == value)
+					return;
+				currentStateText = value;
+
+				if (PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("CurrentStateText"));
+			}
+		}
+		private string currentStateText = String.Empty;
 
 		/// <summary>
 		/// Text visible in the status bar.
@@ -339,16 +384,39 @@ namespace Phinite
 				{
 					SetUIVisibility(AreaForWordInput);
 
-					OptionStepByStepEvaluation.IsEnabled = false;
-					OptionImmediateEvaluation.IsEnabled = false;
+					OptionStepByStepEvaluation.IsEnabled = true;
+					OptionImmediateEvaluation.IsEnabled = true;
 				}
 				else if ((newUiState & UIState.EvaluationPhase) > 0)
 				{
 					SetUIVisibility(AreaForWordEvaluation);
+
+					if (newUiState == UIState.BusyEvaluating)
+					{
+						OptionEvalAbort.IsEnabled = true;
+						OptionEvalNextStep.IsEnabled = false;
+						OptionEvalFinalResult.IsEnabled = false;
+						OptionEvalFinalize.IsEnabled = false;
+					}
+					else if (newUiState == UIState.ReadyForNextEvaluationStep)
+					{
+						OptionEvalAbort.IsEnabled = true;
+						OptionEvalNextStep.IsEnabled = true;
+						OptionEvalFinalResult.IsEnabled = true;
+						OptionEvalFinalize.IsEnabled = false;
+					}
 				}
 				else if ((newUiState & UIState.EvaluationResultsPhase) > 0)
 				{
 					SetUIVisibility(AreaForWordEvaluation);
+
+					if (newUiState == UIState.WordWasAccepted || newUiState == UIState.WordWasRejected)
+					{
+						OptionEvalAbort.IsEnabled = false;
+						OptionEvalNextStep.IsEnabled = false;
+						OptionEvalFinalResult.IsEnabled = false;
+						OptionEvalFinalize.IsEnabled = true;
+					}
 				}
 
 				if (overrideStatusText == null)
@@ -407,111 +475,9 @@ namespace Phinite
 			t.Start();
 		}
 
-		private Point DrawParseTree(PartialExpression parseTree, double x = 0, double y = 0)
+		private void DrawFiniteStateMachine(FiniteStateMachine machine, Canvas canvas)
 		{
-			var canvas = ParseTreeCanvas;
-			var canvasContent = canvas.Children;
-
-			bool root = x == 0 && y == 0;
-			if (root)
-			{
-				x = 15;
-				y = 10;
-				canvasContent.Clear();
-			}
-
-			double width = 50;
-			double height = 15;
-			string text = String.Empty;
-
-			var elem = new TextBlock();
-			elem.TextAlignment = TextAlignment.Center;
-			elem.Width = width;
-			elem.Height = height;
-
-			canvasContent.Add(elem);
-			Canvas.SetLeft(elem, x);
-			Canvas.SetTop(elem, y);
-
-			var border = new Ellipse();
-			border.Stroke = Brushes.Gray;
-			border.StrokeThickness = 1;
-			border.Width = elem.Width + 4;
-			border.Height = elem.Height * 2 + 4;
-
-			canvasContent.Add(border);
-			Canvas.SetLeft(border, x - 2);
-			Canvas.SetTop(border, y - elem.Height / 2);
-
-			int treeWidth = parseTree.CalculateTreeWidth();
-			if (treeWidth > 1)
-			{
-				Canvas.SetTop(elem, Canvas.GetTop(elem) + ((height * 2 + 6) * (treeWidth - 1)) / 2);
-				Canvas.SetTop(border, Canvas.GetTop(border) + ((height * 2 + 6) * (treeWidth - 1)) / 2);
-			}
-
-			if (parseTree.Role == PartialExpressionRole.EmptyWord)
-				text = "epsilon";
-			else if (parseTree.Role == PartialExpressionRole.Letter)
-				text = parseTree.Value;
-			else if ((parseTree.Role & PartialExpressionRole.InternalNode) > 0)
-			{
-				if (parseTree.Role == PartialExpressionRole.Concatenation)
-					text = "concat";
-				else if (parseTree.Role == PartialExpressionRole.Union)
-					text = "union";
-
-				double yy = y;
-				foreach (var part in parseTree.Parts)
-				{
-					var poly = new Polyline();
-					poly.Stroke = Brushes.Gray;
-					poly.StrokeThickness = 2;
-					poly.Points.Add(new Point(2, Canvas.GetTop(elem) + height / 2 + 2));
-					poly.Points.Add(new Point(width - 2, yy + height / 2 + 2));
-
-					canvasContent.Add(poly);
-					Canvas.SetLeft(poly, Canvas.GetLeft(elem) + width);
-					//Canvas.SetTop(poly, 0);
-
-					var rootPt = DrawParseTree(part, x + width * 2, yy);
-
-					int partWidth = part.CalculateTreeWidth();
-
-					if (partWidth > 1)
-					{
-						var pt = poly.Points[1];
-						poly.Points[1] = new Point(pt.X, rootPt.Y + height / 2 + 2);
-					}
-
-					yy += (height * 2 + 6) * partWidth;
-				}
-			}
-
-			if (parseTree.Operator != UnaryOperator.None)
-				text += RegularExpression.TagsStrings[(InputSymbolTag)parseTree.Operator];
-
-			elem.Text = text;
-
-			if (root)
-			{
-				var poly = new Polyline();
-				poly.Stroke = Brushes.Gray;
-				poly.StrokeThickness = 2;
-				poly.Points.Add(new Point(5, Canvas.GetTop(elem) + height / 2 + 2));
-				poly.Points.Add(new Point(x - 2, Canvas.GetTop(elem) + height / 2 + 2));
-				canvasContent.Add(poly);
-
-				canvas.Width = (parseTree.CalculateTreeHeight() - 1) * (width * 2) + width + x;
-				canvas.Height = treeWidth * (height * 2 + 6) + y;
-			}
-
-			return new Point(Canvas.GetLeft(elem), Canvas.GetTop(elem));
-		}
-
-		private void DrawFiniteStateMachine(FiniteStateMachine machine)
-		{
-			var canvas = ConstructedMachineCanvas;
+			//var canvas = ConstructedMachineCanvas;
 			var canvasContent = canvas.Children;
 
 			//var states = machine.States;
@@ -791,7 +757,7 @@ namespace Phinite
 
 			if (stepByStep)
 			{
-				Dispatcher.BeginInvoke((Action)delegate { DrawParseTree(regexp.ParseTree); });
+				Dispatcher.BeginInvoke((Action)delegate { ParseTreeDrawing.Draw(ParseTreeCanvas, regexp.ParseTree); });
 
 				SetUIState(UIState.ReadyForConstruction);
 				return;
@@ -860,7 +826,7 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					DrawFiniteStateMachine(fsm);
+					DrawFiniteStateMachine(fsm, ConstructedMachineCanvas);
 				}
 			});
 
@@ -902,6 +868,15 @@ namespace Phinite
 				}
 				if (fsm.IsConstructionFinished())
 				{
+					Dispatcher.BeginInvoke((Action)delegate
+					{
+						lock (regexpAndFsmLock)
+						{
+							// draw the fsm behind word input controls
+							DrawFiniteStateMachine(fsm, WordInputBackgroundCanvas);
+						}
+					});
+
 					SetUIState(UIState.ReadyForEvaluation);
 					return;
 				}
@@ -917,11 +892,70 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
-		//private void DrawSubParseTree(PartialExpression parseTree, double x = 0, double y = 0)
-		//{
+		private void EvaluationStepWorker()
+		{
+			bool finished = false;
+			int state = -1;
 
-		//	//ParseTreeCanvas.Children.Add();
-		//}
+			lock (regexpAndFsmLock)
+			{
+				if (fsm == null)
+				{
+					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+					return;
+				}
+				if (fsm.IsEvaluationFinished())
+				{
+					// just begin evaluation, because otherwise user will never see
+					// the very 1st step
+					fsm.BeginEvaluation(InputWordText);
+				}
+				else
+				{
+					if (stepByStep)
+						fsm.Evaluate(1);
+					else
+						fsm.Evaluate(0);
+				}
+
+				finished = fsm.IsEvaluationFinished();
+				state = fsm.CurrentState;
+
+				// update strings
+				ProcessedWordFragmentText = fsm.EvaluatedWordProcessedFragment;
+				RemainingWordFragmentText = fsm.EvaluatedWordRemainingFragment;
+			}
+
+			// update info about current state
+			var s = new StringBuilder("q");
+			if (fsm.CurrentState >= 0)
+				s.Append(state);
+			else
+				s.Append("R"); // rejecting state
+			CurrentStateText = s.ToString();
+
+			// draw machine
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				lock (regexpAndFsmLock)
+				{
+					DrawFiniteStateMachine(fsm, WordEvaluationCanvas);
+				}
+			});
+
+			// TODO: colour current state
+
+			if (finished)
+			{
+				if (state >= 0)
+					SetUIState(UIState.WordWasAccepted);
+				else
+					SetUIState(UIState.WordWasRejected);
+				return;
+			}
+
+			SetUIState(UIState.ReadyForNextEvaluationStep);
+		}
 
 		private void LatexGenerationWorker()
 		{
@@ -1124,15 +1158,15 @@ namespace Phinite
 
 		private void OptionImmediate_Click(object sender, RoutedEventArgs e)
 		{
-			SetUIState(UIState.ValidatingInputExpression);
 			stepByStep = false;
+			SetUIState(UIState.ValidatingInputExpression);
 			CallMethodInNewThread(ValidationWorker, "Validation");
 		}
 
 		private void OptionStepByStep_Click(object sender, RoutedEventArgs e)
 		{
-			SetUIState(UIState.ValidatingInputExpression);
 			stepByStep = true;
+			SetUIState(UIState.ValidatingInputExpression);
 			CallMethodInNewThread(ValidationWorker, "Validation");
 		}
 
@@ -1160,9 +1194,7 @@ namespace Phinite
 		private void OptionFinalResult_Click(object sender, RoutedEventArgs e)
 		{
 			stepByStep = false;
-
-			SetUIState(UIState.BusyConstructing);
-			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
+			OptionNextStep_Click(sender, e);
 		}
 
 		private void GenerateLatex_Click(object sender, RoutedEventArgs e)
@@ -1193,7 +1225,7 @@ namespace Phinite
 
 		#endregion
 
-		#region word input screen handlers
+		#region word input and evaluation screens handlers
 
 		private void InputWord_TextChanged(object sender, TextChangedEventArgs e)
 		{
@@ -1203,16 +1235,31 @@ namespace Phinite
 
 		private void OptionStepByStepEvaluation_Click(object sender, RoutedEventArgs e)
 		{
-			//SetUIState(UIState.ValidatingInputExpression);
-			//stepByStep = true;
-			//CallMethodInNewThread(ValidationWorker, "Validation");
+			stepByStep = true;
+			OptionEvalNextStep_Click(sender, e);
 		}
 
 		private void OptionImmediateEvaluation_Click(object sender, RoutedEventArgs e)
 		{
-			//SetUIState(UIState.ValidatingInputExpression);
-			//stepByStep = false;
-			//CallMethodInNewThread(ValidationWorker, "Validation");
+			stepByStep = false;
+			OptionEvalNextStep_Click(sender, e);
+		}
+
+		private void OptionEvalNextStep_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.BusyEvaluating);
+			CallMethodInNewThread(EvaluationStepWorker, "Evaluation");
+		}
+
+		private void OptionEvalFinalResult_Click(object sender, RoutedEventArgs e)
+		{
+			stepByStep = false;
+			OptionEvalNextStep_Click(sender, e);
+		}
+
+		private void OptionEvalFinalize_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ReadyForRegexpInput);
 		}
 
 		#endregion

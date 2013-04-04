@@ -68,6 +68,7 @@
       <SubType>Code</SubType>
       <DependentUpon>MessageFrame.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ParseTreeDrawing.cs" />
     <Compile Include="Petzold\ArrowEnds.cs" />
     <None Include="Petzold\ArrowheadsDemo.cs" />
     <Compile Include="Petzold\ArrowLine.cs" />

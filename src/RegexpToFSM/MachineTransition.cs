@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -10,6 +11,20 @@ namespace Phinite
 	/// </summary>
 	public class MachineTransition : Tuple<int, List<string>, int>
 	{
+		public int InitialStateId { get { return Item1; } }
+
+		public ReadOnlyCollection<string> Letters
+		{
+			get
+			{
+				if (Item2 == null)
+					return null;
+				return new ReadOnlyCollection<string>(Item2);
+			}
+		}
+
+		public int ResultingStateId { get { return Item3; } }
+
 		/// <summary>
 		/// Creates a new finite-state machine transition.
 		/// </summary>
@@ -54,6 +69,13 @@ namespace Phinite
 			Item2.AddRange(letters);
 		}
 
+		public bool ContainsLetter(string letter)
+		{
+			if (Item2 == null)
+				return false;
+
+			return Item2.Any(x => x.Equals(letter));
+		}
 	}
 
 	//public class MachineTransition : Tuple<RegularExpression, List<string>, RegularExpression>

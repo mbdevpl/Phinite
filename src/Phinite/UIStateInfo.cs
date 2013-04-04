@@ -45,6 +45,7 @@ namespace Phinite
 				{UIState.PdfGenerationError, "errors in pdf generation; ready for other tasks"},
 
 				// WordInputPhase
+				{UIState.ReadyForNewWord, "ready"},
 
 				// EvaluationPhase
 				{UIState.BusyEvaluating, "busy"},
