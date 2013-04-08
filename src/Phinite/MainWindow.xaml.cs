@@ -68,7 +68,7 @@ namespace Phinite
 			//= @"MiKTeX\miktex\bin\pdflatex";
 			= @"pdflatex";
 
-		private int pdflatexTimeout = 2;
+		private int pdflatexTimeout = 15;
 
 		private bool useSystemDefaultPdfViewer
 			//= false;
@@ -77,6 +77,8 @@ namespace Phinite
 		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
 
 		private static readonly int fsmGraphTextHeight = 20;
+
+		private Dictionary<int, Point> fsmLayout = null;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -470,12 +472,12 @@ namespace Phinite
 		{
 			Thread t = new Thread(method);
 			t.Name = name + "Thread";
-			//t.Priority = ThreadPriority.BelowNormal;
+			t.Priority = ThreadPriority.Lowest;
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
 		}
 
-		private void DrawFiniteStateMachine(FiniteStateMachine machine, Canvas canvas)
+		private void DrawFiniteStateMachine(FiniteStateMachine machine, Dictionary<int, Point> layout, Canvas canvas)
 		{
 			//var canvas = ConstructedMachineCanvas;
 			var canvasContent = canvas.Children;
@@ -484,7 +486,6 @@ namespace Phinite
 			//var initial = machine.InitialState;
 			//var accepting = machine.AcceptingStates;
 			var transitions = machine.Transitions;
-			Dictionary<int, Point> layout = machine.LayOut();
 
 			canvasContent.Clear();
 
@@ -809,6 +810,7 @@ namespace Phinite
 			ReadOnlyCollection<RegularExpression> accepting = null;
 			ReadOnlyCollection<RegularExpression> states = null;
 			ReadOnlyCollection<MachineTransition> transitions = null;
+			Dictionary<int, Point> layout = null;
 			lock (regexpAndFsmLock)
 			{
 				if (fsm == null)
@@ -820,13 +822,21 @@ namespace Phinite
 				accepting = fsm.AcceptingStates;
 				states = fsm.States;
 				transitions = fsm.Transitions;
+
+				layout = fsm.LayOut();
 			}
 
 			Dispatcher.BeginInvoke((Action)delegate
 			{
 				lock (regexpAndFsmLock)
 				{
-					DrawFiniteStateMachine(fsm, ConstructedMachineCanvas);
+					if (fsm == null)
+					{
+						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+						return;
+					}
+
+					DrawFiniteStateMachine(fsm, layout, ConstructedMachineCanvas);
 				}
 			});
 
@@ -868,12 +878,14 @@ namespace Phinite
 				}
 				if (fsm.IsConstructionFinished())
 				{
+					fsmLayout = layout;
+
 					Dispatcher.BeginInvoke((Action)delegate
 					{
 						lock (regexpAndFsmLock)
 						{
 							// draw the fsm behind word input controls
-							DrawFiniteStateMachine(fsm, WordInputBackgroundCanvas);
+							DrawFiniteStateMachine(fsm, layout, WordInputBackgroundCanvas);
 						}
 					});
 
@@ -939,7 +951,7 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					DrawFiniteStateMachine(fsm, WordEvaluationCanvas);
+					DrawFiniteStateMachine(fsm, fsmLayout, WordEvaluationCanvas);
 				}
 			});
 
