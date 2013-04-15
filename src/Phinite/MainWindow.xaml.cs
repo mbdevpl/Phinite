@@ -720,7 +720,7 @@ namespace Phinite
 			}
 			catch (Exception e)
 			{
-				new MessageFrame("Phinite/Regexp error", "Regular expression validation failed",
+				new MessageFrame(this, "Phinite/Regexp error", "Regular expression validation failed",
 					String.Format("There was some unexpected error while evaluating the input: {0}.", e.Message)
 					).ShowDialog();
 				SetUIState(UIState.ReadyForNewInputAfterError);
@@ -749,7 +749,7 @@ namespace Phinite
 			}
 			catch (Exception e)
 			{
-				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+				new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
 					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
 					).ShowDialog();
 				SetUIState(UIState.ReadyForNewInputAfterError);
@@ -784,7 +784,7 @@ namespace Phinite
 			}
 			//catch (StackOverflowException e) // this cannot be caught since .NET 2.0
 			//{
-			//	new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+			//	new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
 			//		String.Format("The provided regular expression seems too complicated for the program,"
 			//		+ " which resulted in too many recursively nested function calls (i.e. a stack overflow): {0}.", e.Message)
 			//		).ShowDialog();
@@ -793,7 +793,7 @@ namespace Phinite
 			//}
 			catch (Exception e)
 			{
-				new MessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+				new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
 					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
 					).ShowDialog();
 				SetUIState(UIState.ReadyForNewInputAfterError);
@@ -1012,9 +1012,9 @@ namespace Phinite
 			{
 				if (!p.Start())
 				{
-					new MessageFrame("Phinite/LaTeX error", "Error while starting LaTeX",
-								String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions)
-								).ShowDialog();
+					new MessageFrame(this, "Phinite/LaTeX error", "Error while starting LaTeX",
+						String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions)
+						).ShowDialog();
 					SetUIState(UIState.PdfGenerationError);
 					return;
 				}
@@ -1030,7 +1030,7 @@ namespace Phinite
 					if (p.WaitForExit(1000 * pdflatexTimeout))
 						break;
 
-					if (new MessageFrame("Phinite/LaTeX error", "LaTeX timeout",
+					if (new MessageFrame(this, "Phinite/LaTeX error", "LaTeX timeout",
 							String.Format(timeoutMessageFormat, pdflatexTimeout, pdflatexTimeout),
 							null, true, true, false, "Yes", "No").ShowDialog() == true)
 						continue;
@@ -1043,12 +1043,12 @@ namespace Phinite
 				if (p.ExitCode != 0)
 				{
 					if (File.Exists(generatedPdf))
-						new MessageFrame("Phinite/LaTeX warning", "Minor errors in LaTeX execution",
+						new MessageFrame(this, "Phinite/LaTeX warning", "Minor errors in LaTeX execution",
 							"PDF file was created, but there were some errors and the result may not look as good as expected."
 							).ShowDialog();
 					else
 					{
-						new MessageFrame("Phinite/LaTeX error", "Severe errors in LaTeX execution",
+						new MessageFrame(this, "Phinite/LaTeX error", "Severe errors in LaTeX execution",
 							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem."
 							).ShowDialog();
 						SetUIState(UIState.PdfGenerationError);
@@ -1070,7 +1070,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame("Phinite/LaTeX/PDF error", "Error in Phinite configuration",
+				new MessageFrame(this, "Phinite/LaTeX/PDF error", "Error in Phinite configuration",
 							String.Format("There is no LaTeX executable at this path:\n\n{0}\n\nAnd/or there is no PDF viewer at this path:\n\n", pdflatexCommand, pdfViewerCommand)
 							).ShowDialog();
 				SetUIState(UIState.PdfGenerationError);
@@ -1122,7 +1122,7 @@ namespace Phinite
 			s.AppendLine("- hs");
 			s.AppendLine("- xcolor");
 
-			new MessageFrame("About Phinite", "Information about Phinite", s.ToString(), PhiImage.Source).ShowDialog();
+			new MessageFrame(this, "About Phinite", "Information about Phinite", s.ToString(), PhiImage.Source).ShowDialog();
 		}
 
 		private void OptionViewBA_Click(object sender, RoutedEventArgs e)
@@ -1133,7 +1133,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame("Phinite", "Missing content", "business analysis file was not found").ShowDialog();
+				new MessageFrame(this, "Phinite", "Missing content", "business analysis file was not found").ShowDialog();
 			}
 		}
 
@@ -1145,7 +1145,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame("Phinite", "Missing content", "technical analysis file was not found").ShowDialog();
+				new MessageFrame(this, "Phinite", "Missing content", "technical analysis file was not found").ShowDialog();
 			}
 		}
 
@@ -1299,7 +1299,7 @@ namespace Phinite
 			s.Append("\" -  parentheses\n\n");
 			s.Append("If you are unsure, load one of the example expressions to see how it works.");
 
-			new MessageFrame("Phinite information", "Regular expression input", s.ToString()).ShowDialog();
+			new MessageFrame(this, "Phinite information", "Regular expression input", s.ToString()).ShowDialog();
 		}
 
 		private void Info_InputWord(object sender, RoutedEventArgs e)
@@ -1321,7 +1321,7 @@ namespace Phinite
 			s.Append("If you are unsure, just start computing without any input\n");
 			s.Append("or write just a single letter to see how the basic case works.");
 
-			new MessageFrame("Phinite information", "Word input", s.ToString()).ShowDialog();
+			new MessageFrame(this, "Phinite information", "Word input", s.ToString()).ShowDialog();
 		}
 
 		#endregion

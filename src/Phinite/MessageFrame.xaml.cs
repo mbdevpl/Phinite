@@ -191,11 +191,12 @@ namespace Phinite
 			InitializeComponent();
 		}
 
-		public MessageFrame(string windowTitle, string messageTitle, string messageText,
+		public MessageFrame(Window owner, string windowTitle, string messageTitle, string messageText,
 			ImageSource image = null,
 			bool toggleOk = true, bool toggleCancel = false, bool toggleHelp = false,
 			string captionOk = "Ok", string captionCancel = "Cancel", string captionHelp = "Help")
 		{
+			this.Owner = owner;
 			SetContent(windowTitle, messageTitle, messageText, image);
 			SetButtons(toggleOk, toggleCancel, toggleHelp, captionOk, captionCancel, captionHelp);
 
@@ -204,7 +205,7 @@ namespace Phinite
 
 		public MessageFrame(Exception ex, bool toggleOk = true, bool toggleCancel = false,
 				bool toggleHelp = false)
-			: this("Error information", String.Format("Exception was thrown: {0}", ex.GetType()),
+			: this(null, "Error information", String.Format("Exception was thrown: {0}", ex.GetType()),
 				ex.ToString(), null, toggleOk, toggleCancel, toggleHelp)
 		{
 			//nothing needed here
