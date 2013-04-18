@@ -67,13 +67,13 @@ namespace Phinite.Test
 		[TestMethod]
 		public void KleeneConcatenation_Test()
 		{
-			ConstructAndCompareRegexp("aa^*", "a^+", true);
+			ConstructAndCompareRegexp("aa^*", "a^+", false);
 		}
 
 		[TestMethod]
 		public void KleeneUnion_Test()
 		{
-			ConstructAndCompareRegexp("a+b^*+c", "c+.+b^++a", true);
+			ConstructAndCompareRegexp("a+b^*+c", "c+.+b^++a", false);
 		}
 
 		[TestMethod]
@@ -103,12 +103,12 @@ namespace Phinite.Test
 		private void ConstructAndCompareRegexp(string input1, string input2, bool expectedEqual)
 		{
 			//Arrange
-
-			//Act
 			exp1 = new RegularExpression(input1, true);
 			Console.Out.WriteLine("{0} optimized into {1}", input1, exp1);
 			exp2 = new RegularExpression(input2, true);
 			Console.Out.WriteLine("{0} optimized into {1}", input2, exp2);
+
+			//Act
 
 			//Assert
 			Assert.AreEqual(expectedEqual, exp1.Equals(exp2),
@@ -118,5 +118,6 @@ namespace Phinite.Test
 			Console.Out.WriteLine("the expressions \"{0}\" and \"{1}\" are{2} equal, as expected",
 				exp1, exp2, expectedEqual ? "" : " not");
 		}
+
 	}
 }

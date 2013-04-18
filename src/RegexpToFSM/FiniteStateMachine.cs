@@ -280,32 +280,101 @@ namespace Phinite
 			var currentId = notDerivedIds[0];
 			var current = equivalentStatesGroups[currentId].Value[0]; // .First(x => x.Key == currentId)
 
-			foreach (var letter in current.Alphabet)
+			var alphabet = current.Alphabet;
+			int count = alphabet.Count;
+
+			if (count > 0)
 			{
-				var derived = current.Derive(letter);
+				Thread mainThread = Thread.CurrentThread;
+				Thread[] derivationThreads = new Thread[count];
+				RegularExpression[] derivations = new RegularExpression[count];
 
-				if (derived == null)
-					continue;
+				//object remainingLock = new object();
+				//int remaining = count;
+				int processorsCount = count; // TODO: get total number of logical processing units
+				Semaphore semaphore = new Semaphore(processorsCount, processorsCount);
 
-				var derivedId = equivalentStatesGroups.FindIndex(x => x.Value.Any(y => y.Equals(derived)));
-
-				if (derivedId >= 0)
+				// derive in parallel
+				for (int i = 0; i < count; ++i)
 				{
-					var foundTransition = transitions.FindIndex(x => x.Item1 == currentId && x.Item3 == derivedId);
-					if (foundTransition >= 0)
-						transitions[foundTransition].AddLetter(letter);
+					Thread t = new Thread(new ParameterizedThreadStart((object obj) =>
+					{
+						int n = (int)obj;
+						semaphore.WaitOne();
+						derivations[n] = current.Derive(alphabet[n]);
+						semaphore.Release();
+						//lock (remainingLock)
+						//{
+						//	--remaining;
+						//	if (remaining == 0)
+						//		mainThread.Interrupt();
+						//}
+					}));
+					t.Name = "DerivationThread";
+					t.Priority = ThreadPriority.Lowest;
+					t.SetApartmentState(ApartmentState.STA);
+					t.Start(i);
+					derivationThreads[i] = t;
+				}
+
+				// sync
+				for (int i = 0; i < count; ++i)
+					derivationThreads[i].Join();
+
+
+				//while (true)
+				//{
+				//	try
+				//	{
+				//		Thread.Sleep(Int32.MaxValue);
+				//	}
+				//	catch (ThreadInterruptedException e)
+				//	{
+				//		lock (remainingLock)
+				//		{
+				//			if (remaining == 0)
+				//				break;
+				//		}
+				//	}
+				//	lock (remainingLock)
+				//	{
+				//		if (remaining == 0)
+				//			break;
+				//	}
+				//}
+
+				// analyze results in sequence
+				for (int i = 0; i < count; ++i)
+				{
+					var letter = alphabet[i];
+					var derived = derivations[i];
+
+					if (derived == null)
+						continue;
+
+					var derivedId = equivalentStatesGroups.FindIndex(x => x.Value.Any(y => y.Equals(derived)));
+
+					if (derivedId >= 0)
+					{
+						var foundTransition = transitions.FindIndex(x => x.Item1 == currentId && x.Item3 == derivedId);
+						if (foundTransition >= 0)
+							transitions[foundTransition].AddLetter(letter);
+						else
+							transitions.Add(new MachineTransition(currentId, letter, derivedId));
+					}
 					else
-						transitions.Add(new MachineTransition(currentId, letter, derivedId));
+					{
+						notLabeled.Add(derived);
+						notOptimizedTransitions.Add(new Tuple<int, string, RegularExpression>(currentId, letter, derived));
+					}
 				}
-				else
-				{
-					notLabeled.Add(derived);
-					notOptimizedTransitions.Add(new Tuple<int, string, RegularExpression>(currentId, letter, derived));
-				}
-
-				//if (states.Any(x => x.IsEqual(current)))
-				//	continue;
 			}
+
+			//foreach (var letter in current.Alphabet)
+			//{
+			//	//if (states.Any(x => x.IsEqual(current)))
+			//	//	continue;
+			//}
 
 			notDerivedIds.RemoveAt(0);
 			return true;

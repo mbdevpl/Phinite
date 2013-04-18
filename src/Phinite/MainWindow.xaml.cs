@@ -677,6 +677,30 @@ namespace Phinite
 			canvas.Height = maxY + stateDiameter / 2 + 1;
 		}
 
+		private bool CheckIfComputationAbortedAndDealWithIt(object obj)
+		{
+			if (obj != null)
+				return false;
+
+			regexp = null;
+			fsm = null;
+
+			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+			return true;
+		}
+
+		private bool CheckIfComputationAbortedAndDealWithIt(object obj1, object obj2)
+		{
+			if (obj1 != null && obj2 != null)
+				return false;
+
+			regexp = null;
+			fsm = null;
+
+			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+			return true;
+		}
+
 		private void WindowInitializationWorker()
 		{
 			foreach (string key in Examples.Keys)
@@ -729,6 +753,9 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
+				if (CheckIfComputationAbortedAndDealWithIt(regexp))
+					return;
+
 				ValidatedRegexpText = regexp.ToString();
 			}
 
@@ -739,11 +766,9 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (regexp == null)
-					{
-						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+					if (CheckIfComputationAbortedAndDealWithIt(regexp))
 						return;
-					}
+
 					fsm = new FiniteStateMachine(regexp);
 				}
 			}
@@ -774,11 +799,9 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (fsm == null)
-					{
-						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+					if (CheckIfComputationAbortedAndDealWithIt(fsm))
 						return;
-					}
+
 					fsm.Construct(1);
 				}
 			}
@@ -813,11 +836,8 @@ namespace Phinite
 			Dictionary<int, Point> layout = null;
 			lock (regexpAndFsmLock)
 			{
-				if (fsm == null)
-				{
-					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+				if (CheckIfComputationAbortedAndDealWithIt(fsm))
 					return;
-				}
 
 				accepting = fsm.AcceptingStates;
 				states = fsm.States;
@@ -830,11 +850,14 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (fsm == null)
-					{
-						SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+					if (CheckIfComputationAbortedAndDealWithIt(fsm))
 						return;
-					}
+
+					if (layout.Count != states.Count)
+						return;
+
+					if (layout.Count != fsm.States.Count)
+						return;
 
 					DrawFiniteStateMachine(fsm, layout, ConstructedMachineCanvas);
 				}
@@ -871,11 +894,9 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				if (fsm == null)
-				{
-					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+				if (CheckIfComputationAbortedAndDealWithIt(fsm))
 					return;
-				}
+
 				if (fsm.IsConstructionFinished())
 				{
 					fsmLayout = layout;
@@ -884,6 +905,9 @@ namespace Phinite
 					{
 						lock (regexpAndFsmLock)
 						{
+							if (CheckIfComputationAbortedAndDealWithIt(fsm))
+								return;
+
 							// draw the fsm behind word input controls
 							DrawFiniteStateMachine(fsm, layout, WordInputBackgroundCanvas);
 						}
@@ -911,11 +935,9 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				if (fsm == null)
-				{
-					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+				if (CheckIfComputationAbortedAndDealWithIt(fsm))
 					return;
-				}
+
 				if (fsm.IsEvaluationFinished())
 				{
 					// just begin evaluation, because otherwise user will never see
@@ -951,6 +973,9 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
+					if (CheckIfComputationAbortedAndDealWithIt(fsm))
+						return;
+
 					DrawFiniteStateMachine(fsm, fsmLayout, WordEvaluationCanvas);
 				}
 			});
@@ -976,11 +1001,9 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				if (regexp == null || fsm == null)
-				{
-					SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+				if (CheckIfComputationAbortedAndDealWithIt(regexp, fsm))
 					return;
-				}
+
 				r = regexp;
 				f = fsm;
 			}

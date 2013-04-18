@@ -377,6 +377,9 @@ namespace Phinite
 			return returned;
 		}
 
+		/// <summary>
+		/// Removes useless nodes from the parse tree.
+		/// </summary>
 		public void Optimize()
 		{
 			//string test = ToString();
@@ -430,6 +433,11 @@ namespace Phinite
 			return parsedInput.GeneratesEmptyWord();
 		}
 
+		/// <summary>
+		/// Checks if given expression is equivalent to this one.
+		/// </summary>
+		/// <param name="regexp"></param>
+		/// <returns></returns>
 		public bool IsEquivalent(RegularExpression regexp)
 		{
 			if (Equals(regexp))
@@ -505,7 +513,7 @@ namespace Phinite
 		}
 
 		/// <summary>
-		/// Returns a string representation of this regular expression.
+		/// Returns a string representation of parse tree of this regular expression.
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString()
