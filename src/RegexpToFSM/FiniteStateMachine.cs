@@ -734,7 +734,7 @@ namespace Phinite
 
 				int newBestLayout = 0;
 				for (int j = 1; j < workGroupSize; ++j)
-					if (layoutsScores[j] < layoutsScores[newBestLayout])
+					if (layoutsScores[j] > layoutsScores[newBestLayout])
 						newBestLayout = j;
 
 				if (layoutsScores[newBestLayout] == 0)
