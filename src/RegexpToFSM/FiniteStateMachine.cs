@@ -12,6 +12,7 @@ using GraphSharp.Algorithms.Layout.Compound;
 using GraphSharp.Algorithms.Layout.Compound.FDP;
 using System.Threading;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Phinite
 {
@@ -58,7 +59,7 @@ namespace Phinite
 				foreach (var stateGroup in equivalentStatesGroups)
 				{
 					if (stateGroup.Value.Count == 0)
-						throw new ArgumentException("an equivalent state group must have at least member state");
+						states.Add(null); //throw new ArgumentException("an equivalent state group must have at least member state");
 					// TODO: use state with shortest string representation instead of the 1st state
 					states.Add(stateGroup.Value[0]);
 				}
@@ -108,7 +109,7 @@ namespace Phinite
 				{
 					var stateGroup = equivalentStatesGroups[id].Value;
 					if (stateGroup.Count == 0)
-						throw new ArgumentException("an equivalent state group must have at least member state");
+						acceptingStates.Add(null); //throw new ArgumentException("an equivalent state group must have at least member state");
 					// TODO: use state with shortest string representation instead of the 1st state
 					acceptingStates.Add(stateGroup[0]);
 				}
@@ -190,11 +191,20 @@ namespace Phinite
 			acceptingStatesIds = new List<int>();
 		}
 
+		/// <summary>
+		/// Checks if this finite-state machine is fully constructed.
+		/// </summary>
+		/// <returns></returns>
 		public bool IsConstructionFinished()
 		{
 			return notLabeled.Count == 0 && notDerivedIds.Count == 0 && notOptimizedTransitions.Count == 0;
 		}
 
+		/// <summary>
+		/// Labels the next expression from the not-labeled-expressions queue.
+		/// </summary>
+		/// <param name="breakOnNotFound"></param>
+		/// <returns>true if any expression was labeled during execution of this method</returns>
 		public bool LabelNextExpression(bool breakOnNotFound = false)
 		{
 			if (notLabeled.Count == 0)
@@ -272,6 +282,10 @@ namespace Phinite
 			throw new NotImplementedException();
 		}
 
+		/// <summary>
+		/// Derives next expression from the not-derived-expressions queue.
+		/// </summary>
+		/// <returns>true if any expression was derived during execution of this method</returns>
 		public bool DeriveNextExpression()
 		{
 			if (notDerivedIds.Count == 0)
@@ -285,12 +299,11 @@ namespace Phinite
 
 			if (count > 0)
 			{
-				Thread mainThread = Thread.CurrentThread;
 				Thread[] derivationThreads = new Thread[count];
 				RegularExpression[] derivations = new RegularExpression[count];
 
-				//object remainingLock = new object();
-				//int remaining = count;
+				/****
+
 				int processorsCount = count; // TODO: get total number of logical processing units
 				Semaphore semaphore = new Semaphore(processorsCount, processorsCount);
 
@@ -303,12 +316,6 @@ namespace Phinite
 						semaphore.WaitOne();
 						derivations[n] = current.Derive(alphabet[n]);
 						semaphore.Release();
-						//lock (remainingLock)
-						//{
-						//	--remaining;
-						//	if (remaining == 0)
-						//		mainThread.Interrupt();
-						//}
 					}));
 					t.Name = "DerivationThread";
 					t.Priority = ThreadPriority.Lowest;
@@ -321,27 +328,13 @@ namespace Phinite
 				for (int i = 0; i < count; ++i)
 					derivationThreads[i].Join();
 
+				****/
 
-				//while (true)
-				//{
-				//	try
-				//	{
-				//		Thread.Sleep(Int32.MaxValue);
-				//	}
-				//	catch (ThreadInterruptedException e)
-				//	{
-				//		lock (remainingLock)
-				//		{
-				//			if (remaining == 0)
-				//				break;
-				//		}
-				//	}
-				//	lock (remainingLock)
-				//	{
-				//		if (remaining == 0)
-				//			break;
-				//	}
-				//}
+				// derive in parallel
+				Parallel.For(0, count, (int n) =>
+				{
+					derivations[n] = current.Derive(alphabet[n]);
+				});
 
 				// analyze results in sequence
 				for (int i = 0; i < count; ++i)
@@ -387,6 +380,10 @@ namespace Phinite
 			evaluatedWordRemainingFragment = null;
 		}
 
+		/// <summary>
+		/// Begins evaluation of a given word on this machine.
+		/// </summary>
+		/// <param name="word"></param>
 		public void BeginEvaluation(string word)
 		{
 			if (!IsConstructionFinished())
@@ -403,6 +400,10 @@ namespace Phinite
 			evaluatedWordRemainingFragment = word;
 		}
 
+		/// <summary>
+		/// Tries to perform at most given number of steps of word evaluation.
+		/// </summary>
+		/// <param name="numberOfSteps"></param>
 		public void Evaluate(int numberOfSteps = 0)
 		{
 			if (!IsConstructionFinished())
@@ -443,6 +444,11 @@ namespace Phinite
 			}
 		}
 
+		/// <summary>
+		/// Checks if this machine is in accepting state and there is nothing left to evaluate,
+		/// or it may be in rejecting state.
+		/// </summary>
+		/// <returns></returns>
 		public bool IsEvaluationFinished()
 		{
 			if (!IsConstructionFinished())
@@ -499,6 +505,11 @@ namespace Phinite
 		//	}
 		//}
 
+		/// <summary>
+		/// Checks if a state with given index is an accepting one.
+		/// </summary>
+		/// <param name="stateIndex"></param>
+		/// <returns>guess what: true if it is an accepting state and false otherwise</returns>
 		public bool IsAccepting(int stateIndex)
 		{
 			return acceptingStatesIds.Any(x => x == stateIndex);
@@ -614,8 +625,6 @@ namespace Phinite
 
 		public Dictionary<int, Point> LayOut()
 		{
-			var layouts = new List<KeyValuePair<Dictionary<int, Point>, double>>();
-			int bestLayout = 0;
 			//layout = new Dictionary<int, Point>();
 
 			//Random rand = new Random();
@@ -674,53 +683,70 @@ namespace Phinite
 
 			#endregion
 
-			//double lastScore = 1;
-			for (int i = 0; i < 50; ++i)
+			int workGroupSize = 32;
+
+			var layoutsAll = new List<KeyValuePair<Dictionary<int, Point>, double>>();
+			int bestLayout = 0;
+
+			for (int i = 0; i < 4; ++i)
 			{
-				#region running GraphSharp algorithm
+				double[] layoutsScores = new double[workGroupSize];
+				Dictionary<int, Point>[] layouts = new Dictionary<int, Point>[workGroupSize];
 
-				var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
-						graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
-				algo4.Compute();
-				while (algo4.State != ComputationState.Finished)
-					Thread.Sleep(250);
-
-				#endregion
-
-				var layout = new Dictionary<int, Point>();
-
-				double minX = 1000, minY = 1000;
-				foreach (var pos in algo4.VertexPositions)
+				// try several layouts in parallel
+				Parallel.For(0, workGroupSize, (int n) =>
 				{
-					var location = pos.Value;
-					if (location.X < minX) minX = location.X;
-					if (location.Y < minY) minY = location.Y;
-					layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
-				}
+					#region running GraphSharp algorithm
 
-				minX -= 60;
-				minY -= 60;
+					var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+							graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
+					algo4.Compute();
+					while (algo4.State != ComputationState.Finished)
+						Thread.Sleep(250);
 
-				for (int key = 0; key < layout.Count; ++key)
-				{
-					layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
-				}
+					#endregion
 
-				double score = CalculateLayoutScore(layout);
-				layouts.Add(new KeyValuePair<Dictionary<int, Point>, double>(layout, score));
+					var layout = new Dictionary<int, Point>();
 
-				if (score == 0)
-					return layouts[layouts.Count - 1].Key;
+					double minX = 1000, minY = 1000;
+					foreach (var pos in algo4.VertexPositions)
+					{
+						var location = pos.Value;
+						if (location.X < minX) minX = location.X;
+						if (location.Y < minY) minY = location.Y;
+						layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
+					}
 
-				if (score > layouts[bestLayout].Value)
-					bestLayout = layouts.Count - 1;
+					minX -= 60;
+					minY -= 60;
 
-				//if (lastScore > 0)
-				//	lastScore = score;
+					for (int key = 0; key < layout.Count; ++key)
+					{
+						layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
+					}
+
+					double score = CalculateLayoutScore(layout);
+
+					layoutsScores[n] = score;
+					layouts[n] = layout;
+
+				});
+
+				int newBestLayout = 0;
+				for (int j = 1; j < workGroupSize; ++j)
+					if (layoutsScores[j] < layoutsScores[newBestLayout])
+						newBestLayout = j;
+
+				if (layoutsScores[newBestLayout] == 0)
+					return layouts[newBestLayout];
+
+				layoutsAll.Add(new KeyValuePair<Dictionary<int, Point>, double>(layouts[newBestLayout], layoutsScores[newBestLayout]));
+
+				if (layoutsScores[newBestLayout] > layoutsAll[bestLayout].Value)
+					bestLayout = layoutsAll.Count - 1;
 			}
 
-
-			return layouts[bestLayout].Key;
+			return layoutsAll[bestLayout].Key;
 
 			//var results = new Dictionary<RegularExpression, Point>();
 			//foreach (var pair in dictionary)

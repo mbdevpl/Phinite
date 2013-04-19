@@ -134,22 +134,22 @@
 					</ScrollViewer>
 					<Separator Height="5" />
 					<Label Content="Labeled expressions" />
-					<DataGrid ItemsSource="{Binding LabeledExpressionsData}" AutoGenerateColumns="False">
+					<DataGrid Name="DataGridForStates" ItemsSource="{Binding LabeledExpressionsData}" AutoGenerateColumns="False">
 						<DataGrid.Columns>
-							<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1}" Width="Auto" />
 							<DataGridTextColumn Header="Label" Binding="{Binding Item2}" Width="Auto" />
 							<DataGridTextColumn Header="Remarks" Binding="{Binding Item3}" Width="Auto" />
+							<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1}" Width="Auto" />
 						</DataGrid.Columns>
 					</DataGrid>
 					<Separator Height="5" />
 					<Label Content="Transitions" />
 					<ScrollViewer VerticalScrollBarVisibility="Hidden">
-						<DataGrid ItemsSource="{Binding TransitionsData}" AutoGenerateColumns="False">
+						<DataGrid Name="DataGridForTransitions" ItemsSource="{Binding TransitionsData}" AutoGenerateColumns="False">
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="Initial expression" Binding="{Binding Item1}" Width="Auto" />
 								<DataGridTextColumn Header="Initial state" Binding="{Binding Item2}" Width="Auto" />
-								<DataGridTextColumn Header="Letter" Binding="{Binding Item3}" Width="Auto" />
+								<DataGridTextColumn Header="Letter(s)" Binding="{Binding Item3}" Width="Auto" />
 								<DataGridTextColumn Header="Resulting state" Binding="{Binding Item4}" Width="Auto" />
+								<DataGridTextColumn Header="Initial expression" Binding="{Binding Item1}" Width="Auto" />
 								<DataGridTextColumn Header="Resulting expression" Binding="{Binding Item5}" Width="Auto" />
 							</DataGrid.Columns>
 						</DataGrid>

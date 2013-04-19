@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 
 namespace Phinite
@@ -182,46 +183,12 @@ namespace Phinite
 					if (taggedInput.Count > 0)
 					{
 						var previous = taggedInput[taggedInput.Count - 1].Value;
-
-						if ((
-								previous.Equals(InputSymbolTag.Union)
-								|| previous.Equals(InputSymbolTag.OpeningParenthesis)
-								) && (
-								current.Equals(InputSymbolTag.Union)
-								|| current.Equals(InputSymbolTag.KleeneStar)
-								|| current.Equals(InputSymbolTag.KleenePlus)
-							))
-							throw new ArgumentException(String.Format("error at character {0} of input: "
-								+ "union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol", i));
-
-						if ((
-								previous.Equals(InputSymbolTag.KleeneStar)
-								|| previous.Equals(InputSymbolTag.KleenePlus)
-								) && (
-								current.Equals(InputSymbolTag.KleeneStar)
-								|| current.Equals(InputSymbolTag.KleenePlus)
-							))
-							throw new ArgumentException(String.Format("error at character {0} of input: "
-								+ "kleene star and kleene plus symbols cannot be stacked", i));
-
-						if (previous.Equals(InputSymbolTag.OpeningParenthesis)
-							&& current.Equals(InputSymbolTag.ClosingParenthesis))
-							throw new ArgumentException(String.Format("error at character {0} of input: "
-								+ "it is illegal to use an empty pair of perentheses", i));
+						CheckIfTagSequenceValid(i, previous, current);
 
 						if (taggedInput.Count > 1)
 						{
 							var previous2 = taggedInput[taggedInput.Count - 2].Value;
-							if ((
-									previous2.Equals(InputSymbolTag.OpeningParenthesis)
-									&& previous.Equals(InputSymbolTag.ClosingParenthesis)
-									) && (
-									current.Equals(InputSymbolTag.Union)
-									|| current.Equals(InputSymbolTag.KleeneStar)
-									|| current.Equals(InputSymbolTag.KleenePlus)
-								))
-								throw new ArgumentException(String.Format("error at character {0} of input: "
-									+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", i));
+							CheckIfTagSequenceValid(i, previous2, previous, current);
 						}
 					}
 					else
@@ -232,7 +199,8 @@ namespace Phinite
 								|| current.Equals(InputSymbolTag.KleenePlus)
 								|| current.Equals(InputSymbolTag.ClosingParenthesis)
 							)
-							throw new ArgumentException(String.Format("error at character {0} of input: "
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								"error at character {0} of input: "
 								+ "the expression can start only with letter or opening parenthesis", i));
 					}
 
@@ -249,7 +217,8 @@ namespace Phinite
 				{
 					if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
 						continue;
-					throw new ArgumentException(String.Format("error at character {0} of input: "
+					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+						"error at character {0} of input: "
 						+ "use of the symbol \"{1}\" is forbidden here", i, ForbiddenSymbols[n]));
 				}
 
@@ -276,6 +245,56 @@ namespace Phinite
 				throw new ArgumentException("regular expression cannot end with union operator or an opening parenthesis");
 		}
 
+		private void CheckIfTagSequenceValid(int index, params InputSymbolTag[] tags)
+		{
+			switch (tags.Length)
+			{
+				case 2:
+					{
+						InputSymbolTag previous = tags[0];
+						InputSymbolTag current = tags[1];
+
+						if ((previous == InputSymbolTag.Union || previous == InputSymbolTag.OpeningParenthesis)
+							&& (
+								current == InputSymbolTag.Union
+								|| current == InputSymbolTag.KleeneStar
+								|| current == InputSymbolTag.KleenePlus
+							))
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								"error at character {0} of input: "
+								+ "union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol", index));
+
+						if ((previous == InputSymbolTag.KleeneStar || previous == InputSymbolTag.KleenePlus)
+							&& (current == InputSymbolTag.KleeneStar || current == InputSymbolTag.KleenePlus))
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								"error at character {0} of input: "
+								+ "kleene star and kleene plus symbols cannot be stacked", index));
+
+						if (previous == InputSymbolTag.OpeningParenthesis
+							&& current == InputSymbolTag.ClosingParenthesis)
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								"error at character {0} of input: "
+								+ "it is illegal to use an empty pair of perentheses", index));
+					} break;
+				case 3:
+					{
+						InputSymbolTag previous2 = tags[0];
+						InputSymbolTag previous = tags[1];
+						InputSymbolTag current = tags[2];
+
+						if ((previous2 == InputSymbolTag.OpeningParenthesis && previous == InputSymbolTag.ClosingParenthesis)
+							&& (
+								current == InputSymbolTag.Union
+								|| current == InputSymbolTag.KleeneStar
+								|| current == InputSymbolTag.KleenePlus
+							))
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								"error at character {0} of input: "
+								+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", index));
+					} break;
+			}
+		}
+
 		private void CountTags()
 		{
 			tagCount = new Dictionary<InputSymbolTag, uint>();
@@ -292,7 +311,8 @@ namespace Phinite
 			tagCount.TryGetValue(InputSymbolTag.OpeningParenthesis, out openCount);
 			tagCount.TryGetValue(InputSymbolTag.ClosingParenthesis, out closeCount);
 			if (openCount != closeCount)
-				throw new ArgumentException(String.Format("parentheses count in the expression does not match,"
+				throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+					"parentheses count in the expression does not match,"
 					+ " there are {0} opening, but {1} closing parentheses", openCount, closeCount));
 		}
 
@@ -312,64 +332,68 @@ namespace Phinite
 			PartialExpression current = returned;
 			for (int i = startingIndex; i < taggedInput.Count; ++i)
 			{
-				var input = taggedInput[i];
+				var tagPair = taggedInput[i];
 
-				if (input.Value.Equals(InputSymbolTag.Letter))
+				switch (tagPair.Value)
 				{
-					current.Role = PartialExpressionRole.Concatenation;
-					current.AddToConcatenation(new PartialExpression(current, input.Key));
-				}
-				else if (input.Value.Equals(InputSymbolTag.EmptyWord))
-				{
-					current.Role = PartialExpressionRole.Concatenation;
-					current.AddToConcatenation(new PartialExpression(PartialExpressionRole.EmptyWord, current));
-				}
-				else if (input.Value.Equals(InputSymbolTag.Union))
-				{
-					if (current.Root == null)
-					{
-						var newCurrent = new PartialExpression(PartialExpressionRole.Undetermined, null);
-						var newRoot = new PartialExpression(null, new List<PartialExpression> { current, newCurrent }, false);
+					case InputSymbolTag.Letter:
+						{
+							current.Role = PartialExpressionRole.Concatenation;
+							current.AddToConcatenation(new PartialExpression(current, tagPair.Key));
+						} break;
+					case InputSymbolTag.EmptyWord:
+						{
+							current.Role = PartialExpressionRole.Concatenation;
+							current.AddToConcatenation(new PartialExpression(PartialExpressionRole.EmptyWord, current));
+						} break;
+					case InputSymbolTag.Union:
+						{
+							if (current.Root == null)
+							{
+								var newCurrent = new PartialExpression(PartialExpressionRole.Undetermined, null);
+								var newRoot = new PartialExpression(null, new List<PartialExpression> { current, newCurrent }, false);
 
-						current.Root = newRoot;
-						newCurrent.Root = newRoot;
+								current.Root = newRoot;
+								newCurrent.Root = newRoot;
 
-						if (returned == current)
-							returned = newRoot;
-						current = newCurrent;
-					}
-					else if (current.Root.Role.Equals(PartialExpressionRole.Union)
-						&& current.Root.Parts.Contains(current))
-					{
-						var newCurrent = new PartialExpression(PartialExpressionRole.Undetermined, current.Root);
-						current.Root.AddToUnion(newCurrent);
-						current = newCurrent;
-					}
-					else
-						throw new NotImplementedException("more handling code needed");
-				}
-				else if (input.Value.Equals(InputSymbolTag.OpeningParenthesis))
-				{
-					int last = 0;
-					var subExpr = ParseSubExpression(i + 1, out last);
-					current.Role = PartialExpressionRole.Concatenation;
-					current.AddToConcatenation(subExpr);
-					subExpr.Root = current;
-					i = last;
-				}
-				else if (input.Value.Equals(InputSymbolTag.ClosingParenthesis))
-				{
-					lastIndex = i;
-					return returned;
-				}
-				else if ((input.Value & InputSymbolTag.UnaryOperator) > 0)
-				{
-					current.Parts[current.Parts.Count - 1].Operator = (UnaryOperator)input.Value;
-					//current.LastConcatenatedSymbol.Operator = (UnaryOperator)input.Value;
-				}
-				else
-				{
-					throw new NotImplementedException("more handling code needed");
+								if (returned == current)
+									returned = newRoot;
+								current = newCurrent;
+							}
+							else if (current.Root.Role.Equals(PartialExpressionRole.Union)
+								&& current.Root.Parts.Contains(current))
+							{
+								var newCurrent = new PartialExpression(PartialExpressionRole.Undetermined, current.Root);
+								current.Root.AddToUnion(newCurrent);
+								current = newCurrent;
+							}
+							else
+								throw new NotImplementedException("more handling code needed");
+						} break;
+					case InputSymbolTag.OpeningParenthesis:
+						{
+							int last = 0;
+							var subExpr = ParseSubExpression(i + 1, out last);
+							current.Role = PartialExpressionRole.Concatenation;
+							current.AddToConcatenation(subExpr);
+							subExpr.Root = current;
+							i = last;
+						} break;
+					case InputSymbolTag.ClosingParenthesis:
+						{
+							lastIndex = i;
+							return returned;
+						}
+					case InputSymbolTag.KleeneStar:
+					case InputSymbolTag.KleenePlus:
+						{
+							current.Parts[current.Parts.Count - 1].Operator = (UnaryOperator)tagPair.Value;
+							//current.LastConcatenatedSymbol.Operator = (UnaryOperator)input.Value;
+						} break;
+					default:
+						{
+							throw new NotImplementedException("more handling code needed");
+						}
 				}
 
 				lastIndex = i;
@@ -397,7 +421,7 @@ namespace Phinite
 		public RegularExpression Derive(string removedLetter)
 		{
 			if (removedLetter == null)
-				throw new ArgumentNullException("cannot remove non-existing letter", "removedLetter");
+				throw new ArgumentNullException("removedLetter", "cannot remove non-existing letter");
 			if (removedLetter.Length != 1)
 				throw new ArgumentException("a single letter must be given", "removedLetter");
 

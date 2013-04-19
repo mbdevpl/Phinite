@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,6 +36,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
+    <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Kent.Boogaart.Converters">
@@ -64,6 +66,7 @@
     </ApplicationDefinition>
     <Compile Include="IconHelper.cs" />
     <Compile Include="LatexWriter.cs" />
+    <Compile Include="FiniteStateMachineLayout.cs" />
     <Compile Include="MessageFrame.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>MessageFrame.xaml</DependentUpon>
@@ -74,6 +77,9 @@
     <Compile Include="Petzold\ArrowLine.cs" />
     <Compile Include="Petzold\ArrowLineBase.cs" />
     <Compile Include="Petzold\ArrowPolyline.cs" />
+    <Compile Include="SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UIState.cs" />
     <Compile Include="UIStateInfo.cs" />
     <Page Include="MainWindow.xaml">
@@ -89,6 +95,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MessageFrame.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

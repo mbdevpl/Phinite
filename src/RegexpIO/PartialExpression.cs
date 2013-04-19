@@ -6,10 +6,14 @@ using System.Text;
 
 namespace Phinite
 {
+	/// <summary>
+	/// Part of the expression that serves as a single node of a parse tree of a complete RegularExpression.
+	/// </summary>
 	public class PartialExpression
 	{
-		//public static readonly PartialExpression EmptyWord = new PartialExpression(null, ".");
-
+		/// <summary>
+		/// Role of the expression part, it has large impact on its behaviour.
+		/// </summary>
 		public PartialExpressionRole Role
 		{
 			get { return role; }
@@ -41,6 +45,12 @@ namespace Phinite
 		}
 		private PartialExpression root;
 
+		/// <summary>
+		/// Contains list of sub-parts of this partial expression, if it has any.
+		/// 
+		/// Applicable only to expressions that have role equal to PartialExpressionRole.Concatenation
+		/// or PartialExpressionRole.Union. Always null in other cases.
+		/// </summary>
 		public ReadOnlyCollection<PartialExpression> Parts
 		{
 			get
@@ -54,49 +64,11 @@ namespace Phinite
 		}
 		private List<PartialExpression> parts;
 
-		///// <summary>
-		///// Sub-expressions that are in union with each other.
-		///// </summary>
-		//public ReadOnlyCollection<PartialExpression> Union
-		//{
-		//	get
-		//	{
-		//		if (union == null)
-		//			return null;
-		//		return new ReadOnlyCollection<PartialExpression>(union);
-		//	}
-		//}
-		///// <summary>
-		///// Sub-expressions that are concatenated with each other
-		///// </summary>
-		//public ReadOnlyCollection<PartialExpression> ConcatenatedSymbols
-		//{
-		//	get
-		//	{
-		//		if (concatenatedSymbols == null)
-		//			return null;
-		//		return new ReadOnlyCollection<PartialExpression>(concatenatedSymbols);
-		//	}
-		//}
-		//private List<PartialExpression> union;
-		//private List<PartialExpression> concatenatedSymbols;
-
-		///// <summary>
-		///// Returns the last symbol that is in this part's concatenation.
-		///// </summary>
-		//public PartialExpression LastConcatenatedSymbol
-		//{
-		//	get
-		//	{
-		//		int index = concatenatedSymbols.Count - 1;
-		//		if (index < 0)
-		//			throw new ArgumentException("cannot get a non-existing last concatenated symbol of the expression");
-		//		return concatenatedSymbols[index];
-		//	}
-		//}
-
 		/// <summary>
 		/// Value of this expression, provided that it is a single character.
+		/// 
+		/// Applicable only to expressions that have role equal to PartialExpressionRole.Letter.
+		/// Null in all other cases.
 		/// </summary>
 		public string Value
 		{
@@ -113,6 +85,9 @@ namespace Phinite
 		}
 		private string _value;
 
+		/// <summary>
+		/// Unary operator associated with this part.
+		/// </summary>
 		public UnaryOperator Operator
 		{
 			get { return _operator; }
@@ -147,6 +122,11 @@ namespace Phinite
 			}
 		}
 
+		/// <summary>
+		/// Constructs a new regular expression part.
+		/// </summary>
+		/// <param name="role"></param>
+		/// <param name="root"></param>
 		public PartialExpression(PartialExpressionRole role, PartialExpression root)
 		{
 			this.role = PartialExpressionRole.Undetermined;
@@ -158,12 +138,23 @@ namespace Phinite
 			this._operator = UnaryOperator.None;
 		}
 
+		/// <summary>
+		/// Constructs a new regular expression part.
+		/// </summary>
+		/// <param name="root"></param>
+		/// <param name="parts"></param>
+		/// <param name="concatenation"></param>
 		public PartialExpression(PartialExpression root, List<PartialExpression> parts, bool concatenation)
 			: this(concatenation ? PartialExpressionRole.Concatenation : PartialExpressionRole.Union, root)
 		{
 			this.parts = parts;
 		}
 
+		/// <summary>
+		/// Constructs a new regular expression part.
+		/// </summary>
+		/// <param name="root"></param>
+		/// <param name="value"></param>
 		public PartialExpression(PartialExpression root, string value)
 			: this(PartialExpressionRole.Letter, root)
 		{
@@ -182,32 +173,29 @@ namespace Phinite
 		//	this._value = value;
 		//}
 
+		/// <summary>
+		/// Adds a new part to list of sub-parts that are in alternative with each other.
+		/// </summary>
+		/// <param name="exp"></param>
 		public void AddToUnion(PartialExpression exp)
 		{
-			//if (concatenatedSymbols != null || _value != null)
-			if (!this.role.Equals(PartialExpressionRole.Union))
+			if (!role.Equals(PartialExpressionRole.Union))
 				throw new ArgumentException("cannot add symbol to a partial expression that does not store union");
-			//if (union == null)
-			//	union = new List<PartialExpression>();
 			if (parts == null)
 				parts = new List<PartialExpression>();
-			//this.union.Add(exp);
 			parts.Add(exp);
 		}
 
+		/// <summary>
+		/// Adds a new part to list of sub-parts that are concatenated with each other.
+		/// </summary>
+		/// <param name="exp"></param>
 		public void AddToConcatenation(PartialExpression exp)
 		{
-			//if (role.Equals(PartialExpressionRole.Undetermined))
-			//	role = PartialExpressionRole.Concatenation;
-			//if (union != null || _value != null)
-			//else 
 			if (!role.Equals(PartialExpressionRole.Concatenation))
 				throw new ArgumentException("cannot concatenate symbol with a partial expression that does not store concatenation");
-			//if (concatenatedSymbols == null)
-			//	concatenatedSymbols = new List<PartialExpression>();
 			if (parts == null)
 				parts = new List<PartialExpression>();
-			//this.concatenatedSymbols.Add(exp);
 			parts.Add(exp);
 		}
 
@@ -561,6 +549,10 @@ namespace Phinite
 				throw new ArgumentException("encountered partial expression with role that is not allowed");
 		}
 
+		/// <summary>
+		/// Checks if this expression can generate an empty word.
+		/// </summary>
+		/// <returns></returns>
 		public bool GeneratesEmptyWord()
 		{
 			if (role.Equals(PartialExpressionRole.EmptyWord))
@@ -580,6 +572,12 @@ namespace Phinite
 			return false;
 		}
 
+		/// <summary>
+		/// Calculates the width of this parse tree. Width is understood as the number of the leaves.
+		/// </summary>
+		/// <returns>Positive number if this is a valid partial expression,
+		/// zero if the role of this expression is not determined,
+		/// -1 otherwise.</returns>
 		public int CalculateTreeWidth()
 		{
 			if (role == PartialExpressionRole.Undetermined)
@@ -593,6 +591,13 @@ namespace Phinite
 			return -1;
 		}
 
+		/// <summary>
+		/// Calculates the height of this parse tree. Height is understood as the maximum distance
+		/// from root to any of the leaves, measured by counting nodes, including both root and the leaf.
+		/// </summary>
+		/// <returns>Positive number if this is a valid partial expression,
+		/// zero if the role of this expression is not determined,
+		/// -1 otherwise.</returns>
 		public int CalculateTreeHeight()
 		{
 			if (role == PartialExpressionRole.Undetermined)
@@ -680,23 +685,25 @@ namespace Phinite
 					s.Append(parOpen);
 			}
 
-			if (role.Equals(PartialExpressionRole.Union) && parts.Count > 0)
+			if ((role & PartialExpressionRole.InternalNode) > 0 && parts.Count > 0)
 			{
-				// this part represents union of several expressions
-				if ((parts.Count > 1 && root != null) || _operator != UnaryOperator.None)
+				bool extraParentheses = (parts.Count > 1 && root != null) || _operator != UnaryOperator.None;
+
+				if (extraParentheses)
 					s.Append(parOpen);
-				s.Append(String.Join<PartialExpression>(RegularExpression.TagsStrings[InputSymbolTag.Union], parts));
-				if ((parts.Count > 1 && root != null) || _operator != UnaryOperator.None)
-					s.Append(parClose);
-			}
-			else if (role.Equals(PartialExpressionRole.Concatenation) && parts.Count > 0)
-			{
-				// this part represents concatenation of several expressions
-				if ((parts.Count > 1 && root != null) || _operator != UnaryOperator.None)
-					s.Append(parOpen);
-				foreach (PartialExpression partexp in parts)
-					s.Append(partexp);
-				if ((parts.Count > 1 && root != null) || _operator != UnaryOperator.None)
+				switch (role)
+				{
+					case PartialExpressionRole.Union:
+						// this part represents union of several expressions
+						s.Append(String.Join<PartialExpression>(RegularExpression.TagsStrings[InputSymbolTag.Union], parts));
+						break;
+					case PartialExpressionRole.Concatenation:
+						// this part represents concatenation of several expressions
+						foreach (PartialExpression partexp in parts)
+							s.Append(partexp);
+						break;
+				}
+				if (extraParentheses)
 					s.Append(parClose);
 			}
 			else if (role.Equals(PartialExpressionRole.Letter) && _value != null && _value.Length > 0)
@@ -710,7 +717,7 @@ namespace Phinite
 				s.Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]);
 			}
 			else
-				throw new ArgumentException("invalid partial expression, it contains no data");
+				return null; //throw new ArgumentException("invalid partial expression, it contains no data");
 
 			if (_operator != UnaryOperator.None)
 			{

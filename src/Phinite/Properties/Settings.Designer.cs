@@ -25,7 +25,7 @@ namespace Phinite.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("SumatraPDF\\SumatraPDF.exe")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string DefaultPdfViewerCommand {
             get {
                 return ((string)(this["DefaultPdfViewerCommand"]));
@@ -35,18 +35,93 @@ namespace Phinite.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("MiKTeX\\miktex\\bin\\pdflatex")]
+        public string DefaultInternalPdflatexCommand {
+            get {
+                return ((string)(this["DefaultInternalPdflatexCommand"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultUseInternalPdfViewer {
+            get {
+                return ((bool)(this["DefaultUseInternalPdfViewer"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PdfViewerCommand {
+            get {
+                return ((string)(this["PdfViewerCommand"]));
+            }
+            set {
+                this["PdfViewerCommand"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
+        public string PdflatexCommand {
+            get {
+                return ((string)(this["PdflatexCommand"]));
+            }
+            set {
+                this["PdflatexCommand"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseInternalPdflatex {
+            get {
+                return ((bool)(this["UseInternalPdflatex"]));
+            }
+            set {
+                this["UseInternalPdflatex"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("SumatraPDF\\SumatraPDF.exe")]
+        public string DefaultInternalPdfViewerCommand {
+            get {
+                return ((string)(this["DefaultInternalPdfViewerCommand"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
         public string DefaultPdflatexCommand {
             get {
                 return ((string)(this["DefaultPdflatexCommand"]));
             }
         }
         
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseInternalPdfViewer {
+            get {
+                return ((bool)(this["UseInternalPdfViewer"]));
+            }
+            set {
+                this["UseInternalPdfViewer"] = value;
+            }
+        }
+        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool DefaultUseSystemDefaultPdfViewer {
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultUseInternalPdflatex {
             get {
-                return ((bool)(this["DefaultUseSystemDefaultPdfViewer"]));
+                return ((bool)(this["DefaultUseInternalPdflatex"]));
             }
         }
     }

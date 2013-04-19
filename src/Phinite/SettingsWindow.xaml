@@ -1,0 +1,36 @@
+﻿<Window x:Class="Phinite.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SettingsWindow" Height="300" Width="300">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition />
+				<ColumnDefinition />
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+			<TextBlock Grid.Column="0" Grid.Row="0" Text="pdflatex location" />
+			<TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Pdflatex}" />
+			<TextBlock Grid.Column="0" Grid.Row="1" Text="PDF viewer location" />
+			<TextBox Grid.Column="1" Grid.Row="1" Text="{Binding PdfViewer}" />
+			<TextBlock Grid.Column="0" Grid.Row="2" Text="Default internal pdflatex" />
+			<TextBox Grid.Column="1" Grid.Row="2" Text="{Binding DefaultInternalPdflatex}" IsEnabled="False" />
+			<TextBlock Grid.Column="0" Grid.Row="3" Text="Default internal PDF viewer" />
+			<TextBox Grid.Column="1" Grid.Row="3" Text="{Binding DefaultInternalPdfViewer}" IsEnabled="False" />
+
+		</Grid>
+		<StackPanel Grid.Row="5" Orientation="Horizontal">
+			<Button Content="Ok" />
+			<Button Content="Cancel" />
+		</StackPanel>
+	</Grid>
+</Window>

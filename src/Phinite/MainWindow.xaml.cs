@@ -28,7 +28,7 @@ namespace Phinite
 	/// </summary>
 	public partial class MainWindow : Window, INotifyPropertyChanged
 	{
-		public static readonly Dictionary<string, string> Examples
+		public static Dictionary<string, string> Examples
 			= new Dictionary<string, string>
 			{
 				{"Empty word", "."},
@@ -51,6 +51,8 @@ namespace Phinite
 				{"Hard 4", "(ab^*)^*"},
 				{"Hard 5", "(((b)^*)((a((b)^*))^*))"},
 				{"Harder", "(f+ef+def+cdef+bcdef+abcdef)^*"},
+				{"Infinite loop", "(a^*a)^*"},
+				{"Max processor use test", "0+(1+2+3+4+5+6+7+8+9)(((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*(0+1+2+3+4+5+6+7+8+9))^*(0+1+2+3+4+5+6+7+8+9)^*"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 				
 			};
@@ -789,6 +791,18 @@ namespace Phinite
 				return;
 			}
 
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				foreach (DataGridColumn column in DataGridForStates.Columns)
+					column.Width = DataGridLength.SizeToHeader;
+				foreach (DataGridColumn column in DataGridForTransitions.Columns)
+					column.Width = DataGridLength.SizeToHeader;
+				foreach (DataGridColumn column in DataGridForStates.Columns)
+					column.Width = DataGridLength.Auto;
+				foreach (DataGridColumn column in DataGridForTransitions.Columns)
+					column.Width = DataGridLength.Auto;
+			});
+
 			SetUIState(UIState.BusyConstructing);
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
@@ -948,9 +962,11 @@ namespace Phinite
 				{
 					if (stepByStep)
 						fsm.Evaluate(1);
-					else
-						fsm.Evaluate(0);
+					//else
+					//	fsm.Evaluate(0);
 				}
+				if (!stepByStep)
+					fsm.Evaluate(0);
 
 				finished = fsm.IsEvaluationFinished();
 				state = fsm.CurrentState;
@@ -1094,7 +1110,7 @@ namespace Phinite
 			catch (Win32Exception)
 			{
 				new MessageFrame(this, "Phinite/LaTeX/PDF error", "Error in Phinite configuration",
-							String.Format("There is no LaTeX executable at this path:\n\n{0}\n\nAnd/or there is no PDF viewer at this path:\n\n", pdflatexCommand, pdfViewerCommand)
+							String.Format("There is no LaTeX executable at this path:\n\n{0}\n\nAnd/or there is no PDF viewer at this path:\n\n{1}", pdflatexCommand, pdfViewerCommand)
 							).ShowDialog();
 				SetUIState(UIState.PdfGenerationError);
 				return;
