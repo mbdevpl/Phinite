@@ -66,7 +66,19 @@ namespace Phinite
 				return new ReadOnlyCollection<RegularExpression>(states);
 			}
 		}
-		//private List<RegularExpression> states;
+
+		public ReadOnlyCollection<RegularExpression> LatestStates
+		{
+			get
+			{
+				if (latestStates == null)
+					return null;
+				var array = latestStates.ToArray();
+				latestStates.Clear();
+				return new ReadOnlyCollection<RegularExpression>(array);
+			}
+		}
+		private List<RegularExpression> latestStates;
 
 		/// <summary>
 		/// This list groups together states that were found to be equivalent.
@@ -85,13 +97,24 @@ namespace Phinite
 			get
 			{
 				if (transitions == null)
-					//return new ReadOnlyCollection<MachineTransition>(new List<MachineTransition>());
 					return null;
-
-				return new ReadOnlyCollection<MachineTransition>(transitions);
+				return new ReadOnlyCollection<MachineTransition>(transitions.ToArray());
 			}
 		}
 		private List<MachineTransition> transitions;
+
+		public ReadOnlyCollection<MachineTransition> LatestTransitions
+		{
+			get
+			{
+				if (latestTransitions == null)
+					return null;
+				var array = latestTransitions.ToArray();
+				latestTransitions.Clear();
+				return new ReadOnlyCollection<MachineTransition>(array);
+			}
+		}
+		private List<MachineTransition> latestTransitions;
 
 		/// <summary>
 		/// A read-only collection of accepting states of the machine.
@@ -121,6 +144,9 @@ namespace Phinite
 		public int CurrentState { get { return currentState; } }
 		private int currentState;
 
+		public int PreviousState { get { return previousState; } }
+		private int previousState;
+
 		public string EvaluatedWordInput { get { return evaluatedWordInput; } }
 		private string evaluatedWordInput;
 
@@ -145,6 +171,25 @@ namespace Phinite
 				Construct(0);
 
 			InitializeEvaluation();
+		}
+
+		private void InitializeConstruction()
+		{
+			notLabeled = new List<RegularExpression>();
+			notLabeled.Add(input);
+
+			notDerivedIds = new List<int>();
+
+			latestStates = new List<RegularExpression>();
+			latestTransitions = new List<MachineTransition>();
+
+			equivalentStatesGroups = new List<KeyValuePair<int, List<RegularExpression>>>();
+
+			notOptimizedTransitions = new List<Tuple<int, string, RegularExpression>>();
+
+			transitions = new List<MachineTransition>();
+
+			acceptingStatesIds = new List<int>();
 		}
 
 		/// <summary>
@@ -173,24 +218,6 @@ namespace Phinite
 			}
 		}
 
-		private void InitializeConstruction()
-		{
-			notLabeled = new List<RegularExpression>();
-			notLabeled.Add(input);
-
-			//notDerived = new List<RegularExpression>();
-			notDerivedIds = new List<int>();
-
-			//states = new List<RegularExpression>();
-			equivalentStatesGroups = new List<KeyValuePair<int, List<RegularExpression>>>();
-
-			notOptimizedTransitions = new List<Tuple<int, string, RegularExpression>>();
-
-			transitions = new List<MachineTransition>();
-
-			acceptingStatesIds = new List<int>();
-		}
-
 		/// <summary>
 		/// Checks if this finite-state machine is fully constructed.
 		/// </summary>
@@ -204,7 +231,9 @@ namespace Phinite
 		/// Labels the next expression from the not-labeled-expressions queue.
 		/// </summary>
 		/// <param name="breakOnNotFound"></param>
-		/// <returns>true if any expression was labeled during execution of this method</returns>
+		/// <returns>true if an expression was labeled during execution of this method,
+		/// or if an expression was evaluated and it was determined with 100% certainty
+		/// that it is equivalent to some already labeled expression</returns>
 		public bool LabelNextExpression(bool breakOnNotFound = false)
 		{
 			if (notLabeled.Count == 0)
@@ -231,8 +260,6 @@ namespace Phinite
 						// found an exact duplicate, returning
 						notLabeled.RemoveAt(0);
 						return true;
-						//foundNew = false;
-						//break;
 					}
 				}
 				//TODO: handle the unsure situation here!
@@ -253,6 +280,8 @@ namespace Phinite
 				equivalentStatesGroups.Add(new KeyValuePair<int, List<RegularExpression>>(labeledId, new List<RegularExpression>()));
 				equivalentStatesGroups[labeledId].Value.Add(labeled);
 
+				latestStates.Add(labeled);
+
 				if (labeled.GeneratesEmptyWord())
 					acceptingStatesIds.Add(labeledId);
 
@@ -269,7 +298,11 @@ namespace Phinite
 							// this can happen if more than one transition is optimized in this step
 							transitions[foundTransition].AddLetter(x.Item2);
 						else
-							transitions.Add(new MachineTransition(x.Item1, x.Item2, labeledId));
+						{
+							MachineTransition transition = new MachineTransition(x.Item1, x.Item2, labeledId);
+							transitions.Add(transition);
+							latestTransitions.Add(transition);
+						}
 					});
 					transitionsForOptimization.ForEach(x => notOptimizedTransitions.Remove(x));
 				}
@@ -302,6 +335,7 @@ namespace Phinite
 				Thread[] derivationThreads = new Thread[count];
 				RegularExpression[] derivations = new RegularExpression[count];
 
+				#region obsolete manual parallelization
 				/****
 
 				int processorsCount = count; // TODO: get total number of logical processing units
@@ -329,6 +363,8 @@ namespace Phinite
 					derivationThreads[i].Join();
 
 				****/
+				
+				#endregion
 
 				// derive in parallel
 				Parallel.For(0, count, (int n) =>
@@ -351,9 +387,16 @@ namespace Phinite
 					{
 						var foundTransition = transitions.FindIndex(x => x.Item1 == currentId && x.Item3 == derivedId);
 						if (foundTransition >= 0)
+						{
 							transitions[foundTransition].AddLetter(letter);
+							latestTransitions.Add(transitions[foundTransition]);
+						}
 						else
-							transitions.Add(new MachineTransition(currentId, letter, derivedId));
+						{
+							var mt = new MachineTransition(currentId, letter, derivedId);
+							transitions.Add(mt);
+							latestTransitions.Add(mt);
+						}
 					}
 					else
 					{
@@ -375,6 +418,7 @@ namespace Phinite
 
 		private void InitializeEvaluation()
 		{
+			previousState = -1;
 			currentState = -1;
 			evaluatedWordInput = null;
 			evaluatedWordRemainingFragment = null;
@@ -394,6 +438,7 @@ namespace Phinite
 				// overwrite old eval variables
 			}
 
+			previousState = -1;
 			currentState = 0;
 			evaluatedWordInput = word;
 			evaluatedWordProcessedFragment = String.Empty;
@@ -423,7 +468,7 @@ namespace Phinite
 				}
 				catch (InvalidOperationException)
 				{
-					// silent catch
+					// silent catch, matching transition was not found
 				}
 
 				evaluatedWordProcessedFragment = new StringBuilder(evaluatedWordProcessedFragment)
@@ -431,12 +476,12 @@ namespace Phinite
 
 				evaluatedWordRemainingFragment = evaluatedWordRemainingFragment.Substring(1);
 
+				previousState = currentState;
 				if (transition == null)
 				{
 					currentState = -1;
 					break;
 				}
-
 				currentState = transition.ResultingStateId;
 
 				if (numberOfSteps > 0)
@@ -515,243 +560,12 @@ namespace Phinite
 			return acceptingStatesIds.Any(x => x == stateIndex);
 		}
 
-		private Dictionary<int, double> GetStatesTooCloseToEdge(Dictionary<int, Point> layout, int stateId1, int stateId2, double threshold)
+		public override string ToString()
 		{
-			if (stateId1 == stateId2)
-				return null;
-
-			if (!transitions.Any(x => x.Item1 == stateId1 && x.Item3 == stateId2))
-				return null;
-
-			var p1 = layout[stateId1];
-			var p2 = layout[stateId2];
-
-			Dictionary<int, double> results = null;
-			foreach (var key in layout.Keys)
-			{
-				if (key == stateId1 || key == stateId2)
-					continue;
-
-				double dist = layout[key].DistanceToLine(p1, p2);
-
-				if (dist < threshold)
-				{
-					if (results == null)
-						results = new Dictionary<int, double>();
-					results.Add(key, dist);
-				}
-			}
-			return results;
-		}
-
-		/// <summary>
-		/// Returns a score of a given layout.
-		/// 
-		/// This score is relative, and unless it is zero (perfect score),
-		/// there needs to be another layout for comparison in order for any conclusions to be drawn.
-		/// Zero means that if the machine is drawn using this layout, it will be very easy for human eye
-		/// to analyse it, and that humans in generally will think of it as a clear and understandable drawing.
-		/// For example, you can receive -1000, and think this is bad, but new layout may receive -10^6.
-		/// Also if you receive -0.001 yo may think this is good, but new layout can still receive -10^-6.
-		/// 
-		/// Score is based on number of intersecting edges, number of nodes that lay on some edge,
-		/// number of nodes that are very close to each other, etc.
-		/// </summary>
-		/// <returns>zero if layout is perfect, negative value if it is not</returns>
-		private double CalculateLayoutScore(Dictionary<int, Point> layout)
-		{
-			if (layout == null || layout.Count <= 1)
-				return 0;
-
-			double nodesDistanceScore = 0;
-			double nodesOnEdgesScore = 0;
-			double edgeIntersectionsScore = 0;
-
-			// check if point are too close to each other
-			foreach (var key1 in layout.Keys)
-				foreach (var key2 in layout.Keys)
-				{
-					if (key1 == key2)
-						continue;
-
-					var p1 = layout[key1];
-					var p2 = layout[key2];
-
-					double dist = p1.Distance(p2);
-					if (dist < 100)
-						nodesDistanceScore -= Math.Sqrt(100 - dist) + 1;
-				}
-
-			// check if edges between connected points are obstructed by any state
-			foreach (var key1 in layout.Keys)
-				foreach (var key2 in layout.Keys)
-				{
-					if (key1 == key2)
-						continue;
-					if (!transitions.Any(x => x.Item1 == key1 && x.Item3 == key2))
-						continue;
-
-					var p1 = layout[key1];
-					var p2 = layout[key2];
-
-					foreach (var key in layout.Keys)
-					{
-						if (key == key1 || key == key2)
-							continue;
-
-						double dist = layout[key].DistanceToLine(p1, p2);
-
-						if (dist < 30)
-							nodesOnEdgesScore -= Math.Sqrt(30 - dist) * 2 + 1;
-					}
-
-				}
-
-			// check if any edges intersect
-			foreach (var key1 in layout.Keys)
-				foreach (var key2 in layout.Keys)
-				{
-					if (key1 == key2)
-						continue;
-					if (!transitions.Any(x => x.Item1 == key1 && x.Item3 == key2))
-						continue;
-
-					var p1 = layout[key1];
-					var p2 = layout[key2];
-				}
-
-			return nodesDistanceScore + nodesOnEdgesScore + edgeIntersectionsScore;
-		}
-
-		public Dictionary<int, Point> LayOut()
-		{
-			//layout = new Dictionary<int, Point>();
-
-			//Random rand = new Random();
-
-			//double x = 20, y = 100;
-			//foreach (var stateGroup in equivalentStatesGroups)
-			//{
-			//	layout.Add(stateGroup.Key, new Point(x, y));
-
-			//	var list = transitions.FindAll(t => t.Item3 == stateGroup.Key && t.Item1 != t.Item3 && t.Item1 < stateGroup.Key);
-			//	foreach (var elem in list)
-			//	{
-			//		var bad = GetStatesTooCloseToEdge(layout, elem.Item1, stateGroup.Key, 30);
-			//		if (bad == null)
-			//			continue;
-			//		layout[stateGroup.Key] = new Point(x, y + 100 * (rand.Next() % 2 == 0 ? 1 : -1));
-			//		break;
-			//	}
-
-			//	//list = transitions.FindAll(t => t.Item1 != t.Item3 && t.Item1 == stateGroup.Key);
-			//	//foreach (var elem in list)
-			//	//{
-			//	//	var bad = GetStatesTooCloseToEdge(layout, stateGroup.Key, elem.Item1, 30);
-			//	//	if (bad == null)
-			//	//		continue;
-			//	//	layout[stateGroup.Key] = new Point(x, y - 50);
-			//	//	break;
-			//	//}
-
-			//	x += 100;
-			//	y += 0;
-			//}
-
-			#region GraphSharp graph construction
-
-			var graph = new BidirectionalGraph<string, Edge<string>>();
-			string[] vertices = new string[equivalentStatesGroups.Count];
-			//Dictionary<string, Point> vertexPositions = new Dictionary<string, Point>();
-			Dictionary<string, Size> vertexSizes = new Dictionary<string, Size>();
-			Dictionary<string, Thickness> vertexBorders = new Dictionary<string, Thickness>();
-
-			//int i = 0;
-			for (int i = 0; i < equivalentStatesGroups.Count; ++i)
-			//foreach (var stateGroup in equivalentStatesGroups)
-			{
-				vertices[i] = i/*stateGroup.Key*/.ToString();
-				//vertexPositions.Add(vertices[i], new Point(i * 100, i * 100));
-				vertexSizes.Add(vertices[i], new Size(32, 32));
-				vertexBorders.Add(vertices[i], new Thickness(50, 50, 50, 50));
-				//i++;
-			}
-			graph.AddVertexRange(vertices);
-			foreach (var transition in transitions)
-				if (transition.Item1 != transition.Item3)
-					graph.AddEdge(new Edge<string>(vertices[transition.Item1], vertices[transition.Item3]));
-
-			#endregion
-
-			int workGroupSize = 32;
-
-			var layoutsAll = new List<KeyValuePair<Dictionary<int, Point>, double>>();
-			int bestLayout = 0;
-
-			for (int i = 0; i < 4; ++i)
-			{
-				double[] layoutsScores = new double[workGroupSize];
-				Dictionary<int, Point>[] layouts = new Dictionary<int, Point>[workGroupSize];
-
-				// try several layouts in parallel
-				Parallel.For(0, workGroupSize, (int n) =>
-				{
-					#region running GraphSharp algorithm
-
-					var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
-							graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
-					algo4.Compute();
-					while (algo4.State != ComputationState.Finished)
-						Thread.Sleep(250);
-
-					#endregion
-
-					var layout = new Dictionary<int, Point>();
-
-					double minX = 1000, minY = 1000;
-					foreach (var pos in algo4.VertexPositions)
-					{
-						var location = pos.Value;
-						if (location.X < minX) minX = location.X;
-						if (location.Y < minY) minY = location.Y;
-						layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
-					}
-
-					minX -= 60;
-					minY -= 60;
-
-					for (int key = 0; key < layout.Count; ++key)
-					{
-						layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
-					}
-
-					double score = CalculateLayoutScore(layout);
-
-					layoutsScores[n] = score;
-					layouts[n] = layout;
-
-				});
-
-				int newBestLayout = 0;
-				for (int j = 1; j < workGroupSize; ++j)
-					if (layoutsScores[j] > layoutsScores[newBestLayout])
-						newBestLayout = j;
-
-				if (layoutsScores[newBestLayout] == 0)
-					return layouts[newBestLayout];
-
-				layoutsAll.Add(new KeyValuePair<Dictionary<int, Point>, double>(layouts[newBestLayout], layoutsScores[newBestLayout]));
-
-				if (layoutsScores[newBestLayout] > layoutsAll[bestLayout].Value)
-					bestLayout = layoutsAll.Count - 1;
-			}
-
-			return layoutsAll[bestLayout].Key;
-
-			//var results = new Dictionary<RegularExpression, Point>();
-			//foreach (var pair in dictionary)
-			//	results.Add(equivalentStatesGroups[pair.Key].Value.First(), pair.Value);
-			//return results;
+			return String.Format("States:{0} Accepting:{1} Transitions:{2} notLabeled:{3} notDerived:{4} CurrentState:{5}",
+				equivalentStatesGroups.Count, acceptingStatesIds.Count, transitions.Count,
+				notLabeled.Count, notDerivedIds.Count,
+				currentState);
 		}
 
 	}

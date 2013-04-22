@@ -457,16 +457,12 @@ namespace Phinite
 
 					var new1 = new PartialExpression(this);
 					new1.parts.RemoveAt(0);
-					//TODO: handle if now there is only 1 part
 					new1.Optimize();
-					//new1.parts.Insert(0, new1firstPart);
-					//new1firstPart.root = new1;
 					new1.root = this;
 
 					var new2 = new PartialExpression(this);
 					new2.parts.Insert(0, new1firstPart);
 					new1firstPart.root = new2;
-					//new2.parts.RemoveAt(0);
 					new2.root = this;
 
 					role = PartialExpressionRole.Union;
@@ -490,7 +486,6 @@ namespace Phinite
 
 					var new2 = new PartialExpression(this);
 					new2.parts.RemoveAt(0);
-					//TODO: handle if now there is only 1 part
 					new2.Optimize();
 					new2.root = this;
 

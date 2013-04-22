@@ -9,9 +9,25 @@ namespace Phinite
 	public static class Extensions
 	{
 
+		public static readonly double RadiansToDegrees = 180.0 / Math.PI;
+
+		public static readonly double DegreesToRadians = Math.PI / 180;
+
 		public static Point Copy(this Point thisPoint)
 		{
 			return new Point(thisPoint.X, thisPoint.Y);
+		}
+
+		public static Point MoveTo(this Point thisPoint, double angle, double distance)
+		{
+			double radiansAngle = angle * DegreesToRadians;
+			//Point target = new Point();
+
+			thisPoint.X += distance * Math.Sin(radiansAngle);
+			thisPoint.Y -= distance * Math.Cos(radiansAngle);
+
+			//return thisPoint.MoveTo(target, distance);
+			return thisPoint;
 		}
 
 		public static Point MoveTo(this Point thisPoint, Point target, double distance)
@@ -53,6 +69,40 @@ namespace Phinite
 			}
 
 			return thisPoint;
+		}
+
+		/// <summary>
+		/// Computes angle from this point to some other point. If the point are at the same location, zero is returned.
+		/// </summary>
+		/// <param name="thisPoint"></param>
+		/// <param name="point"></param>
+		/// <returns>angle in degrees</returns>
+		public static double Angle(this Point thisPoint, Point point)
+		{
+			if (thisPoint.X == point.X)
+			{
+				if (thisPoint.Y < point.Y)
+					return 180.0;
+				return 0.0;
+			}
+			if (thisPoint.Y == point.Y)
+			{
+				if (thisPoint.X < point.X)
+					return 90.0;
+				if (thisPoint.X > point.X)
+					return 270.0;
+				return 0.0;
+			}
+
+			double distX = point.X - thisPoint.X;
+			double distY = point.Y - thisPoint.Y;
+			//double dist = thisPoint.Distance(point);
+			//double ratio = distY / dist;
+
+			//double degrees = Math.Atan(ratio) * RadiansToDegrees;
+			double degrees = Math.Atan2(distY, distX) * RadiansToDegrees + 90;
+
+			return degrees;
 		}
 
 		/// <summary>

@@ -245,6 +245,7 @@
 			<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
 				<Button Name="OptionEvalNextStep" Content="Next step" Click="OptionEvalNextStep_Click" />
 				<Button Name="OptionEvalFinalResult" Content="To final result" Click="OptionEvalFinalResult_Click" />
+				<Button Name="OptionEvalAgain" Content="Evaluate another word" Click="OptionEvalAgain_Click" />
 				<Button Name="OptionEvalFinalize" Content="Go back to first screen" Click="OptionEvalFinalize_Click" />
 			</StackPanel>
 		</Grid>

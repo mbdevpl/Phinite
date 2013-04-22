@@ -78,9 +78,7 @@ namespace Phinite
 
 		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
 
-		private static readonly int fsmGraphTextHeight = 20;
-
-		private Dictionary<int, Point> fsmLayout = null;
+		private FiniteStateMachineLayout fsmLayout = null;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -400,6 +398,7 @@ namespace Phinite
 						OptionEvalAbort.IsEnabled = true;
 						OptionEvalNextStep.IsEnabled = false;
 						OptionEvalFinalResult.IsEnabled = false;
+						OptionEvalAgain.IsEnabled = false;
 						OptionEvalFinalize.IsEnabled = false;
 					}
 					else if (newUiState == UIState.ReadyForNextEvaluationStep)
@@ -407,6 +406,7 @@ namespace Phinite
 						OptionEvalAbort.IsEnabled = true;
 						OptionEvalNextStep.IsEnabled = true;
 						OptionEvalFinalResult.IsEnabled = true;
+						OptionEvalAgain.IsEnabled = true;
 						OptionEvalFinalize.IsEnabled = false;
 					}
 				}
@@ -419,6 +419,7 @@ namespace Phinite
 						OptionEvalAbort.IsEnabled = false;
 						OptionEvalNextStep.IsEnabled = false;
 						OptionEvalFinalResult.IsEnabled = false;
+						OptionEvalAgain.IsEnabled = true;
 						OptionEvalFinalize.IsEnabled = true;
 					}
 				}
@@ -479,206 +480,6 @@ namespace Phinite
 			t.Start();
 		}
 
-		private void DrawFiniteStateMachine(FiniteStateMachine machine, Dictionary<int, Point> layout, Canvas canvas)
-		{
-			//var canvas = ConstructedMachineCanvas;
-			var canvasContent = canvas.Children;
-
-			//var states = machine.States;
-			//var initial = machine.InitialState;
-			//var accepting = machine.AcceptingStates;
-			var transitions = machine.Transitions;
-
-			canvasContent.Clear();
-
-			double maxX = 0;
-			double maxY = 0;
-
-			double stateDiameter = 32;
-
-			var poly = new Petzold.Media2D.ArrowLine();
-			//poly.Points.Add(new Point(0, 0));
-			//poly.Points.Add(new Point(stateDiameter, stateDiameter));
-			poly.X1 = 0;
-			poly.Y1 = 0;
-			var initPt2 = new Point(stateDiameter, stateDiameter).MoveTo(new Point(), stateDiameter / 2);
-			poly.X2 = initPt2.X;
-			poly.Y2 = initPt2.Y;
-
-			poly.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
-			poly.ArrowLength = 10;
-			poly.ArrowAngle = 60;
-
-			poly.Stroke = Brushes.Black;
-			poly.StrokeThickness = 1;
-
-			canvasContent.Add(poly);
-			Canvas.SetLeft(poly, layout[0].X - stateDiameter);
-			Canvas.SetTop(poly, layout[0].Y - stateDiameter);
-
-			string text = String.Empty;
-
-			//int i = 0;
-			//foreach (var pair in layout)
-			for (int i = 0; i < layout.Count; ++i)
-			{
-				var location = layout[i];
-
-				var border = new Ellipse();
-				border.Width = stateDiameter;
-				border.Height = stateDiameter;
-
-				border.Stroke = Brushes.Black;
-				border.StrokeThickness = 1;
-				border.Fill = Brushes.White;
-
-				var elem = new TextBlock();
-				elem.TextAlignment = TextAlignment.Center;
-				elem.Width = stateDiameter;
-				elem.Height = fsmGraphTextHeight;
-				elem.Text = "q" + i.ToString();
-
-				foreach (var transition in transitions)
-				{
-					if (transition.Item1 != i)
-						continue;
-
-					var letters = new TextBlock();
-					letters.Height = fsmGraphTextHeight;
-					//letters.Width = double.NaN; // Auto, goes to 100%
-					letters.Width = transition.Item2.Count * fsmGraphTextHeight;
-					letters.Text = String.Join(" ", transition.Item2);
-					letters.TextAlignment = TextAlignment.Center;
-
-					if (transition.Item3 == i)
-					{
-						// loop, i.e. directed edge to self
-
-						canvasContent.Add(letters);
-						Canvas.SetLeft(letters, location.X - letters.Width / 2);
-						Canvas.SetTop(letters, location.Y - stateDiameter - letters.Height);
-						Canvas.SetZIndex(letters, -1000);
-
-						double coefX = ((double)2) / 3;
-						double coefY = ((double)4) / 3;
-						var pt1Ctrl = location.Copy();
-						pt1Ctrl.Offset(-stateDiameter * coefX, -stateDiameter * coefY);
-						var pt2Ctrl = location.Copy();
-						pt2Ctrl.Offset(stateDiameter * coefX, -stateDiameter * coefY);
-						//pt2Ctrl.MoveTo(location, 20);
-
-						var bezier = new BezierSegment();
-						bezier.Point1 = pt1Ctrl;
-						bezier.Point2 = pt2Ctrl;
-						bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, stateDiameter / 2 + 1);
-
-						var arrow = new Petzold.Media2D.ArrowLine();
-						arrow.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
-						arrow.ArrowLength = 10;
-						arrow.ArrowAngle = 60;
-						var ptArr = location.Copy().MoveTo(pt2Ctrl, stateDiameter / 2);
-						arrow.X1 = bezier.Point3.X;
-						arrow.Y1 = bezier.Point3.Y;
-						arrow.X2 = ptArr.X;
-						arrow.Y2 = ptArr.Y;
-
-						arrow.StrokeThickness = 1;
-						arrow.Stroke = Brushes.Black;
-
-
-						var path = new PathFigure();
-						path.StartPoint = location.Copy().MoveTo(pt1Ctrl, stateDiameter / 2);
-						path.Segments.Add(bezier);
-
-						var loop = new System.Windows.Shapes.Path();
-						var geo = new PathGeometry();
-						loop.Data = geo;
-						geo.Figures = new PathFigureCollection();
-						geo.Figures.Add(path);
-
-						loop.Stroke = Brushes.Black;
-						loop.StrokeThickness = 1;
-
-						canvasContent.Add(arrow);
-						Canvas.SetLeft(arrow, 0);
-						Canvas.SetTop(arrow, 0);
-						Canvas.SetZIndex(arrow, -1000);
-
-						canvasContent.Add(loop);
-						Canvas.SetLeft(loop, 0);
-						Canvas.SetTop(loop, 0);
-						Canvas.SetZIndex(loop, -1000);
-
-						continue;
-					}
-
-					// directed edge
-
-					var target = layout[transition.Item3].Copy().MoveTo(location, stateDiameter / 2);
-
-					canvasContent.Add(letters);
-					Canvas.SetLeft(letters, (location.X + layout[transition.Item3].X) / 2 - letters.Width / 2);
-					Canvas.SetTop(letters, (location.Y + layout[transition.Item3].Y) / 2 - (transition.Item3 > i ? 1 : 0) * (letters.Height));
-					Canvas.SetZIndex(letters, -1000);
-
-					var edge = new Petzold.Media2D.ArrowLine();
-					//edge.Points.Add(new Point());
-					//edge.Points.Add(target.Copy().Offset(-location.X, -location.Y));
-					//edge.Points.Add(location);
-					//edge.Points.Add(target);
-
-					edge.ArrowEnds = Petzold.Media2D.ArrowEnds.End;
-					edge.ArrowLength = 10;
-					edge.ArrowAngle = 60;
-					edge.X1 = location.X;
-					edge.Y1 = location.Y;
-					edge.X2 = target.X;
-					edge.Y2 = target.Y;
-
-					edge.StrokeThickness = 1;
-					edge.Stroke = Brushes.Black;
-
-					canvasContent.Add(edge);
-					Canvas.SetLeft(edge, 0);
-					Canvas.SetTop(edge, 0);
-					Canvas.SetZIndex(edge, -1000);
-				}
-
-				canvasContent.Add(border);
-				Canvas.SetLeft(border, location.X - border.Width / 2);
-				Canvas.SetTop(border, location.Y - border.Height / 2);
-				Canvas.SetZIndex(border, 0);
-
-				if (machine.IsAccepting(i))
-				{
-					var border2 = new Ellipse();
-					border2.StrokeThickness = 1;
-					border2.Width = stateDiameter - 6;
-					border2.Height = stateDiameter - 6;
-
-					border2.Stroke = Brushes.Black;
-					border2.Fill = Brushes.White;
-
-					canvasContent.Add(border2);
-					Canvas.SetLeft(border2, location.X - border2.Width / 2);
-					Canvas.SetTop(border2, location.Y - border2.Height / 2);
-					Canvas.SetZIndex(border2, 0);
-				}
-
-				canvasContent.Add(elem);
-				Canvas.SetLeft(elem, location.X - elem.Width / 2);
-				Canvas.SetTop(elem, location.Y - elem.Height / 2);
-				Canvas.SetZIndex(elem, 0);
-
-				if (location.X > maxX) maxX = location.X;
-				if (location.Y > maxY) maxY = location.Y;
-
-				//++i;
-			}
-			canvas.Width = maxX + stateDiameter / 2 + 1;
-			canvas.Height = maxY + stateDiameter / 2 + 1;
-		}
-
 		private bool CheckIfComputationAbortedAndDealWithIt(object obj)
 		{
 			if (obj != null)
@@ -716,11 +517,24 @@ namespace Phinite
 				});
 			}
 
+			{
+				// dummy calls to force dll load
+				var a1 = new RegularExpression("abc+def", true);
+				var a2 = new FiniteStateMachine(a1, true);
+				var a3 = new FiniteStateMachineLayout(a2);
+				a3.Create();
+
+				// System.Xml.Linq
+				System.Xml.Linq.Extensions.Equals(a1, a2);
+
+				//WindowBase, PresentationCore, PresentationFramework
+				System.Diagnostics.Trace.WriteLine("WindowBase");
+				System.Windows.Media.PointCollection a4 = new PointCollection();
+				System.Windows.Shapes.Line a5 = new Line();
+			}
+
 			lock (regexpAndFsmLock)
 			{
-				// dummy calls to force loading dlls
-				regexp = new RegularExpression("abc+def", true);
-				fsm = new FiniteStateMachine(regexp, true);
 				regexp = null;
 				fsm = null;
 			}
@@ -819,15 +633,6 @@ namespace Phinite
 					fsm.Construct(1);
 				}
 			}
-			//catch (StackOverflowException e) // this cannot be caught since .NET 2.0
-			//{
-			//	new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
-			//		String.Format("The provided regular expression seems too complicated for the program,"
-			//		+ " which resulted in too many recursively nested function calls (i.e. a stack overflow): {0}.", e.Message)
-			//		).ShowDialog();
-			//	ChangeStatus(Status.ReadyForNextStep);
-			//	return;
-			//}
 			catch (Exception e)
 			{
 				new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
@@ -840,14 +645,17 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepResultsWorker, "ConstructionStepResults");
 		}
 
+		/// <summary>
+		/// Puts intermediate results into AreaForMachineCreation.
+		/// </summary>
 		private void ConstructionStepResultsWorker()
 		{
-			//Thread.Sleep(500); // put intermediate results into AreaForIntermediateResult
-
 			ReadOnlyCollection<RegularExpression> accepting = null;
 			ReadOnlyCollection<RegularExpression> states = null;
 			ReadOnlyCollection<MachineTransition> transitions = null;
-			Dictionary<int, Point> layout = null;
+			ReadOnlyCollection<RegularExpression> latestStates = null;
+			ReadOnlyCollection<MachineTransition> latestTransitions = null;
+			FiniteStateMachineLayout layout = null;
 			lock (regexpAndFsmLock)
 			{
 				if (CheckIfComputationAbortedAndDealWithIt(fsm))
@@ -857,8 +665,13 @@ namespace Phinite
 				states = fsm.States;
 				transitions = fsm.Transitions;
 
-				layout = fsm.LayOut();
+				latestStates = fsm.LatestStates;
+				latestTransitions = fsm.LatestTransitions;
+
+				layout = new FiniteStateMachineLayout(fsm);
 			}
+
+			layout.Create();
 
 			Dispatcher.BeginInvoke((Action)delegate
 			{
@@ -866,15 +679,8 @@ namespace Phinite
 				{
 					if (CheckIfComputationAbortedAndDealWithIt(fsm))
 						return;
-
-					if (layout.Count != states.Count)
-						return;
-
-					if (layout.Count != fsm.States.Count)
-						return;
-
-					DrawFiniteStateMachine(fsm, layout, ConstructedMachineCanvas);
 				}
+				layout.Draw(ConstructedMachineCanvas, latestStates, latestTransitions);
 			});
 
 			var data = new List<Tuple<RegularExpression, string, string>>();
@@ -921,10 +727,9 @@ namespace Phinite
 						{
 							if (CheckIfComputationAbortedAndDealWithIt(fsm))
 								return;
-
-							// draw the fsm behind word input controls
-							DrawFiniteStateMachine(fsm, layout, WordInputBackgroundCanvas);
 						}
+						// draw the fsm behind word input controls
+						layout.Draw(WordInputBackgroundCanvas);
 					});
 
 					SetUIState(UIState.ReadyForEvaluation);
@@ -945,6 +750,7 @@ namespace Phinite
 		private void EvaluationStepWorker()
 		{
 			bool finished = false;
+			int previous = -1;
 			int state = -1;
 
 			lock (regexpAndFsmLock)
@@ -958,17 +764,14 @@ namespace Phinite
 					// the very 1st step
 					fsm.BeginEvaluation(InputWordText);
 				}
-				else
-				{
-					if (stepByStep)
-						fsm.Evaluate(1);
-					//else
-					//	fsm.Evaluate(0);
-				}
+				else if (stepByStep)
+					fsm.Evaluate(1);
+
 				if (!stepByStep)
 					fsm.Evaluate(0);
 
 				finished = fsm.IsEvaluationFinished();
+				previous = fsm.PreviousState;
 				state = fsm.CurrentState;
 
 				// update strings
@@ -978,7 +781,7 @@ namespace Phinite
 
 			// update info about current state
 			var s = new StringBuilder("q");
-			if (fsm.CurrentState >= 0)
+			if (state >= 0)
 				s.Append(state);
 			else
 				s.Append("R"); // rejecting state
@@ -991,12 +794,9 @@ namespace Phinite
 				{
 					if (CheckIfComputationAbortedAndDealWithIt(fsm))
 						return;
-
-					DrawFiniteStateMachine(fsm, fsmLayout, WordEvaluationCanvas);
 				}
+				fsmLayout.Draw(WordEvaluationCanvas, previous, state, finished);
 			});
-
-			// TODO: colour current state
 
 			if (finished)
 			{
@@ -1300,6 +1100,11 @@ namespace Phinite
 		{
 			SetUIState(UIState.BusyEvaluating);
 			CallMethodInNewThread(EvaluationStepWorker, "Evaluation");
+		}
+
+		private void OptionEvalAgain_Click(object sender, RoutedEventArgs e)
+		{
+			SetUIState(UIState.ReadyForNewWord);
 		}
 
 		private void OptionEvalFinalResult_Click(object sender, RoutedEventArgs e)
