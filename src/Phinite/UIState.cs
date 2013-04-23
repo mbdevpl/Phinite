@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 namespace Phinite
 {
 	/// <summary>
@@ -41,6 +37,7 @@ namespace Phinite
 		BusyGeneratingPdf = LatexResultPhase | 1 << 1,
 		PdfGenerated = LatexResultPhase | 1 << 2,
 		PdfGenerationError = LatexResultPhase | 1 << 3,
+		PdfGenerationTimeout = LatexResultPhase | 1 << 4,
 
 		WordInputPhase = 1 << 18,
 		ReadyForNewWord = WordInputPhase | 1,

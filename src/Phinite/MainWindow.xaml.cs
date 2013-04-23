@@ -4,18 +4,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
@@ -66,17 +59,7 @@ namespace Phinite
 
 		private bool stepByStep;
 
-		private string pdflatexCommand
-			//= @"MiKTeX\miktex\bin\pdflatex";
-			= @"pdflatex";
-
-		private int pdflatexTimeout = 15;
-
-		private bool useSystemDefaultPdfViewer
-			//= false;
-			= true;
-
-		private string pdfViewerCommand = @"SumatraPDF\SumatraPDF.exe";
+		PhiniteSettings settings;
 
 		private FiniteStateMachineLayout fsmLayout = null;
 
@@ -282,17 +265,20 @@ namespace Phinite
 					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = true;
 
-					if (newUiState == UIState.ReadyForNewInputAfterInvalidInput)
+					switch (newUiState)
 					{
-						InvalidExpressionBorder.BorderBrush = Brushes.Red;
-						OptionStepByStep.IsEnabled = false;
-						OptionImmediate.IsEnabled = false;
-					}
-					else
-					{
-						InvalidExpressionBorder.BorderBrush = Brushes.Transparent;
-						OptionStepByStep.IsEnabled = true;
-						OptionImmediate.IsEnabled = true;
+						case UIState.ReadyForNewInputAfterInvalidInput:
+							{
+								InvalidExpressionBorder.BorderBrush = Brushes.Red;
+								OptionStepByStep.IsEnabled = false;
+								OptionImmediate.IsEnabled = false;
+							} break;
+						default:
+							{
+								InvalidExpressionBorder.BorderBrush = Brushes.Transparent;
+								OptionStepByStep.IsEnabled = true;
+								OptionImmediate.IsEnabled = true;
+							} break;
 					}
 
 					Input.IsEnabled = true;
@@ -322,13 +308,22 @@ namespace Phinite
 					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = false;
 
-					if (newUiState == UIState.BusyConstructing)
+					switch (newUiState)
 					{
-						OptionAbort.IsEnabled = true;
-						OptionNextStep.IsEnabled = false;
-						OptionFinalResult.IsEnabled = false;
-						OptionLatex.IsEnabled = false;
-						OptionEvaluate.IsEnabled = false;
+						case UIState.BusyConstructing:
+							{
+								OptionSettings.IsEnabled = false;
+
+								OptionAbort.IsEnabled = true;
+								OptionNextStep.IsEnabled = false;
+								OptionFinalResult.IsEnabled = false;
+								OptionLatex.IsEnabled = false;
+								OptionEvaluate.IsEnabled = false;
+							} break;
+						default:
+							{
+								OptionSettings.IsEnabled = true;
+							} break;
 					}
 				}
 				else if ((newUiState & UIState.ConstructionStepResultsPhase) > 0)
@@ -337,6 +332,8 @@ namespace Phinite
 
 					if (newUiState == UIState.ReadyForNextConstructionStep)
 					{
+						OptionSettings.IsEnabled = true;
+
 						OptionAbort.IsEnabled = true;
 						OptionNextStep.IsEnabled = true;
 						OptionFinalResult.IsEnabled = true;
@@ -348,38 +345,52 @@ namespace Phinite
 				{
 					SetUIVisibility(AreaForMachineCreation);
 
-					if (newUiState == UIState.ReadyForEvaluation)
+					switch (newUiState)
 					{
-						OptionAbort.IsEnabled = true;
-						OptionNextStep.IsEnabled = false;
-						OptionFinalResult.IsEnabled = false;
-						OptionLatex.IsEnabled = true;
-						OptionEvaluate.IsEnabled = true;
-					}
-					else if (newUiState == UIState.BusyGeneratingLatex)
-					{
-						OptionAbort.IsEnabled = false;
-						OptionNextStep.IsEnabled = false;
-						OptionFinalResult.IsEnabled = false;
-						OptionLatex.IsEnabled = false;
-						OptionEvaluate.IsEnabled = false;
+						case UIState.ReadyForEvaluation:
+							{
+								OptionSettings.IsEnabled = true;
+
+								OptionAbort.IsEnabled = true;
+								OptionNextStep.IsEnabled = false;
+								OptionFinalResult.IsEnabled = false;
+								OptionLatex.IsEnabled = true;
+								OptionEvaluate.IsEnabled = true;
+							} break;
+						case UIState.BusyGeneratingLatex:
+							{
+								OptionSettings.IsEnabled = false;
+
+								OptionAbort.IsEnabled = false;
+								OptionNextStep.IsEnabled = false;
+								OptionFinalResult.IsEnabled = false;
+								OptionLatex.IsEnabled = false;
+								OptionEvaluate.IsEnabled = false;
+							} break;
 					}
 				}
 				else if ((newUiState & UIState.LatexResultPhase) > 0)
 				{
 					SetUIVisibility(AreaForGeneratedLatex);
 
-					if (newUiState == UIState.BusyGeneratingPdf)
+					switch (newUiState)
 					{
-						OptionBackToInput.IsEnabled = false;
-						OptionBackToFSM.IsEnabled = false;
-						OptionGeneratePDF.IsEnabled = false;
-					}
-					else
-					{
-						OptionBackToInput.IsEnabled = true;
-						OptionBackToFSM.IsEnabled = true;
-						OptionGeneratePDF.IsEnabled = true;
+						case UIState.BusyGeneratingPdf:
+							{
+								OptionSettings.IsEnabled = false;
+
+								OptionBackToInput.IsEnabled = false;
+								OptionBackToFSM.IsEnabled = false;
+								OptionGeneratePDF.IsEnabled = false;
+							} break;
+						default:
+							{
+								OptionSettings.IsEnabled = true;
+
+								OptionBackToInput.IsEnabled = true;
+								OptionBackToFSM.IsEnabled = true;
+								OptionGeneratePDF.IsEnabled = true;
+							} break;
 					}
 				}
 				else if ((newUiState & UIState.WordInputPhase) > 0)
@@ -393,34 +404,50 @@ namespace Phinite
 				{
 					SetUIVisibility(AreaForWordEvaluation);
 
-					if (newUiState == UIState.BusyEvaluating)
+					switch (newUiState)
 					{
-						OptionEvalAbort.IsEnabled = true;
-						OptionEvalNextStep.IsEnabled = false;
-						OptionEvalFinalResult.IsEnabled = false;
-						OptionEvalAgain.IsEnabled = false;
-						OptionEvalFinalize.IsEnabled = false;
-					}
-					else if (newUiState == UIState.ReadyForNextEvaluationStep)
-					{
-						OptionEvalAbort.IsEnabled = true;
-						OptionEvalNextStep.IsEnabled = true;
-						OptionEvalFinalResult.IsEnabled = true;
-						OptionEvalAgain.IsEnabled = true;
-						OptionEvalFinalize.IsEnabled = false;
+						case UIState.BusyEvaluating:
+							{
+								OptionSettings.IsEnabled = false;
+
+								OptionEvalAbort.IsEnabled = true;
+								OptionEvalNextStep.IsEnabled = false;
+								OptionEvalFinalResult.IsEnabled = false;
+								OptionEvalAgain.IsEnabled = false;
+								OptionEvalFinalize.IsEnabled = false;
+							} break;
+						case UIState.ReadyForNextEvaluationStep:
+							{
+								OptionSettings.IsEnabled = true;
+
+								OptionEvalAbort.IsEnabled = true;
+								OptionEvalNextStep.IsEnabled = true;
+								OptionEvalFinalResult.IsEnabled = true;
+								OptionEvalAgain.IsEnabled = true;
+								OptionEvalFinalize.IsEnabled = false;
+							} break;
 					}
 				}
 				else if ((newUiState & UIState.EvaluationResultsPhase) > 0)
 				{
 					SetUIVisibility(AreaForWordEvaluation);
 
-					if (newUiState == UIState.WordWasAccepted || newUiState == UIState.WordWasRejected)
+					MenuMain.IsEnabled = true;
+					MenuExamples.IsEnabled = false;
+
+					switch (newUiState)
 					{
-						OptionEvalAbort.IsEnabled = false;
-						OptionEvalNextStep.IsEnabled = false;
-						OptionEvalFinalResult.IsEnabled = false;
-						OptionEvalAgain.IsEnabled = true;
-						OptionEvalFinalize.IsEnabled = true;
+						case UIState.WordWasAccepted:
+						case UIState.WordWasRejected:
+							{
+								OptionSettings.IsEnabled = true;
+
+								OptionEvalAbort.IsEnabled = false;
+								OptionEvalNextStep.IsEnabled = false;
+								OptionEvalFinalResult.IsEnabled = false;
+								OptionEvalAgain.IsEnabled = true;
+								OptionEvalFinalize.IsEnabled = true;
+							} break;
 					}
 				}
 
@@ -560,9 +587,10 @@ namespace Phinite
 			}
 			catch (Exception e)
 			{
-				new MessageFrame(this, "Phinite/Regexp error", "Regular expression validation failed",
-					String.Format("There was some unexpected error while evaluating the input: {0}.", e.Message)
-					).ShowDialog();
+				ShowMessageFrame("Phinite/Regexp error", "Regular expression validation failed",
+					String.Format("There was some unexpected error while evaluating the input: {0}."
+					+ " The error is not caused by the fact that the expression is invalid.", e.Message),
+					true);
 				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
@@ -590,9 +618,9 @@ namespace Phinite
 			}
 			catch (Exception e)
 			{
-				new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
-					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
-					).ShowDialog();
+				ShowMessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message),
+					true);
 				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
@@ -635,9 +663,9 @@ namespace Phinite
 			}
 			catch (Exception e)
 			{
-				new MessageFrame(this, "Phinite/FSM error", "Finite-state machine was not created",
-					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message)
-					).ShowDialog();
+				ShowMessageFrame("Phinite/FSM error", "Finite-state machine was not created",
+					String.Format("There was some unexpected error while creating the finite-state machine: {0}.", e.Message),
+					true);
 				SetUIState(UIState.ReadyForNewInputAfterError);
 				return;
 			}
@@ -838,7 +866,7 @@ namespace Phinite
 
 			File.AppendAllText(generatedTex, LatexOutputText);
 
-			string latexExecutable = pdflatexCommand;
+			string latexExecutable = settings.Pdflatex;
 			string latexOptions = new StringBuilder()
 				.Append(@"-shell-escape ")
 				.Append(@"-interaction=batchmode ")
@@ -851,9 +879,9 @@ namespace Phinite
 			{
 				if (!p.Start())
 				{
-					new MessageFrame(this, "Phinite/LaTeX error", "Error while starting LaTeX",
-						String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions)
-						).ShowDialog();
+					ShowMessageFrame("Phinite/LaTeX error", "Error while starting LaTeX",
+						String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions),
+						true);
 					SetUIState(UIState.PdfGenerationError);
 					return;
 				}
@@ -866,30 +894,36 @@ namespace Phinite
 					.ToString();
 				while (userWaitsForTimeout)
 				{
-					if (p.WaitForExit(1000 * pdflatexTimeout))
+					if (p.WaitForExit(1000 * settings.PdflatexTimeout))
 						break;
 
-					if (new MessageFrame(this, "Phinite/LaTeX error", "LaTeX timeout",
-							String.Format(timeoutMessageFormat, pdflatexTimeout, pdflatexTimeout),
-							null, true, true, false, "Yes", "No").ShowDialog() == true)
+					Dispatcher.Invoke((Action)delegate
+					{
+						var dialog = new MessageFrame(this, "Phinite/LaTeX error", "LaTeX timeout",
+								String.Format(timeoutMessageFormat, settings.PdflatexTimeout, settings.PdflatexTimeout),
+								null, true, true, false, "Yes", "No");
+						if (dialog.ShowDialog() != true)
+							userWaitsForTimeout = false;
+					});
+
+					if (userWaitsForTimeout)
 						continue;
 
-					userWaitsForTimeout = false;
-					SetUIState(UIState.PdfGenerationError);
+					SetUIState(UIState.PdfGenerationTimeout);
 					return;
 				}
 
 				if (p.ExitCode != 0)
 				{
 					if (File.Exists(generatedPdf))
-						new MessageFrame(this, "Phinite/LaTeX warning", "Minor errors in LaTeX execution",
-							"PDF file was created, but there were some errors and the result may not look as good as expected."
-							).ShowDialog();
+						ShowMessageFrame("Phinite/LaTeX warning", "Minor errors in LaTeX execution",
+							"PDF file was created, but there were some errors and the result may not look as good as expected.",
+							true);
 					else
 					{
-						new MessageFrame(this, "Phinite/LaTeX error", "Severe errors in LaTeX execution",
-							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem."
-							).ShowDialog();
+						ShowMessageFrame("Phinite/LaTeX error", "Severe errors in LaTeX execution",
+							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem.",
+							true);
 						SetUIState(UIState.PdfGenerationError);
 						return;
 					}
@@ -902,16 +936,17 @@ namespace Phinite
 					catch (IOException) { }
 				}
 
-				if (useSystemDefaultPdfViewer)
-					Process.Start(generatedPdf);
+				if (settings.PdfViewer.Length > 0)
+					Process.Start(settings.PdfViewer, generatedPdf);
 				else
-					Process.Start(pdfViewerCommand, generatedPdf);
+					Process.Start(generatedPdf);
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame(this, "Phinite/LaTeX/PDF error", "Error in Phinite configuration",
-							String.Format("There is no LaTeX executable at this path:\n\n{0}\n\nAnd/or there is no PDF viewer at this path:\n\n{1}", pdflatexCommand, pdfViewerCommand)
-							).ShowDialog();
+				ShowMessageFrame("Phinite/LaTeX/PDF error", "Error in Phinite configuration",
+								String.Format("There is no LaTeX executable at this path:\n\n{0}\n\n"
+									+ "And/or there is no PDF viewer at this path:\n\n{1}",
+									settings.Pdflatex, settings.PdfViewer), true);
 				SetUIState(UIState.PdfGenerationError);
 				return;
 			}
@@ -921,10 +956,21 @@ namespace Phinite
 			}
 
 			SetUIState(UIState.PdfGenerated);
-			//Thread t = new Thread(LatexEnded);
-			//t.Name = "LatexAndPdfGenerationEndingThread";
-			//t.SetApartmentState(ApartmentState.STA);
-			//t.Start();
+		}
+
+		private bool? ShowMessageFrame(string windowTitle, string messageTitle, string messageText, bool inNewThread)
+		{
+			if (inNewThread)
+			{
+				bool? result = null;
+				Dispatcher.Invoke((Action)delegate
+				{
+					result = new MessageFrame(this, windowTitle, messageTitle, messageText).ShowDialog();
+				});
+				return result;
+			}
+			else
+				return new MessageFrame(this, windowTitle, messageTitle, messageText).ShowDialog();
 		}
 
 		#region main menu handlers
@@ -939,6 +985,11 @@ namespace Phinite
 
 		private void OptionSettings_Click(object sender, RoutedEventArgs e)
 		{
+			var backup = new PhiniteSettings(settings);
+			var s = new SettingsWindow(settings);
+			s.Owner = this;
+			if (s.ShowDialog() != true)
+				settings = backup;
 		}
 
 		private void OptionAbout_Click(object sender, RoutedEventArgs e)
@@ -1170,17 +1221,29 @@ namespace Phinite
 
 		#endregion
 
-		protected override void OnClosing(CancelEventArgs e)
+		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		{
+			var sett = Properties.Settings.Default;
+			settings = new PhiniteSettings(sett);
+			sett.SettingsSaving += Default_SettingsSaving;
+		}
+
+		private void Default_SettingsSaving(object sender, CancelEventArgs e)
+		{
+			var sett = Properties.Settings.Default;
+		}
+
+		private void MainWindow_Closing(object sender, CancelEventArgs e)
 		{
 			SetUIState(UIState.Loading);
+
+			settings.Save();
 
 			lock (regexpAndFsmLock)
 			{
 				fsm = null;
 				regexp = null;
 			}
-
-			base.OnClosing(e);
 		}
 
 	}

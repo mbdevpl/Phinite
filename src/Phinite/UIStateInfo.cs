@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Phinite
 {
@@ -43,6 +40,7 @@ namespace Phinite
 				{UIState.BusyGeneratingPdf, "generating pdf"},
 				{UIState.PdfGenerated, "pdf generated succesfully; ready for other tasks"},
 				{UIState.PdfGenerationError, "errors in pdf generation; ready for other tasks"},
+				{UIState.PdfGenerationTimeout, "pdf generation timeout; ready for other tasks"},
 
 				// WordInputPhase
 				{UIState.ReadyForNewWord, "ready"},

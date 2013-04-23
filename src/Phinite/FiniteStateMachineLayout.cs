@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-
-using QuickGraph;
-using QuickGraph.Algorithms;
-using GraphSharp.Algorithms.Layout.Compound;
-using GraphSharp.Algorithms.Layout.Compound.FDP;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using GraphSharp.Algorithms.Layout.Compound;
+using GraphSharp.Algorithms.Layout.Compound.FDP;
+using GraphSharp.Algorithms.Layout.Simple.FDP;
+using GraphSharp.Algorithms.Layout.Simple.Tree;
+using GraphSharp.Algorithms.OverlapRemoval;
 using Petzold.Media2D;
+using QuickGraph;
+using QuickGraph.Algorithms;
 
 namespace Phinite
 {
@@ -139,20 +140,11 @@ namespace Phinite
 				// try several layouts in parallel
 				Parallel.For(0, workGroupSize, (int n) =>
 				{
-					#region running GraphSharp algorithm
-
-					var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
-							graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
-					algo4.Compute();
-					while (algo4.State != ComputationState.Finished)
-						Thread.Sleep(250);
-
-					#endregion
-
+					var createdVertices = Create4();
 					var layout = new Dictionary<int, Point>();
 
 					double minX = 1000, minY = 1000;
-					foreach (var pos in algo4.VertexPositions)
+					foreach (var pos in createdVertices)
 					{
 						var location = pos.Value;
 						if (location.X < minX) minX = location.X;
@@ -199,6 +191,85 @@ namespace Phinite
 			CreateEdges();
 			return;
 
+		}
+
+		//private IDictionary<string, Point> Create1()
+		//{
+		//	// 1st algorithm
+		//	var algo1 = new SourceFirstTopologicalSortAlgorithm<string, Edge<string>>(graph);
+		//	algo1.Compute();
+		//	while (algo1.State != ComputationState.Finished)
+		//		Thread.Sleep(100);
+
+		//	return algo1.SortedVertices;
+		//}
+
+		private IDictionary<string, Point> Create2()
+		{
+			// 2nd algorithm
+			ISOMLayoutParameters params2 = null;//new ISOMLayoutParameters();
+			var algo2 = new ISOMLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(graph, params2);
+			algo2.Compute();
+			while (algo2.State != ComputationState.Finished)
+				Thread.Sleep(100);
+
+			return algo2.VertexPositions;
+		}
+
+		private IDictionary<string, Point> Create3()
+		{
+			// 3rd algorithm
+			var params3 = new BalloonTreeLayoutParameters();
+			params3.MinRadius = 50;
+			params3.Border = 1;
+			var algo3 = new BalloonTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+				graph, null/*vertexPositions*/, vertexSizes, params3, "q0");
+			algo3.Compute();
+			while (algo3.State != ComputationState.Finished)
+				Thread.Sleep(100);
+
+			return algo3.VertexPositions;
+		}
+
+		private IDictionary<string, Point> Create4()
+		{
+			var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+					graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
+			algo4.Compute();
+			while (algo4.State != ComputationState.Finished)
+				Thread.Sleep(250);
+
+			return algo4.VertexPositions;
+		}
+
+		private object RemoveOverlaps1()
+		{
+			OneWayFSAParameters params1 = new OneWayFSAParameters();
+			params1.HorizontalGap = 40;
+			params1.VerticalGap = 40;
+
+			OneWayFSAAlgorithm<string> algo1;
+			algo1 = new OneWayFSAAlgorithm<string>(null, params1);
+			algo1.Compute();
+			while (algo1.State != ComputationState.Finished)
+				Thread.Sleep(250);
+
+			return null;
+		}
+		
+		private object RemoveOverlaps2()
+		{
+			OverlapRemovalParameters params2 = new OverlapRemovalParameters();
+			params2.HorizontalGap = 40;
+			params2.VerticalGap = 40;
+
+			FSAAlgorithm<string> algo2;
+			algo2 = new FSAAlgorithm<string>(null, params2);
+			algo2.Compute();
+			while (algo2.State != ComputationState.Finished)
+				Thread.Sleep(250);
+
+			return null;
 		}
 
 		private void CreateEdges()

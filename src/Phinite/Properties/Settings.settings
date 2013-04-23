@@ -2,35 +2,35 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Phinite.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="DefaultPdfViewerCommand" Type="System.String" Scope="Application">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="DefaultInternalPdflatexCommand" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">MiKTeX\miktex\bin\pdflatex</Value>
-    </Setting>
-    <Setting Name="DefaultUseInternalPdfViewer" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="PdfViewerCommand" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="PdflatexCommand" Type="System.String" Scope="User">
-      <Value Profile="(Default)">pdflatex</Value>
-    </Setting>
-    <Setting Name="UseInternalPdflatex" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="DefaultInternalPdfViewerCommand" Type="System.String" Scope="Application">
+    <Setting Name="PdfViewerInternal" Type="System.String" Scope="Application">
       <Value Profile="(Default)">SumatraPDF\SumatraPDF.exe</Value>
     </Setting>
-    <Setting Name="DefaultPdflatexCommand" Type="System.String" Scope="Application">
+    <Setting Name="PdfViewer" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="Pdflatex" Type="System.String" Scope="User">
       <Value Profile="(Default)">pdflatex</Value>
     </Setting>
-    <Setting Name="UseInternalPdfViewer" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+    <Setting Name="PdflatexInUse" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
-    <Setting Name="DefaultUseInternalPdflatex" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+    <Setting Name="PdflatexInternal" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">MiKTeX\miktex\bin\pdflatex</Value>
+    </Setting>
+    <Setting Name="PdfViewerInUse" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="PdflatexTimeoutDefault" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">20</Value>
+    </Setting>
+    <Setting Name="PdflatexExternal" Type="System.String" Scope="User">
+      <Value Profile="(Default)">pdflatex</Value>
+    </Setting>
+    <Setting Name="PdflatexTimeoutInUse" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="PdflatexTimeout" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">15</Value>
     </Setting>
   </Settings>
 </SettingsFile>

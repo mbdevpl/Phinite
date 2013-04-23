@@ -25,103 +25,112 @@ namespace Phinite.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string DefaultPdfViewerCommand {
+        [global::System.Configuration.DefaultSettingValueAttribute("SumatraPDF\\SumatraPDF.exe")]
+        public string PdfViewerInternal {
             get {
-                return ((string)(this["DefaultPdfViewerCommand"]));
+                return ((string)(this["PdfViewerInternal"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PdfViewer {
+            get {
+                return ((string)(this["PdfViewer"]));
+            }
+            set {
+                this["PdfViewer"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
+        public string Pdflatex {
+            get {
+                return ((string)(this["Pdflatex"]));
+            }
+            set {
+                this["Pdflatex"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int PdflatexInUse {
+            get {
+                return ((int)(this["PdflatexInUse"]));
+            }
+            set {
+                this["PdflatexInUse"] = value;
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("MiKTeX\\miktex\\bin\\pdflatex")]
-        public string DefaultInternalPdflatexCommand {
+        public string PdflatexInternal {
             get {
-                return ((string)(this["DefaultInternalPdflatexCommand"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool DefaultUseInternalPdfViewer {
-            get {
-                return ((bool)(this["DefaultUseInternalPdfViewer"]));
+                return ((string)(this["PdflatexInternal"]));
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string PdfViewerCommand {
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int PdfViewerInUse {
             get {
-                return ((string)(this["PdfViewerCommand"]));
+                return ((int)(this["PdfViewerInUse"]));
             }
             set {
-                this["PdfViewerCommand"] = value;
+                this["PdfViewerInUse"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public int PdflatexTimeoutDefault {
+            get {
+                return ((int)(this["PdflatexTimeoutDefault"]));
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
-        public string PdflatexCommand {
+        public string PdflatexExternal {
             get {
-                return ((string)(this["PdflatexCommand"]));
+                return ((string)(this["PdflatexExternal"]));
             }
             set {
-                this["PdflatexCommand"] = value;
+                this["PdflatexExternal"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool UseInternalPdflatex {
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int PdflatexTimeoutInUse {
             get {
-                return ((bool)(this["UseInternalPdflatex"]));
+                return ((int)(this["PdflatexTimeoutInUse"]));
             }
             set {
-                this["UseInternalPdflatex"] = value;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("SumatraPDF\\SumatraPDF.exe")]
-        public string DefaultInternalPdfViewerCommand {
-            get {
-                return ((string)(this["DefaultInternalPdfViewerCommand"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
-        public string DefaultPdflatexCommand {
-            get {
-                return ((string)(this["DefaultPdflatexCommand"]));
+                this["PdflatexTimeoutInUse"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool UseInternalPdfViewer {
+        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        public int PdflatexTimeout {
             get {
-                return ((bool)(this["UseInternalPdfViewer"]));
+                return ((int)(this["PdflatexTimeout"]));
             }
             set {
-                this["UseInternalPdfViewer"] = value;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool DefaultUseInternalPdflatex {
-            get {
-                return ((bool)(this["DefaultUseInternalPdflatex"]));
+                this["PdflatexTimeout"] = value;
             }
         }
     }

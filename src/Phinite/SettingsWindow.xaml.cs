@@ -1,16 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Phinite
 {
@@ -19,58 +8,115 @@ namespace Phinite
 	/// </summary>
 	public partial class SettingsWindow : Window, INotifyPropertyChanged
 	{
-		internal readonly Properties.Settings DefaultSettings;
-
-		public string DefaultInternalPdfViewer { get { return DefaultSettings.DefaultInternalPdfViewerCommand; } }
-
-		public string DefaultInternalPdflatex { get { return DefaultSettings.DefaultInternalPdflatexCommand; } }
+		private PhiniteSettings phi;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public string Pdflatex
+		public int PdflatexInUse
 		{
-			get { return pdflatex; }
+			get { return phi.Settings.PdflatexInUse; }
 			set
 			{
-				if (pdflatex == value)
+				if (phi.Settings.PdflatexInUse == value)
 					return;
-				pdflatex = value;
+				phi.Settings.PdflatexInUse = value;
+				InvokePropertyChanged("PdflatexInUse");
+			}
+		}
 
+		public string PdflatexInternal { get { return phi.Settings.PdflatexInternal; } }
+
+		public string PdflatexExternal { get { return phi.Settings.PdflatexExternal; } }
+
+		public string Pdflatex
+		{
+			get { return phi.Settings.Pdflatex; }
+			set
+			{
+				if (phi.Settings.Pdflatex.Equals(value))
+					return;
+				phi.Settings.Pdflatex = value;
 				InvokePropertyChanged("Pdflatex");
 			}
 		}
-		private string pdflatex;
+
+		public int PdflatexTimeoutInUse
+		{
+			get { return phi.Settings.PdflatexTimeoutInUse; }
+			set
+			{
+				if (phi.Settings.PdflatexTimeoutInUse == value)
+					return;
+				phi.Settings.PdflatexTimeoutInUse = value;
+				InvokePropertyChanged("PdflatexTimeoutInUse");
+			}
+		}
+
+		public int PdflatexTimeoutDefault { get { return phi.Settings.PdflatexTimeoutDefault; } }
+
+		public decimal PdflatexTimeout
+		{
+			get { return phi.Settings.PdflatexTimeout; }
+			set
+			{
+				if (phi.Settings.PdflatexTimeout == (int)value)
+					return;
+				phi.Settings.PdflatexTimeout = (int)value;
+				InvokePropertyChanged("PdflatexTimeout");
+			}
+		}
+
+		public int PdfViewerInUse
+		{
+			get { return phi.Settings.PdfViewerInUse; }
+			set
+			{
+				if (phi.Settings.PdfViewerInUse == value)
+					return;
+				phi.Settings.PdfViewerInUse = value;
+				InvokePropertyChanged("PdfViewerInUse");
+			}
+		}
+
+		public string PdfViewerInternal { get { return phi.Settings.PdfViewerInternal; } }
 
 		public string PdfViewer
 		{
-			get { return pdfViewer; }
+			get { return phi.Settings.PdfViewer; }
 			set
 			{
-				if (pdfViewer == value)
+				if (phi.Settings.PdfViewer.Equals(value))
 					return;
-				pdfViewer = value;
-
+				phi.Settings.PdfViewer = value;
 				InvokePropertyChanged("PdfViewer");
 			}
 		}
-		private string pdfViewer;
 
-		public SettingsWindow()
+		public SettingsWindow(PhiniteSettings settings)
 		{
+			phi = settings;
+
 			DataContext = this;
 
-			DefaultSettings = Properties.Settings.Default;
-
 			InitializeComponent();
-
-			Pdflatex = DefaultSettings.PdflatexCommand;
-			PdfViewer = DefaultSettings.PdfViewerCommand;
 		}
 
 		private void InvokePropertyChanged(string propertyName)
 		{
 			if (PropertyChanged != null)
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		private void ButtonOk_Click(object sender, RoutedEventArgs e)
+		{
+			DialogResult = true;
+			Close();
+		}
+
+		private void ButtonCancel_Click(object sender, RoutedEventArgs e)
+		{
+			DialogResult = false;
+			Close();
 		}
 
 	}

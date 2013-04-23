@@ -34,13 +34,7 @@
     <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GraphSharp">
-      <HintPath>..\..\lib\GraphSharp.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationFramework" />
-    <Reference Include="QuickGraph">
-      <HintPath>..\..\lib\QuickGraph.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -53,7 +47,6 @@
   <ItemGroup>
     <Compile Include="Extensions.cs" />
     <Compile Include="FiniteStateMachine.cs" />
-    <Compile Include="MachineLayoutAlgorithm.cs" />
     <Compile Include="MachineTransition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
