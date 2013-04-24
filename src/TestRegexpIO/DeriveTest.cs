@@ -13,37 +13,37 @@ namespace Phinite.Test
 		RegularExpression derivation;
 
 		[TestMethod]
-		public void Concatenation1_Test()
+		public void Concatenation_Test1()
 		{
 			ConstructAndDeriveRegexp("abc", "bc", "a");
 		}
 
 		[TestMethod]
-		public void Concatenation2_Test()
+		public void Concatenation_Test2()
 		{
 			ConstructAndDeriveRegexp("abc", null, "b");
 		}
 
 		[TestMethod]
-		public void Union1_Test()
+		public void Union_Test1()
 		{
 			ConstructAndDeriveRegexp("a+b+c", ".", "a");
 		}
 
 		[TestMethod]
-		public void Union2_Test()
+		public void Union_Test2()
 		{
 			ConstructAndDeriveRegexp("a+b+c", ".", "b");
 		}
 
 		[TestMethod]
-		public void Union3_Test()
+		public void Union_Test3()
 		{
 			ConstructAndDeriveRegexp("a+b+c", ".", "c");
 		}
 
 		[TestMethod]
-		public void Union4_Test()
+		public void Union_Test4()
 		{
 			ConstructAndDeriveRegexp("a+b+c", null, "d");
 		}

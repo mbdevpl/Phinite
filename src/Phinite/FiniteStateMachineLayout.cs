@@ -256,7 +256,7 @@ namespace Phinite
 
 			return null;
 		}
-		
+
 		private object RemoveOverlaps2()
 		{
 			OverlapRemovalParameters params2 = new OverlapRemovalParameters();
@@ -384,9 +384,7 @@ namespace Phinite
 					}
 
 					// check connected vertices
-					if (!transitions.Any(x => x.InitialStateId == key1 && x.ResultingStateId == key2)
-						//|| !transitions.Any(x => x.ResultingStateId == key1 && x.InitialStateId == key2)
-						)
+					if (!transitions.Any(x => x.InitialStateId == key1 && x.ResultingStateId == key2))
 						continue;
 
 					// check if any state is obstructed by the edge
@@ -398,12 +396,33 @@ namespace Phinite
 						double dist = vertices[key].DistanceToLine(p1, p2);
 
 						if (dist < 30)
-							nodesOnEdgesScore -= Math.Sqrt(30 - dist) * 2;
+							nodesOnEdgesScore -= Math.Sqrt(StateEllipseDiameter - dist);
 					}
 
-					// TODO: check if it intersects with any other edge
-				}
+					// TODO: check if the edge intersects with any other edge
+					var line = new LineGeometry(p1, p2);
+					foreach (var keyOther1 in vertices.Keys)
+						foreach (var keyOther2 in vertices.Keys)
+						{
+							if (keyOther1 == keyOther2)
+								continue;
+							if (keyOther1 == key1 || keyOther2 == key2 || keyOther1 == key2 || keyOther2 == key1)
+								continue;
+							//if (keyOther1 == key1 && keyOther2 == key2)
+							//	continue;
+							//if (keyOther1 == key2 && keyOther2 == key1)
+							//	continue;
+							if (!transitions.Any(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2))
+								continue;
 
+							var pOther1 = vertices[keyOther1];
+							var pOther2 = vertices[keyOther2];
+
+							//if (line.Intersects(new LineGeometry(pOther1, pOther2)))
+							if(Extensions.Intersects(p1, p2, pOther1, pOther2))
+								edgeIntersectionsScore -= 10;
+						}
+				}
 
 			return nodesDistanceScore + nodesOnEdgesScore + edgeIntersectionsScore;
 		}

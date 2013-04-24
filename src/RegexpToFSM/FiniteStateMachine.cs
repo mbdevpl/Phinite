@@ -1,17 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Linq;
-
-//using QuickGraph;
-//using QuickGraph.Algorithms;
-//using GraphSharp.Algorithms.Layout.Simple.Tree;
-//using GraphSharp.Algorithms.Layout.Simple.FDP;
-//using GraphSharp.Algorithms.Layout.Compound;
-//using GraphSharp.Algorithms.Layout.Compound.FDP;
-using System.Threading;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Phinite
@@ -42,7 +34,6 @@ namespace Phinite
 		/// <summary>
 		/// List of all expressions that need to be derived.
 		/// </summary>
-		//private List<RegularExpression> notDerived;
 		private List<int> notDerivedIds;
 
 		/// <summary>
@@ -67,6 +58,10 @@ namespace Phinite
 			}
 		}
 
+		/// <summary>
+		/// Collection of states added since last reading of this property,
+		/// useful only during construction phase.
+		/// </summary>
 		public ReadOnlyCollection<RegularExpression> LatestStates
 		{
 			get
@@ -103,6 +98,10 @@ namespace Phinite
 		}
 		private List<MachineTransition> transitions;
 
+		/// <summary>
+		/// Collection of transitions added since last reading of this property,
+		/// useful only during construction phase.
+		/// </summary>
 		public ReadOnlyCollection<MachineTransition> LatestTransitions
 		{
 			get
@@ -141,18 +140,33 @@ namespace Phinite
 		}
 		private List<int> acceptingStatesIds;
 
+		/// <summary>
+		/// Current state of fsm, valid only during word evaluation phase.
+		/// </summary>
 		public int CurrentState { get { return currentState; } }
 		private int currentState;
 
+		/// <summary>
+		/// Previous state of fsm, valid only during word evaluation phase.
+		/// </summary>
 		public int PreviousState { get { return previousState; } }
 		private int previousState;
 
+		/// <summary>
+		/// Whole evaluated input word, valid only during word evaluation phase.
+		/// </summary>
 		public string EvaluatedWordInput { get { return evaluatedWordInput; } }
 		private string evaluatedWordInput;
 
+		/// <summary>
+		/// Processed part of input word, valid only during word evaluation phase.
+		/// </summary>
 		public string EvaluatedWordProcessedFragment { get { return evaluatedWordProcessedFragment; } }
 		private string evaluatedWordProcessedFragment;
 
+		/// <summary>
+		/// Part of input word that was not processed yet, valid only during word evaluation phase.
+		/// </summary>
 		public string EvaluatedWordRemainingFragment { get { return evaluatedWordRemainingFragment; } }
 		private string evaluatedWordRemainingFragment;
 

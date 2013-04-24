@@ -43,10 +43,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\GraphSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Kent.Boogaart.Converters">
+    <Reference Include="Kent.Boogaart.Converters, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc96fa93a217f7a1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\Kent.Boogaart.Converters.dll</HintPath>
     </Reference>
-    <Reference Include="Kent.Boogaart.HelperTrinity">
+    <Reference Include="Kent.Boogaart.HelperTrinity, Version=1.1.0.0, Culture=neutral, PublicKeyToken=cc96fa93a217f7a1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\Kent.Boogaart.HelperTrinity.dll</HintPath>
     </Reference>
     <Reference Include="QuickGraph, Version=3.2.40122.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
@@ -75,6 +77,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Extensions.cs" />
     <Compile Include="IconHelper.cs" />
     <Compile Include="LatexWriter.cs" />
     <Compile Include="FiniteStateMachineLayout.cs" />

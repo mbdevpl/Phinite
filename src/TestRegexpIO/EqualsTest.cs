@@ -17,49 +17,49 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void Concatenation1_Test()
+		public void Concatenation_Test1()
 		{
 			ConstructAndCompareRegexp("aba", "aba", true);
 		}
 
 		[TestMethod]
-		public void Concatenation2_Test()
+		public void Concatenation_Test2()
 		{
 			ConstructAndCompareRegexp("aba", "abb", false);
 		}
 
 		[TestMethod]
-		public void Concatenation3_Test()
+		public void Concatenation_Test3()
 		{
 			ConstructAndCompareRegexp("aba", "abc", false);
 		}
 
 		[TestMethod]
-		public void Union1_Test()
+		public void Union_Test1()
 		{
 			ConstructAndCompareRegexp("a+b", "b+a", true);
 		}
 
 		[TestMethod]
-		public void Union2_Test()
+		public void Union_Test2()
 		{
 			ConstructAndCompareRegexp("a+b", "b+a+b", true);
 		}
 
 		[TestMethod]
-		public void Union3_Test()
+		public void Union_Test3()
 		{
 			ConstructAndCompareRegexp("a+b+.", "a+b", false);
 		}
 
 		[TestMethod]
-		public void Union4_Test()
+		public void Union_Test4()
 		{
 			ConstructAndCompareRegexp("a+b+c", "a+b", false);
 		}
 
 		[TestMethod]
-		public void Union5_Test()
+		public void Union_Test5()
 		{
 			ConstructAndCompareRegexp("a+b+c", "c+a+b", true);
 		}
@@ -77,25 +77,25 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void Parenthesis1_Test()
+		public void Parenthesis_Test1()
 		{
 			ConstructAndCompareRegexp("a(bc)", "(ab)c", true);
 		}
 
 		[TestMethod]
-		public void Parenthesis2_Test()
+		public void Parenthesis_Test2()
 		{
 			ConstructAndCompareRegexp("a+(b+c)", "(a+b)+c", true);
 		}
 
 		[TestMethod]
-		public void Parenthesis3_Test()
+		public void Parenthesis_Test3()
 		{
 			ConstructAndCompareRegexp("a(b+c)", "(a+b)c", false);
 		}
 
 		[TestMethod]
-		public void Parenthesis4_Test()
+		public void Parenthesis_Test4()
 		{
 			ConstructAndCompareRegexp("a+(bc)", "(ab)+c", false);
 		}

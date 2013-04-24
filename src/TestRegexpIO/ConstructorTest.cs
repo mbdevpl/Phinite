@@ -31,7 +31,7 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void InvalidInput1_Test()
+		public void InvalidInput_Test1()
 		{
 			ConstructRegexp("(", true);
 
@@ -42,7 +42,7 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void InvalidInput2_Test()
+		public void InvalidInput_Test2()
 		{
 			ConstructRegexp(")", true);
 
@@ -53,7 +53,7 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void InvalidInput3_Test()
+		public void InvalidInput_Test3()
 		{
 			ConstructRegexp("(()", true);
 
@@ -64,7 +64,7 @@ namespace Phinite.Test
 		}
 
 		[TestMethod]
-		public void InvalidInput4_Test()
+		public void InvalidInput_Test4()
 		{
 			ConstructRegexp("())", true);
 
