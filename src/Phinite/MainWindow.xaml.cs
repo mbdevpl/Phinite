@@ -38,6 +38,7 @@ namespace Phinite
 				{"Example from BA", "a(a+b)^*b"},
 				{"Example from TA", "a^+b^+ + ab^+c"},
 				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
+				{"4 long paths", "aaaaaaae+bbbbbbe+ccccce+dddde"},
 				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
 				{"Hard 2", "(a+.)^*b"},
 				{"Hard 3", "(a(a+.)b^*)^*"},

@@ -75,7 +75,7 @@ namespace Phinite
 		}
 
 		/// <summary>
-		/// Computes angle from this point to some other point. If the point are at the same location, zero is returned.
+		/// Computes angle from this point to some other point. If the point are at the same location, <code>Double.NaN</code> is returned.
 		/// </summary>
 		/// <param name="thisPoint"></param>
 		/// <param name="point"></param>
@@ -86,7 +86,9 @@ namespace Phinite
 			{
 				if (thisPoint.Y < point.Y)
 					return 180.0;
-				return 0.0;
+				if (thisPoint.Y > point.Y)
+					return 0.0;
+				return Double.NaN;
 			}
 			if (thisPoint.Y == point.Y)
 			{
@@ -94,7 +96,7 @@ namespace Phinite
 					return 90.0;
 				if (thisPoint.X > point.X)
 					return 270.0;
-				return 0.0;
+				return Double.NaN;
 			}
 
 			double distX = point.X - thisPoint.X;
@@ -104,6 +106,9 @@ namespace Phinite
 
 			//double degrees = Math.Atan(ratio) * RadiansToDegrees;
 			double degrees = Math.Atan2(distY, distX) * RadiansToDegrees + 90;
+
+			if (degrees < 0)
+				degrees += 360;
 
 			return degrees;
 		}

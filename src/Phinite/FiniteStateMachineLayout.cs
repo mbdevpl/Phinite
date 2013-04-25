@@ -23,7 +23,7 @@ namespace Phinite
 	{
 		#region style settings
 
-		private static readonly double TextBlockHeight = 20;
+		private static readonly double TextBlockHeight = 18;
 
 		private static readonly double StateEllipseDiameter = 32;
 
@@ -236,9 +236,8 @@ namespace Phinite
 			var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
 					graph, vertexSizes, vertexBorders, new Dictionary<string, CompoundVertexInnerLayoutType>());
 			algo4.Compute();
-			while (algo4.State != ComputationState.Finished)
-				Thread.Sleep(250);
-
+			//while (algo4.State != ComputationState.Finished)
+			//	Thread.Sleep(250);
 			return algo4.VertexPositions;
 		}
 
@@ -275,6 +274,7 @@ namespace Phinite
 		private void CreateEdges()
 		{
 			edges = new Dictionary<MachineTransition, Tuple<int, int>>();
+			bool loopsExist = false;
 
 			foreach (var transition in transitions)
 			{
@@ -283,37 +283,50 @@ namespace Phinite
 
 				if (idStart == idEnd)
 				{
-					int angle = 0;
-					// TODO: infer angle using other incoming and outgoing edges of this vertex
-
-					var angles = new Tuple<int, int>(angle, angle);
-					edges.Add(transition, angles);
+					loopsExist = true;
+					continue;
 				}
-				else
+
+				var start = vertices[idStart];
+				var end = vertices[idEnd];
+
+				int startAngle = 0;
+				int endAngle = 0;
+
+				startAngle = (int)start.Angle(end);
+				endAngle = startAngle + (startAngle >= 180 ? -180 : +180);
+
+				if (transitions.Any(x => x.InitialStateId == idEnd
+					&& x.ResultingStateId == idStart))
 				{
-					var start = vertices[idStart];
-					var end = vertices[idEnd];
-
-					int startAngle = 0;
-					int endAngle = 0;
-
-					if (transitions.Any(x => x.InitialStateId == idEnd
-						&& x.ResultingStateId == idStart))
-					{
-						startAngle = (int)start.Angle(end);
-						endAngle = startAngle + (startAngle >= 180 ? -180 : +180);
-						//(int)end.Angle(start);
-
-						startAngle += 10;
-						endAngle -= 10;
-					}
-
-					var angles = new Tuple<int, int>(startAngle, endAngle);
-					edges.Add(transition, angles);
+					startAngle += 10;
+					endAngle -= 10;
 				}
+
+				var angles = new Tuple<int, int>(startAngle, endAngle);
+				edges.Add(transition, angles);
+			}
+
+			if (!loopsExist)
+				return;
+
+			foreach (var transition in transitions)
+			{
+				int idStart = transition.InitialStateId;
+				int idEnd = transition.ResultingStateId;
+
+				if (idStart != idEnd)
+					continue;
+
+				int angle = (int)FindMostFreeAngle(idStart, true, true, 0);
+
+				var angles = new Tuple<int, int>(angle, angle);
+				edges.Add(transition, angles);
+
 			}
 		}
 
+		/*
 		private Dictionary<int, double> GetStatesTooCloseToEdge(Dictionary<int, Point> layout,
 			int stateId1, int stateId2, double threshold)
 		{
@@ -343,6 +356,7 @@ namespace Phinite
 			}
 			return results;
 		}
+		 */
 
 		/// <summary>
 		/// Returns a score of a given layout.
@@ -419,7 +433,7 @@ namespace Phinite
 							var pOther2 = vertices[keyOther2];
 
 							//if (line.Intersects(new LineGeometry(pOther1, pOther2)))
-							if(Extensions.Intersects(p1, p2, pOther1, pOther2))
+							if (Extensions.Intersects(p1, p2, pOther1, pOther2))
 								edgeIntersectionsScore -= 10;
 						}
 				}
@@ -432,26 +446,24 @@ namespace Phinite
 			int currentState, bool evaluationEnded)
 		{
 			var canvasContent = canvas.Children;
-
-			//var states = machine.States;
-			//var initial = machine.InitialState;
-			//var accepting = machine.AcceptingStates;
-			//var transitions = machine.Transitions;
-
 			canvasContent.Clear();
 
 			double maxX = 0;
 			double maxY = 0;
 
-			if (constructionMode && highlightedStates.Any(x => states.IndexOf(x) == 0))
-				DrawStartArrow(canvas, HighlightedEdgeBrush, HighlightedEdgeBorderBrush, vertices[0], 0);
-			else
-				DrawStartArrow(canvas, EdgeBrush, EdgeBorderBrush, vertices[0], 0);
+			//IEnumerable<MachineTransition> transitionsFromInitialState = transitions.Where(x => x.InitialStateId == 0);
+
+			{
+				double startAngle = FindMostFreeAngle(0, true, false, 315);
+
+				if (constructionMode && highlightedStates.Any(x => states.IndexOf(x) == 0))
+					DrawStartArrow(canvas, HighlightedEdgeBrush, HighlightedEdgeBorderBrush, vertices[0], startAngle);
+				else
+					DrawStartArrow(canvas, EdgeBrush, EdgeBorderBrush, vertices[0], startAngle);
+			}
 
 			string text = String.Empty;
 
-			//int i = 0;
-			//foreach (var pair in layout)
 			for (int i = 0; i < vertices.Count; ++i)
 			{
 				var location = vertices[i];
@@ -497,40 +509,71 @@ namespace Phinite
 					if (transition.Item3 == i)
 					{
 						// loop, i.e. directed edge to self
-						canvasContent.Add(letters);
+
+						double angle = edges[transition].Item1;
+
+						DrawLoop(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush, location, angle);
+
+						Point translatePoint = new Point().MoveTo(angle, LoopHeight);
+
+						if (angle > 90 && angle <= 270)
+							angle -= 180;
+
+						var rotateTransform = new RotateTransform(angle, letters.Width / 2, TextBlockHeight / 2);
+						var translateTransform = new TranslateTransform(translatePoint.X, translatePoint.Y);
+						var transforms = new TransformGroup();
+						transforms.Children.Add(rotateTransform);
+						transforms.Children.Add(translateTransform);
+						letters.RenderTransform = transforms;
+
 						Canvas.SetLeft(letters, location.X - letters.Width / 2);
-						Canvas.SetTop(letters, location.Y - StateEllipseDiameter - letters.Height);
-						Canvas.SetZIndex(letters, 0);
-
-						DrawLoop(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush, location, edges[transition].Item1);
-
-						continue;
-					}
-
-					// directed edge
-					Point endpoint = vertices[transition.Item3];
-
-					canvasContent.Add(letters);
-					Canvas.SetZIndex(letters, 0);
-
-					if (transitions.Any(x => x.InitialStateId == transition.ResultingStateId
-							&& x.ResultingStateId == transition.InitialStateId))
-					{
-						// TODO: set label coordinates properly
-						Canvas.SetLeft(letters, (location.X + endpoint.X) / 2 - letters.Width / 2);
-						Canvas.SetTop(letters, (location.Y + endpoint.Y) / 2 - (transition.Item3 > i ? 1 : 0) * (letters.Height));
-
-						DrawEdge(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush,
-							location, edges[transition].Item1, endpoint, edges[transition].Item2);
+						Canvas.SetTop(letters, location.Y - TextBlockHeight / 2);
 					}
 					else
 					{
-						// TODO: set label coordinates properly
-						Canvas.SetLeft(letters, (location.X + endpoint.X) / 2 - letters.Width / 2);
-						Canvas.SetTop(letters, (location.Y + endpoint.Y) / 2);
+						// normal edge
+						Point endpoint = vertices[transition.Item3];
 
-						DrawEdge(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush, location, endpoint);
+						double angle = location.Angle(endpoint) - 90;
+						Point translatePoint;
+
+						if (transitions.Any(x => x.InitialStateId == transition.ResultingStateId
+								&& x.ResultingStateId == transition.InitialStateId))
+						{
+							if (angle > 90 && angle <= 270)
+							{
+								angle -= 180;
+								translatePoint = new Point().MoveTo(angle, TextBlockHeight / 2 + 4);
+							}
+							else
+								translatePoint = new Point().MoveTo(angle, -TextBlockHeight / 2 - 4);
+
+							DrawEdge(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush,
+								location, edges[transition].Item1, endpoint, edges[transition].Item2);
+						}
+						else
+						{
+							DrawEdge(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush, location, endpoint);
+
+							if (angle > 90 && angle <= 270)
+								angle -= 180;
+							translatePoint = new Point().MoveTo(angle, TextBlockHeight / 2 - 2);
+						}
+
+						var rotateTransform = new RotateTransform(angle, letters.Width / 2, TextBlockHeight / 2);
+						var translateTransform = new TranslateTransform(translatePoint.X, translatePoint.Y);
+						var transforms = new TransformGroup();
+						transforms.Children.Add(rotateTransform);
+						transforms.Children.Add(translateTransform);
+						letters.RenderTransform = transforms;
+
+						Point middle = new Point((location.X + endpoint.X) / 2, (location.Y + endpoint.Y) / 2);
+
+						Canvas.SetLeft(letters, middle.X - letters.Width / 2);
+						Canvas.SetTop(letters, middle.Y - TextBlockHeight / 2);
 					}
+					canvasContent.Add(letters);
+					Canvas.SetZIndex(letters, 0);
 				}
 
 				Brush vertexBrush = null;
@@ -587,8 +630,55 @@ namespace Phinite
 
 				//++i;
 			}
-			canvas.Width = maxX + StateEllipseDiameter / 2 + 1;
-			canvas.Height = maxY + StateEllipseDiameter / 2 + 1;
+			canvas.Width = maxX + LayoutOffset;
+			canvas.Height = maxY + LayoutOffset;
+		}
+
+		private double FindMostFreeAngle(int stateId, bool checkOutboundEdges, bool checkInboundEdges, int defaultAngle)
+		{
+			var edgesFromInitialState = new List<KeyValuePair<MachineTransition, Tuple<int, int>>>();
+			if (checkOutboundEdges)
+				edgesFromInitialState.AddRange(edges.Where(x => x.Key.InitialStateId == stateId));
+
+			var edgesToInitialState = new List<KeyValuePair<MachineTransition, Tuple<int, int>>>();
+			if (checkInboundEdges)
+				edgesToInitialState.AddRange(edges.Where(x => x.Key.ResultingStateId == stateId));
+
+			int totalCount = edgesFromInitialState.Count + edgesToInitialState.Count;
+
+			if (totalCount == 0)
+				return defaultAngle;
+
+			if (totalCount == 1)
+			{
+				if (edgesFromInitialState.Count == 0)
+					return (edgesToInitialState[0].Value.Item2 + 180) % 360;
+				return (edgesFromInitialState[0].Value.Item1 + 180) % 360;
+			}
+
+			double angle = defaultAngle;
+
+			List<double> angles = new List<double>();
+			foreach (var edge in edgesFromInitialState)
+				angles.Add(edge.Value.Item1);
+			foreach (var edge in edgesToInitialState)
+				angles.Add(edge.Value.Item2);
+			angles.Sort();
+
+			var anglesDiffs = new List<double>(angles.Zip(angles.Skip(1), (x, y) => y - x));
+			anglesDiffs.Add(angles.First() + 360 - angles.Last());
+
+			int index = anglesDiffs.IndexOf(anglesDiffs.Max());
+			if (index == anglesDiffs.Count - 1)
+			{
+				angle = (angles[index] - 360 + angles[0]) / 2;
+				if (angle < 0)
+					angle += 360;
+			}
+			else
+				angle = (angles[index] + angles[index + 1]) / 2;
+
+			return angle;
 		}
 
 		public void Draw(Canvas canvas, IList<RegularExpression> highlightedStates,
@@ -616,45 +706,24 @@ namespace Phinite
 		{
 			var canvasContent = canvas.Children;
 
-			var initPt2 = new Point(StateEllipseDiameter, StateEllipseDiameter).MoveTo(new Point(), StateEllipseDiameter / 2);
+			Point start = new Point().MoveTo(angle, StateEllipseDiameter);
+			Point end = new Point().MoveTo(angle, StateEllipseDiameter / 2);
 
-			var poly = new ArrowLine();
-			poly.X1 = 0;
-			poly.Y1 = 0;
-			poly.X2 = initPt2.X;
-			poly.Y2 = initPt2.Y;
-
-			poly.ArrowEnds = ArrowEnds.End;
-			poly.ArrowLength = 10;
-			poly.ArrowAngle = 60;
-
-			poly.Stroke = brush;
-			poly.StrokeThickness = 1;
+			ArrowLine poly = MakeArrow(start, end, brush, 1);
 
 			canvasContent.Add(poly);
-			Canvas.SetLeft(poly, location.X - StateEllipseDiameter);
-			Canvas.SetTop(poly, location.Y - StateEllipseDiameter);
+			Canvas.SetLeft(poly, location.X);
+			Canvas.SetTop(poly, location.Y);
 			Canvas.SetZIndex(poly, -5);
 
 			if (borderBrush.Equals(Brushes.Transparent))
 				return;
 
-			poly = new ArrowLine();
-			poly.X1 = 0;
-			poly.Y1 = 0;
-			poly.X2 = initPt2.X;
-			poly.Y2 = initPt2.Y;
-
-			poly.ArrowEnds = ArrowEnds.End;
-			poly.ArrowLength = 10;
-			poly.ArrowAngle = 60;
-
-			poly.Stroke = borderBrush;
-			poly.StrokeThickness = 5;
+			poly = MakeArrow(start, end, borderBrush, 5);
 
 			canvasContent.Add(poly);
-			Canvas.SetLeft(poly, location.X - StateEllipseDiameter);
-			Canvas.SetTop(poly, location.Y - StateEllipseDiameter);
+			Canvas.SetLeft(poly, location.X);
+			Canvas.SetTop(poly, location.Y);
 			Canvas.SetZIndex(poly, -9);
 		}
 
@@ -967,6 +1036,25 @@ namespace Phinite
 			Canvas.SetLeft(arrow, 0);
 			Canvas.SetTop(arrow, 0);
 			Canvas.SetZIndex(arrow, -9);
+		}
+
+		private static ArrowLine MakeArrow(Point start, Point end,
+			Brush strokeBrush, double strokeThickness)
+		{
+			ArrowLine poly = new ArrowLine();
+			poly.X1 = start.X;
+			poly.Y1 = start.Y;
+			poly.X2 = end.X;
+			poly.Y2 = end.Y;
+
+			poly.ArrowEnds = ArrowEnds.End;
+			poly.ArrowLength = 10;
+			poly.ArrowAngle = 60;
+
+			poly.Stroke = strokeBrush;
+			poly.StrokeThickness = strokeThickness;
+
+			return poly;
 		}
 
 	}
