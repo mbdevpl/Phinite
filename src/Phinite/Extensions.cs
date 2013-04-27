@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 
 namespace Phinite
 {
+	/// <summary>
+	/// Various custom extension methods used throughout Phinite.
+	/// </summary>
 	public static class Extensions
 	{
 
@@ -179,18 +183,123 @@ namespace Phinite
 			var p21 = line.StartPoint;
 			var p22 = line.EndPoint;
 
-			return Intersects(p11, p12, p21, p22);
+			return CheckIfIntersects(p11, p12, p21, p22);
 		}
 
-		public static bool Intersects(Point p11, Point p12, Point p21, Point p22)
+		public static bool Intersects(this Point thisPoint, Point endPoint, Point otherStartPoint, Point otherEndPoint)
+		{
+			return CheckIfIntersects(thisPoint, endPoint, otherStartPoint, otherEndPoint);
+		}
+
+		private static bool CheckBoundsX(Point p1, Point p2, Point min, Point max)
+		{
+			// preliminary bounds are checked outside
+			//if (p1.X <= min.X || p1.X >= max.X)
+			//	return null;
+
+			double ratio = (max.Y - min.Y) / (max.X - min.X);
+
+			double d1 = max.Y - (max.X - p1.X) * ratio;
+			bool below = p1.Y > d1;
+
+			double d2 = max.Y - (max.X - p2.X) * ratio;
+			bool above = p2.Y < d2;
+
+			if (below != above)
+				return false;
+
+			if (p2.Equals(min) || p2.Equals(max))
+			{
+				// TODO: case that one endpoint is equal, but other lays on edge
+				return false;
+			}
+			else if (p2.X >= min.X && p2.X <= max.X)
+			{
+				return true;
+			}
+			else if (p2.X < min.X)
+			{
+				double ratioAlt = (p1.Y - min.Y) / (p1.X - min.X);
+
+				double dAlt = p1.Y - (p1.X - p2.X) * ratioAlt;
+				bool aboveAlt = p2.Y < dAlt;
+
+				if (below == aboveAlt)
+					return true;
+				else
+					return false;
+			}
+			else
+			{
+				double ratioAlt = (max.Y - p1.Y) / (max.X - p1.X);
+
+				double dAlt = max.Y - (max.X - p2.X) * ratioAlt;
+				bool aboveAlt = p2.Y < dAlt;
+
+				if (below == aboveAlt)
+					return true;
+				else
+					return false;
+			}
+
+			throw new ArgumentException("please checked preliminary bounds outside of this method");
+		}
+
+		private static bool CheckBoundsY(Point p1, Point p2, Point min, Point max)
+		{
+			// TODO: thic can probably be merged with CheckBoundsX
+
+			double ratio = (max.X - min.X) / (max.Y - min.Y);
+
+			double d1 = max.Y - p1.Y;
+			bool toRight = p1.X > max.X - d1 * ratio;
+
+			double d2 = max.Y - p2.Y;
+			bool toLeft = p2.X < max.X - d2 * ratio;
+
+			if (toRight != toLeft)
+				return false;
+
+			if (p2.Equals(min) || p2.Equals(max))
+			{
+				return false;
+			}
+			else if (p2.Y >= min.Y && p2.Y <= max.Y)
+			{
+				return true;
+			}
+			else if (p2.Y < min.Y)
+			{
+				double ratioAlt = (p1.X - min.X) / (p1.Y - min.Y);
+
+				double dAlt = p1.Y - p2.Y;
+				bool toLeftAlt = p2.X < p1.X - dAlt * ratioAlt;
+
+				if (toRight == toLeftAlt)
+					return true;
+				else
+					return false;
+			}
+			else
+			{
+				double ratioAlt = (max.X - p1.X) / (max.Y - p1.Y);
+
+				double dAlt = max.Y - p2.Y;
+				bool toLeftAlt = p2.X < max.X - dAlt * ratioAlt;
+
+				if (toRight == toLeftAlt)
+					return true;
+				else
+					return false;
+			}
+
+			throw new ArgumentException("please checked preliminary bounds outside of this method");
+		}
+
+		private static bool CheckIfIntersects(Point p11, Point p12, Point p21, Point p22)
 		{
 			var p1Min = new Point(Math.Min(p11.X, p12.X), Math.Min(p11.Y, p12.Y));
 			var p1Max = new Point(Math.Max(p11.X, p12.X), Math.Max(p11.Y, p12.Y));
-
-			var p1MinX = p1Min.X == p11.X ? p11 : p12;
-			var p1MinY = p1Min.Y == p11.Y ? p11 : p12;
-			var p1MaxX = p1Max.X == p11.X ? p11 : p12;
-			var p1MaxY = p1Max.Y == p11.Y ? p11 : p12;
 
 			var p2Min = new Point(Math.Min(p21.X, p22.X), Math.Min(p21.Y, p22.Y));
 			var p2Max = new Point(Math.Max(p21.X, p22.X), Math.Max(p21.Y, p22.Y));
@@ -198,199 +307,63 @@ namespace Phinite
 			if (p2Min.X > p1Max.X || p2Max.X < p1Min.X || p2Min.Y > p1Max.Y || p2Max.Y < p1Min.Y)
 				return false;
 
+			// TODO: DRY this code...
+
+			var p1MinX = p1Min.X == p11.X ? p11 : p12;
+			var p1MaxX = p1Max.X == p11.X ? p11 : p12;
+
 			if (p21.X > p1MinX.X && p21.X < p1MaxX.X)
-			{
-				double ratio = (p1MaxX.Y - p1MinX.Y) / (p1MaxX.X - p1MinX.X);
-
-				double d1 = p1MaxX.X - p21.X;
-				bool below = p21.Y > p1MaxX.Y - d1 * ratio;
-
-				double d2 = p1MaxX.X - p22.X;
-				bool above = p22.Y < p1MaxX.Y - d2 * ratio;
-
-				if (below != above)
-					return false;
-
-				if (p22.X >= p1MinX.X && p22.X <= p1MaxX.X)
-				{
-					return true;
-				}
-				else if (p22.X < p1MinX.X)
-				{
-					double ratioAlt = (p21.Y - p1MinX.Y) / (p21.X - p1MinX.X);
-
-					double dAlt = p21.X - p22.X;
-					bool aboveAlt = p22.Y < p21.Y - dAlt * ratioAlt;
-
-					if (below == aboveAlt)
-						return true;
-					else
-						return false;
-				}
-				else
-				{
-					double ratioAlt = (p1MaxX.Y - p21.Y) / (p1MaxX.X - p21.X);
-
-					double dAlt = p1MaxX.X - p22.X;
-					bool aboveAlt = p22.Y < p1MaxX.Y - dAlt * ratioAlt;
-
-					if (below == aboveAlt)
-						return true;
-					else
-						return false;
-				}
-			}
-
-			if (p21.Y > p1MinY.Y && p21.Y < p1MaxY.Y)
-			{
-				double ratio = (p1MaxY.X - p1MinY.X) / (p1MaxY.Y - p1MinY.Y);
-
-				double d1 = p1MaxY.Y - p21.Y;
-				bool toRight = p21.X > p1MaxY.X - d1 * ratio;
-
-				double d2 = p1MaxY.Y - p22.Y;
-				bool toLeft = p22.X < p1MaxY.X - d2 * ratio;
-
-				if (toRight != toLeft)
-					return false;
-
-				if (p22.Y >= p1MinY.Y && p22.Y <= p1MaxY.Y)
-				{
-					return true;
-				}
-				else if (p22.Y < p1MinY.Y)
-				{
-					double ratioAlt = (p21.X - p1MinY.X) / (p21.Y - p1MinY.Y);
-
-					double dAlt = p21.Y - p22.Y;
-					bool toLeftAlt = p22.X < p21.X - dAlt * ratioAlt;
-
-					if (toRight == toLeftAlt)
-						return true;
-					else
-						return false;
-				}
-				else
-				{
-					double ratioAlt = (p1MaxY.X - p21.X) / (p1MaxY.Y - p21.Y);
-
-					double dAlt = p1MaxY.Y - p22.Y;
-					bool toLeftAlt = p22.X < p1MaxX.X - dAlt * ratioAlt;
-
-					if (toRight == toLeftAlt)
-						return true;
-					else
-						return false;
-				}
-			}
+				return CheckBoundsX(p21, p22, p1MinX, p1MaxX);
 
 			if (p22.X > p1MinX.X && p22.X < p1MaxX.X)
-			{
-				double ratio = (p1MaxX.Y - p1MinX.Y) / (p1MaxX.X - p1MinX.X);
+				return CheckBoundsX(p22, p21, p1MinX, p1MaxX);
 
-				double d2 = p1MaxX.X - p22.X;
-				bool below = p22.Y > p1MaxX.Y - d2 * ratio;
+			var p1MinY = p1Min.Y == p11.Y ? p11 : p12;
+			var p1MaxY = p1Max.Y == p11.Y ? p11 : p12;
 
-				double d1 = p1MaxX.X - p21.X;
-				bool above = p21.Y < p1MaxX.Y - d1 * ratio;
-
-				if (below != above)
-					return false;
-
-				if (p21.X >= p1MinX.X && p21.X <= p1MaxX.X)
-				{
-					return true;
-				}
-				else if (p21.X < p1MinX.X)
-				{
-					double ratioAlt = (p22.Y - p1MinX.Y) / (p22.X - p1MinX.X);
-
-					double dAlt = p22.X - p21.X;
-					bool aboveAlt = p21.Y < p22.Y - dAlt * ratioAlt;
-
-					if (below == aboveAlt)
-						return true;
-					else
-						return false;
-				}
-				else
-				{
-					double ratioAlt = (p1MaxX.Y - p22.Y) / (p1MaxX.X - p22.X);
-
-					double dAlt = p1MaxX.X - p21.X;
-					bool aboveAlt = p21.Y < p1MaxX.Y - dAlt * ratioAlt;
-
-					if (below == aboveAlt)
-						return true;
-					else
-						return false;
-				}
-			}
+			if (p21.Y > p1MinY.Y && p21.Y < p1MaxY.Y)
+				return CheckBoundsY(p21, p22, p1MinY, p1MaxY);
 
 			if (p22.Y > p1MinY.Y && p22.Y < p1MaxY.Y)
-			{
-				double ratio = (p1MaxY.X - p1MinY.X) / (p1MaxY.Y - p1MinY.Y);
+				return CheckBoundsY(p22, p21, p1MinY, p1MaxY);
 
-				double d2 = p1MaxY.Y - p22.Y;
-				bool toRight = p22.X > p1MaxY.X - d2 * ratio;
+			var p2MinX = p2Min.X == p21.X ? p21 : p22;
+			var p2MaxX = p2Max.X == p21.X ? p21 : p22;
 
-				double d1 = p1MaxY.Y - p21.Y;
-				bool toLeft = p21.X < p1MaxY.X - d1 * ratio;
+			if (p11.X > p2MinX.X && p11.X < p2MaxX.X)
+				return CheckBoundsX(p11, p12, p2MinX, p2MaxX);
 
-				if (toRight != toLeft)
-					return false;
+			if (p12.X > p2MinX.X && p12.X < p2MaxX.X)
+				return CheckBoundsX(p12, p11, p2MinX, p2MaxX);
 
-				if (p21.Y >= p1MinY.Y && p21.Y <= p1MaxY.Y)
-				{
-					return true;
-				}
-				else if (p21.Y < p1MinY.Y)
-				{
-					double ratioAlt = (p22.X - p1MinY.X) / (p22.Y - p1MinY.Y);
+			var p2MinY = p2Min.Y == p21.Y ? p21 : p22;
+			var p2MaxY = p2Max.Y == p21.Y ? p21 : p22;
 
-					double dAlt = p22.Y - p21.Y;
-					bool toLeftAlt = p21.X < p22.X - dAlt * ratioAlt;
+			if (p11.Y > p2MinY.Y && p11.Y < p2MaxY.Y)
+				return CheckBoundsX(p11, p12, p2MinY, p2MaxY);
 
-					if (toRight == toLeftAlt)
-						return true;
-					else
-						return false;
-				}
-				else
-				{
-					double ratioAlt = (p1MaxY.X - p22.X) / (p1MaxY.Y - p22.Y);
+			if (p12.Y > p2MinY.Y && p12.Y < p2MaxY.Y)
+				return CheckBoundsX(p12, p11, p2MinY, p2MaxY);
 
-					double dAlt = p1MaxY.Y - p21.Y;
-					bool toLeftAlt = p21.X < p1MaxX.X - dAlt * ratioAlt;
+			if ((p11.Equals(p21) && p12.Equals(p22)) || (p11.Equals(p22) && p12.Equals(p21)))
+				return true;
 
-					if (toRight == toLeftAlt)
-						return true;
-					else
-						return false;
-				}
-			}
-
-			return Intersects(p21, p22, p11, p12);
-
-			//var p2MinX = p2Min.X == p21.X ? p21 : p22;
-			//var p2MinY = p2Min.Y == p21.Y ? p21 : p22;
-			//var p2MaxX = p2Max.X == p21.X ? p21 : p22;
-			//var p2MaxY = p2Max.Y == p21.Y ? p21 : p22;
-
-			//if ((p1MinX.Y > p1MaxX.Y && p2MinX.Y < p2MaxX.Y) || (p1MinX.Y < p1MaxX.Y && p2MinX.Y > p2MaxX.Y))
+			//if (p11.Equals(p21) || p11.Equals(p22) || p12.Equals(p21) || p12.Equals(p22))
 			//	return true;
 
-			//if (p21.X <= p1MinX.X)
-			//{
-				//if(p21.Y <= p1MinX.Y)
-			//}
-			//else if (p21.X >= p1Max.X)
-			//{
-			//}
+			return false;
 
 			//throw new NotImplementedException("Not all cases of line intersection are handled");
 		}
 
-	}
+		public static Point FindIntersection(this Point thisPoint, Point endPoint,
+			Point otherLineStartPoint, Point otherLineEndPoint, bool intersectionExistsForSure)
+		{
+			if(intersectionExistsForSure || thisPoint.Intersects(endPoint, otherLineStartPoint, otherLineEndPoint))
+				return thisPoint.Copy().MoveTo(endPoint, thisPoint.DistanceToLine(otherLineStartPoint, otherLineEndPoint, false));
 
+			throw new InvalidOperationException("these lines do not intersect");
+		}
+
+	}
 }

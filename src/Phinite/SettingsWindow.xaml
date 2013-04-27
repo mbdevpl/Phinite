@@ -4,19 +4,49 @@
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
 		xmlns:ex="http://schemas.xceed.com/wpf/xaml/toolkit"
 		xmlns:con="http://schemas.kent.boogaart.com/converters"
-		Title="Phinite Settings" Height="350" Width="400"
+		Title="Phinite Settings" Height="420" Width="400"
 		WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
 	<Window.Resources>
+		<Style TargetType="StackPanel">
+			<Setter Property="Margin" Value="5,0,5,0" />
+		</Style>
 		<Style TargetType="RadioButton">
-			<Setter Property="Margin" Value="2,0,0,0" />
+			<!--<Setter Property="Margin" Value="0,0,0,0" />-->
+			<Setter Property="Width" Value="150" />
+			<Setter Property="Grid.Column" Value="0" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
+		<!--<Style TargetType="RadioButton" x:Key="RadioButton0">
+			<Setter Property="IsChecked">
+				<Setter.Value>
+					<Binding Path="LayoutCreationFrequencyInUse">
+						<Binding.Converter>
+							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+								<con:Mapping>
+									<con:Mapping.From>
+										<sys:Int32>0</sys:Int32>
+									</con:Mapping.From>
+									<con:Mapping.To>
+										<sys:Boolean>True</sys:Boolean>
+									</con:Mapping.To>
+								</con:Mapping>
+							</con:MapConverter>
+						</Binding.Converter>
+					</Binding>
+				</Setter.Value>
+			</Setter>
+		</Style>-->
 		<Style TargetType="TextBox">
-			<Setter Property="Margin" Value="3,0,2,2" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="Grid.Column" Value="1" />
+		</Style>
+		<Style TargetType="ex:DecimalUpDown">
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="Grid.Column" Value="1" />
 		</Style>
 		<Style TargetType="Button">
 			<Setter Property="Margin" Value="5,5,5,5" />
-			<Setter Property="Padding" Value="10,0,10,0" />
+			<Setter Property="Padding" Value="15,0,15,0" />
 		</Style>
 		<Style TargetType="Label">
 			<Setter Property="FontWeight" Value="Bold" />
@@ -24,192 +54,250 @@
 	</Window.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
 			<RowDefinition />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<Grid>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="Auto" />
-				<ColumnDefinition />
-			</Grid.ColumnDefinitions>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-			</Grid.RowDefinitions>
-
-			<Label Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Content="LaTeX" />
-
-			<!--<TextBlock Grid.Column="0" Grid.ColumnSpan="2"  Grid.Row="1" Text="pdflatex location" />-->
-			<RadioButton Grid.Column="0" Grid.Row="2" Content="default, internal" GroupName="pdflatex">
-				<RadioButton.IsChecked>
-					<Binding Path="PdflatexInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>0</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="2" Text="{Binding PdflatexInternal, Mode=OneWay}" IsEnabled="False" />
-			<RadioButton Grid.Column="0" Grid.Row="3" Content="default, external location" GroupName="pdflatex">
-				<RadioButton.IsChecked>
-					<Binding Path="PdflatexInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>1</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="3" Text="{Binding PdflatexExternal, Mode=OneWay}" IsEnabled="False" />
-			<RadioButton Grid.Column="0" Grid.Row="4" Content="custom location" GroupName="pdflatex">
-				<RadioButton.IsChecked>
-					<Binding Path="PdflatexInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>2</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="4" Text="{Binding Pdflatex}" />
-
-			<Label Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" Content="LaTeX timeout" />
-			<RadioButton Grid.Column="0" Grid.Row="6" Content="default timeout" GroupName="pdflatextimeout">
-				<RadioButton.IsChecked>
-					<Binding Path="PdflatexTimeoutInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>0</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<ex:DecimalUpDown Grid.Column="1" Grid.Row="6" Value="{Binding PdflatexTimeoutDefault, Mode=OneWay}" IsEnabled="False" />
-			<RadioButton Grid.Column="0" Grid.Row="7" Content="custom timeout" GroupName="pdflatextimeout">
-				<RadioButton.IsChecked>
-					<Binding Path="PdflatexTimeoutInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>1</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<ex:DecimalUpDown Grid.Column="1" Grid.Row="7" Value="{Binding PdflatexTimeout}" Minimum="0" Maximum="600" />
-
-			<Label Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="8" Content="PDF viewer" />
-
-			<RadioButton Grid.Column="0" Grid.Row="9" Content="default internal viewer" GroupName="pdfviewer">
-				<RadioButton.IsChecked>
-					<Binding Path="PdfViewerInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>0</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="9" Text="{Binding PdfViewerInternal, Mode=OneWay}" IsEnabled="False" />
-			<RadioButton Grid.Column="0" Grid.Row="10" Content="system default viewer" GroupName="pdfviewer">
-				<RadioButton.IsChecked>
-					<Binding Path="PdfViewerInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>1</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="10" Text="" IsEnabled="False" />
-			<RadioButton Grid.Column="0" Grid.Row="11" Content="custom viewer" GroupName="pdfviewer">
-				<RadioButton.IsChecked>
-					<Binding Path="PdfViewerInUse">
-						<Binding.Converter>
-							<con:MapConverter FallbackBehavior="ReturnUnsetValue">
-								<con:Mapping>
-									<con:Mapping.From>
-										<sys:Int32>2</sys:Int32>
-									</con:Mapping.From>
-									<con:Mapping.To>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.To>
-								</con:Mapping>
-							</con:MapConverter>
-						</Binding.Converter>
-					</Binding>
-				</RadioButton.IsChecked>
-			</RadioButton>
-			<TextBox Grid.Column="1" Grid.Row="11" Text="{Binding PdfViewer}" />
-
-		</Grid>
-		<StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
+		<StackPanel>
+			<Label Content="Machine creation in immediate mode:&#013;  layout creation frequency" />
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<RadioButton Grid.Row="0" Content="default frequency">
+					<!-- Style="{StaticResource RadioButton0}" -->
+					<RadioButton.IsChecked>
+						<Binding Path="LayoutCreationFrequencyInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>0</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<ex:DecimalUpDown Grid.Row="0" Value="{Binding LayoutCreationFrequencyDefault, Mode=OneWay}" IsEnabled="False" />
+				<RadioButton Grid.Row="1" Content="custom frequency">
+					<RadioButton.IsChecked>
+						<Binding Path="LayoutCreationFrequencyInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>1</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<ex:DecimalUpDown Grid.Row="1" Value="{Binding LayoutCreationFrequency}" Minimum="1" Maximum="50" />
+			</Grid>
+			<Label Content="LaTeX: location of pdflatex executable" />
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<RadioButton Grid.Row="0" Content="default, internal" GroupName="pdflatex">
+					<RadioButton.IsChecked>
+						<Binding Path="PdflatexInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>0</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="0" Text="{Binding PdflatexInternal, Mode=OneWay}" IsEnabled="False" />
+				<RadioButton Grid.Row="1" Content="default, external location" GroupName="pdflatex">
+					<RadioButton.IsChecked>
+						<Binding Path="PdflatexInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>1</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="1" Text="{Binding PdflatexExternal, Mode=OneWay}" IsEnabled="False" />
+				<RadioButton Grid.Row="2" Content="custom location" GroupName="pdflatex">
+					<RadioButton.IsChecked>
+						<Binding Path="PdflatexInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>2</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="2" Text="{Binding Pdflatex}" />
+			</Grid>
+			<Label Content="LaTeX: pdflatex process timeout" />
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<RadioButton Grid.Row="0" Content="default timeout" GroupName="pdflatextimeout">
+					<RadioButton.IsChecked>
+						<Binding Path="PdflatexTimeoutInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>0</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<ex:DecimalUpDown Grid.Row="0" Value="{Binding PdflatexTimeoutDefault, Mode=OneWay}" IsEnabled="False" />
+				<RadioButton Grid.Row="1" Content="custom timeout" GroupName="pdflatextimeout">
+					<RadioButton.IsChecked>
+						<Binding Path="PdflatexTimeoutInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>1</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<ex:DecimalUpDown Grid.Row="1" Value="{Binding PdflatexTimeout}" Minimum="0" Maximum="600" />
+			</Grid>
+			<Label Content="PDF viewer: location of the executable" />
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<RadioButton Grid.Row="0" Content="default internal viewer" GroupName="pdfviewer">
+					<RadioButton.IsChecked>
+						<Binding Path="PdfViewerInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>0</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="0" Text="{Binding PdfViewerInternal, Mode=OneWay}" IsEnabled="False" />
+				<RadioButton Grid.Row="1" Content="system default viewer" GroupName="pdfviewer">
+					<RadioButton.IsChecked>
+						<Binding Path="PdfViewerInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>1</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="1" Text="" IsEnabled="False" />
+				<RadioButton Grid.Row="2" Content="custom viewer" GroupName="pdfviewer">
+					<RadioButton.IsChecked>
+						<Binding Path="PdfViewerInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>2</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBox Grid.Row="2" Text="{Binding PdfViewer}" />
+			</Grid>
+		</StackPanel>
+		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
 			<Button Content="Ok" Click="ButtonOk_Click" />
 			<Button Content="Cancel" Click="ButtonCancel_Click" />
 		</StackPanel>

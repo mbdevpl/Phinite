@@ -39,14 +39,17 @@ namespace Phinite
 				{"Example from TA", "a^+b^+ + ab^+c"},
 				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
 				{"4 long paths", "aaaaaaae+bbbbbbe+ccccce+dddde"},
-				{"Hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
-				{"Hard 2", "(a+.)^*b"},
-				{"Hard 3", "(a(a+.)b^*)^*"},
-				{"Hard 4", "(ab^*)^*"},
-				{"Hard 5", "(((b)^*)((a((b)^*))^*))"},
-				{"Harder", "(f+ef+def+cdef+bcdef+abcdef)^*"},
+				{"Seemingly hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
+				{"Seemingly hard 2", "(f+ef+def+cdef+bcdef+abcdef)^*"},
+				{"Seemingly hard 3", "(a+.)^*b"},
+				{"Seemingly hard 4", "(ab^*)^*"},
+				{"Hard", "(((b)^*)((a((b)^*))^*))"},
+				{"Pseudo e-mail", "(a+b+c+d+e+f+g+h+i+m+l+u+v+w+x+y+z)^+@(a+b+c+d+e+f+g+h+i+m+l+u+v+w+x+y+z)^+_(pl+eu+com+org+net)"},
+				{"Yay!", "(A^+B^*C^+D^*E^+F^*G^+H^*I^+J^*K^+L^*M^+N^*O^+P^*R^+S^*T^+U^*V^+W^*X^+Y^*Z^+)^*"},
+				{"Mess!", "(A^+B^*C^*D^*E^*F^*G^*H^*I^*J^*K^*L^*M^*N^*O^*P^*R^*S^+T^*U^*V^*W^*X^*Y^*Z^*)^*"},
 				{"Infinite loop", "(a^*a)^*"},
-				{"Max processor use test", "0+(1+2+3+4+5+6+7+8+9)(((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*(0+1+2+3+4+5+6+7+8+9))^*(0+1+2+3+4+5+6+7+8+9)^*"},
+				{"Infinite loop 2", "(a(a+.)b^*)^*"},
+				{"Max processor use test", "0+(1+2+3+4+5+6+7+8+9)((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 				
 			};
@@ -60,8 +63,9 @@ namespace Phinite
 
 		private bool stepByStep;
 
-		PhiniteSettings settings;
+		private PhiniteSettings settings;
 
+		private int layoutAge = 0;
 		private FiniteStateMachineLayout fsmLayout = null;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -82,7 +86,7 @@ namespace Phinite
 					PropertyChanged(this, new PropertyChangedEventArgs("InputRegexpText"));
 			}
 		}
-		private string inputRegexpText = Examples["Hard 3"];
+		private string inputRegexpText = Examples["Yay!"];
 
 		/// <summary>
 		/// Plain text that represents a preprocessed (validated and optimized) regular expression.
@@ -118,7 +122,7 @@ namespace Phinite
 					PropertyChanged(this, new PropertyChangedEventArgs("InputWordText"));
 			}
 		}
-		private string inputWordText = String.Empty;
+		private string inputWordText = "ABCDEFGHIJKLMNOPRSTUVWXYZ";
 
 		public string ProcessedWordFragmentText
 		{
@@ -265,6 +269,7 @@ namespace Phinite
 
 					MenuMain.IsEnabled = true;
 					MenuExamples.IsEnabled = true;
+					OptionSettings.IsEnabled = true;
 
 					switch (newUiState)
 					{
@@ -383,6 +388,7 @@ namespace Phinite
 								OptionBackToInput.IsEnabled = false;
 								OptionBackToFSM.IsEnabled = false;
 								OptionGeneratePDF.IsEnabled = false;
+								OptionEvaluateFromLatex.IsEnabled = false;
 							} break;
 						default:
 							{
@@ -391,6 +397,7 @@ namespace Phinite
 								OptionBackToInput.IsEnabled = true;
 								OptionBackToFSM.IsEnabled = true;
 								OptionGeneratePDF.IsEnabled = true;
+								OptionEvaluateFromLatex.IsEnabled = true;
 							} break;
 					}
 				}
@@ -534,16 +541,16 @@ namespace Phinite
 
 		private void WindowInitializationWorker()
 		{
-			foreach (string key in Examples.Keys)
+			Dispatcher.BeginInvoke((Action)delegate
 			{
-				Dispatcher.BeginInvoke((Action)delegate
+				foreach (var example in Examples)
 				{
 					var item = new MenuItem();
-					item.Header = key;
+					item.Header = String.Format("{0}, \"{1}\"", example.Key, example.Value);
 					item.Click += OptionExample_Click;
 					MenuExamples.Items.Add(item);
-				});
-			}
+				}
+			});
 
 			{
 				// dummy calls to force dll load
@@ -634,6 +641,8 @@ namespace Phinite
 				return;
 			}
 
+			layoutAge = settings.LayoutCreationFrequency;
+
 			Dispatcher.BeginInvoke((Action)delegate
 			{
 				foreach (DataGridColumn column in DataGridForStates.Columns)
@@ -685,6 +694,7 @@ namespace Phinite
 			ReadOnlyCollection<RegularExpression> latestStates = null;
 			ReadOnlyCollection<MachineTransition> latestTransitions = null;
 			FiniteStateMachineLayout layout = null;
+			bool constructionFinished = false;
 			lock (regexpAndFsmLock)
 			{
 				if (CheckIfComputationAbortedAndDealWithIt(fsm))
@@ -694,23 +704,41 @@ namespace Phinite
 				states = fsm.States;
 				transitions = fsm.Transitions;
 
-				latestStates = fsm.LatestStates;
-				latestTransitions = fsm.LatestTransitions;
+				constructionFinished = fsm.IsConstructionFinished();
 
-				layout = new FiniteStateMachineLayout(fsm);
+				if (stepByStep || layoutAge == settings.LayoutCreationFrequency || constructionFinished)
+				{
+
+					latestStates = fsm.LatestStates;
+					latestTransitions = fsm.LatestTransitions;
+
+					layout = new FiniteStateMachineLayout(fsm);
+				}
 			}
 
-			layout.Create();
-
-			Dispatcher.BeginInvoke((Action)delegate
+			//do not create everytime in case of "immediate solution", rather every N steps
+			if (stepByStep || layoutAge == settings.LayoutCreationFrequency || constructionFinished)
 			{
-				lock (regexpAndFsmLock)
+				//TODO: abort layout creation on computation abort
+				layout.Create();
+
+				Dispatcher.BeginInvoke((Action)delegate
 				{
-					if (CheckIfComputationAbortedAndDealWithIt(fsm))
-						return;
-				}
-				layout.Draw(ConstructedMachineCanvas, latestStates, latestTransitions);
-			});
+					lock (regexpAndFsmLock)
+					{
+						if (CheckIfComputationAbortedAndDealWithIt(fsm))
+							return;
+					}
+					layout.Draw(ConstructedMachineCanvas, latestStates, latestTransitions);
+				});
+			}
+			if (!stepByStep)
+			{
+				if (layoutAge < settings.LayoutCreationFrequency)
+					++layoutAge;
+				else
+					layoutAge = 1;
+			}
 
 			var data = new List<Tuple<RegularExpression, string, string>>();
 			int i = 0;
@@ -746,7 +774,7 @@ namespace Phinite
 				if (CheckIfComputationAbortedAndDealWithIt(fsm))
 					return;
 
-				if (fsm.IsConstructionFinished())
+				if (constructionFinished)
 				{
 					fsmLayout = layout;
 
@@ -981,7 +1009,8 @@ namespace Phinite
 			if (sender is HeaderedItemsControl == false)
 				return;
 			var item = (HeaderedItemsControl)sender;
-			InputRegexpText = Examples[item.Header.ToString()];
+			var itemHeaderString = item.Header.ToString();
+			InputRegexpText = Examples[itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""))];
 		}
 
 		private void OptionSettings_Click(object sender, RoutedEventArgs e)
@@ -999,21 +1028,28 @@ namespace Phinite
 
 			s.AppendLine("Implemented in WPF by Mateusz Bysiek.");
 			s.AppendLine();
-			s.AppendLine("To work properly, this application needs:");
-			s.AppendLine("- Windows 7 operating system");
-			s.AppendLine("- .NET 4.0 framework, full profile");
-			s.AppendLine("- any LaTeX distibution with required packages");
-			s.AppendLine("- any PDF viewer");
+
+			s.AppendLine("To work properly, this application needs:")
+				.AppendLine("- Windows 7 operating system")
+				.AppendLine("- .NET 4.0 framework, full profile")
+				.AppendLine("- any LaTeX distibution with required packages")
+				.AppendLine("- any PDF viewer");
 			s.AppendLine();
-			s.AppendLine("LaTeX packages required:");
-			s.AppendLine("- l3kernel");
-			s.AppendLine("- preprint");
-			s.AppendLine("- pgf");
-			s.AppendLine("- hm");
-			s.AppendLine("- hs");
-			s.AppendLine("- xcolor");
+
+			s.AppendLine("LaTeX packages required:")
+				.AppendLine("- l3kernel")
+				.AppendLine("- preprint")
+				.AppendLine("- pgf")
+				.AppendLine("- hm")
+				.AppendLine("- hs")
+				.AppendLine("- xcolor");
+			s.AppendLine();
+
+			s.Append("Modern multi-core processor is recommended,")
+				.AppendLine(" also up to several GB of memory\nis needed in case of some complicated expressions.");
 
 			new MessageFrame(this, "About Phinite", "Information about Phinite", s.ToString(), PhiImage.Source).ShowDialog();
+			//ShowMessageFrame("Phinite", "Missing content", "technical analysis file was not found", false);
 		}
 
 		private void OptionViewBA_Click(object sender, RoutedEventArgs e)
@@ -1024,7 +1060,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame(this, "Phinite", "Missing content", "business analysis file was not found").ShowDialog();
+				ShowMessageFrame("Phinite", "Missing content", "business analysis file was not found", false);
 			}
 		}
 
@@ -1036,12 +1072,20 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				new MessageFrame(this, "Phinite", "Missing content", "technical analysis file was not found").ShowDialog();
+				ShowMessageFrame("Phinite", "Missing content", "technical analysis file was not found", false);
 			}
 		}
 
 		private void OptionViewUserGuide_Click(object sender, RoutedEventArgs e)
 		{
+			try
+			{
+				Process.Start("bysiekm-phinite-userguide.pdf");
+			}
+			catch (Win32Exception)
+			{
+				ShowMessageFrame("Phinite", "Missing content", "user guide file was not found", false);
+			}
 		}
 
 		private void OptionExit_Click(object sender, RoutedEventArgs e)
@@ -1195,7 +1239,47 @@ namespace Phinite
 			s.Append("\" -  parentheses\n\n");
 			s.Append("If you are unsure, load one of the example expressions to see how it works.");
 
-			new MessageFrame(this, "Phinite information", "Regular expression input", s.ToString()).ShowDialog();
+			ShowMessageFrame("Phinite information", "Regular expression input", s.ToString(), false);
+		}
+
+		private void Info_ParseTree(object sender, RoutedEventArgs e)
+		{
+			var s = new StringBuilder();
+
+			s.Append("This screen presents a parse tree and two versions of the input regular expression above it.");
+			s.Append(" If you check that the second, (\"").Append("Validated and optimized input")
+				.Append("\"), has the same meaning as you intended, you may safely continue.");
+			s.Append("\n\n");
+
+			s.Append("If not, please cancel the computation and enter the expression in such way that it is properly understood by the program.");
+
+			s.Append(" Please remember to follow the rules of regular expression operators precedence, use special symbols properly, etc.");
+
+			ShowMessageFrame("Phinite information", "Parse tree: first interpretation of the input", s.ToString(), false);
+		}
+
+		private void Info_MachineConstruction(object sender, RoutedEventArgs e)
+		{
+			var s = new StringBuilder();
+
+			s.Append("Use buttons on the left side to control the construction process.");
+			s.Append("\n\n");
+			s.Append("When the construction is complete, you may continue right to word evaluation screen,");
+			s.Append(" or before that stop for a moment to view a PDF with construction results report.");
+			s.Append("\n\n");
+			s.Append("To do the former, select \"Go to word evaluation\", and to do the latter select \"Generate LaTeX code\".");
+
+			ShowMessageFrame("Phinite information", "Finite-state machine construction", s.ToString(), false);
+		}
+
+		private void Info_Latex(object sender, RoutedEventArgs e)
+		{
+			var s = new StringBuilder();
+
+			s.Append("");
+			s.Append("");
+
+			ShowMessageFrame("Phinite information", "Regular expression input", s.ToString(), false);
 		}
 
 		private void Info_InputWord(object sender, RoutedEventArgs e)
@@ -1217,7 +1301,7 @@ namespace Phinite
 			s.Append("If you are unsure, just start computing without any input\n");
 			s.Append("or write just a single letter to see how the basic case works.");
 
-			new MessageFrame(this, "Phinite information", "Word input", s.ToString()).ShowDialog();
+			ShowMessageFrame("Phinite information", "Word input", s.ToString(), false);
 		}
 
 		#endregion

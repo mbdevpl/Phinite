@@ -199,6 +199,9 @@ namespace Phinite
 			parts.Add(exp);
 		}
 
+		/// <summary>
+		/// Performs several optimizations of this parse tree. All of them are described in technical analysis.
+		/// </summary>
 		public void Optimize()
 		{
 			if ((role.Equals(PartialExpressionRole.Concatenation)
@@ -394,6 +397,11 @@ namespace Phinite
 		//	return _value == null && concatenatedSymbols == null && union == null;
 		//}
 
+		/// <summary>
+		/// The derivation is performed in-place, therefore it is good to make a backup of instance
+		/// if the original is expected to be of some use later.
+		/// </summary>
+		/// <param name="removedLetter">string containing a single letter</param>
 		public void Derive(string removedLetter)
 		{
 			// to properly derive expressions with unary operators, they have to be transformed

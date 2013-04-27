@@ -8,8 +8,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using GraphSharp.Algorithms.Layout;
 using GraphSharp.Algorithms.Layout.Compound;
 using GraphSharp.Algorithms.Layout.Compound.FDP;
+using GraphSharp.Algorithms.Layout.Contextual;
 using GraphSharp.Algorithms.Layout.Simple.FDP;
 using GraphSharp.Algorithms.Layout.Simple.Tree;
 using GraphSharp.Algorithms.OverlapRemoval;
@@ -25,7 +27,9 @@ namespace Phinite
 
 		private static readonly double TextBlockHeight = 18;
 
-		private static readonly double StateEllipseDiameter = 32;
+		public static readonly double StateEllipseDiameter = 32;
+
+		public static readonly double MinimumStateDistance = 3 * StateEllipseDiameter;
 
 		private static readonly double LoopHeight = StateEllipseDiameter * 4.0 / 3;
 
@@ -75,11 +79,17 @@ namespace Phinite
 
 		private Dictionary<MachineTransition, Tuple<int, int>> edges;
 
+		private FiniteStateMachineLayoutScore layoutScore;
+
 		#endregion
 
 		#region GraphSharp fields
 
 		private BidirectionalGraph<string, Edge<string>> graph;
+
+		private string[] vertexLabels;
+
+		private IDictionary<string, Point> vertexPositions;
 
 		private Dictionary<string, Size> vertexSizes;
 
@@ -93,33 +103,25 @@ namespace Phinite
 			acceptingStates = fsm.AcceptingStates;
 			transitions = fsm.Transitions;
 
-			//if (states.Count == 1 && transitions.Count == 1)
-			//	throw new NotImplementedException("przeciez to jakies badziewie");
-
-			//Console.Out.WriteLine(fsm.ToString());
-
 			#region GraphSharp graph construction
 
 			graph = new BidirectionalGraph<string, Edge<string>>();
-			string[] vertices = new string[states.Count];
-			//Dictionary<string, Point> vertexPositions = new Dictionary<string, Point>();
+			vertexLabels = new string[states.Count];
+			vertexPositions = new Dictionary<string, Point>();
 			vertexSizes = new Dictionary<string, Size>();
 			vertexBorders = new Dictionary<string, Thickness>();
 
-			//int i = 0;
 			for (int i = 0; i < states.Count; ++i)
-			//foreach (var stateGroup in equivalentStatesGroups)
 			{
-				vertices[i] = i/*stateGroup.Key*/.ToString();
-				//vertexPositions.Add(vertices[i], new Point(i * 100, i * 100));
-				vertexSizes.Add(vertices[i], new Size(32, 32));
-				vertexBorders.Add(vertices[i], new Thickness(50, 50, 50, 50));
-				//i++;
+				vertexLabels[i] = i.ToString();
+				vertexPositions.Add(vertexLabels[i], new Point(i * MinimumStateDistance, i * MinimumStateDistance));
+				vertexSizes.Add(vertexLabels[i], new Size(StateEllipseDiameter, StateEllipseDiameter));
+				vertexBorders.Add(vertexLabels[i], new Thickness(MinimumStateDistance));
 			}
-			graph.AddVertexRange(vertices);
+			graph.AddVertexRange(vertexLabels);
 			foreach (var transition in transitions)
 				if (transition.InitialStateId != transition.ResultingStateId)
-					graph.AddEdge(new Edge<string>(vertices[transition.InitialStateId], vertices[transition.ResultingStateId]));
+					graph.AddEdge(new Edge<string>(vertexLabels[transition.InitialStateId], vertexLabels[transition.ResultingStateId]));
 
 			#endregion
 
@@ -127,70 +129,107 @@ namespace Phinite
 
 		public void Create()
 		{
-			int workGroupSize = 32;
+			int workGroupSize = 8;
 
-			var layoutsAll = new List<KeyValuePair<Dictionary<int, Point>, double>>();
+			var layoutsAll = new List<KeyValuePair<Dictionary<int, Point>, FiniteStateMachineLayoutScore>>();
 			int bestLayout = 0;
 
-			for (int i = 0; i < 4; ++i)
+			double defaultDistanceRatio = MinimumStateDistance / 72;
+
+			for (int i = 0; i < 32; ++i)
 			{
-				double[] layoutsScores = new double[workGroupSize];
-				Dictionary<int, Point>[] layouts = new Dictionary<int, Point>[workGroupSize];
+				var layoutsScores = new FiniteStateMachineLayoutScore[workGroupSize];
+				var layouts = new Dictionary<int, Point>[workGroupSize];
 
-				// try several layouts in parallel
-				Parallel.For(0, workGroupSize, (int n) =>
+				try
 				{
-					var createdVertices = Create4();
-					var layout = new Dictionary<int, Point>();
-
-					double minX = 1000, minY = 1000;
-					foreach (var pos in createdVertices)
+					// try several layouts in parallel
+					Parallel.For(0, workGroupSize, (int n) =>
 					{
-						var location = pos.Value;
-						if (location.X < minX) minX = location.X;
-						if (location.Y < minY) minY = location.Y;
-						layout.Add(int.Parse(pos.Key), new Point(location.X, location.Y));
-					}
+						IDictionary<string, Point> createdVertices = null;
 
-					minX -= LayoutOffset;
-					minY -= LayoutOffset;
+						//if (n % 2 == 0)
+						createdVertices = Create4();
+						//else
+						//	createdVertices = Create6();
 
-					for (int key = 0; key < layout.Count; ++key)
+						var layout = new Dictionary<int, Point>();
+
+						var firstCreatedVertex = createdVertices[vertexLabels[0]];
+
+						double minX = firstCreatedVertex.X, minY = firstCreatedVertex.Y;
+						foreach (var pos in createdVertices)
+						{
+							var location = pos.Value;
+							double x = location.X * defaultDistanceRatio;
+							double y = location.Y * defaultDistanceRatio;
+							if (x < minX) minX = x;
+							if (y < minY) minY = y;
+							layout.Add(int.Parse(pos.Key), new Point(x, y));
+						}
+
+						minX -= LayoutOffset + 1;
+						minY -= LayoutOffset + 1;
+
+						//bool invalid = false;
+						for (int key = 0; key < layout.Count; ++key)
+						{
+							layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
+							//if (layout[key].X < LayoutOffset || layout[key].Y < LayoutOffset) invalid = true;
+						}
+
+						var score = CalculateScore(layout);
+
+						score.AnalyzeData();
+
+						//if (invalid)
+						//	score = FiniteStateMachineLayoutScore.Perfect;
+						//else
+						//	score = FiniteStateMachineLayoutScore.Worst;
+
+						layoutsScores[n] = score;
+						layouts[n] = layout;
+
+					});
+				}
+				catch (AggregateException e)
+				{
+					foreach (var exception in e.InnerExceptions)
 					{
-						layout[key] = new Point(layout[key].X - minX, layout[key].Y - minY);
+						System.Console.Out.WriteLine("one of the layout jobs failed:");
+						System.Console.Out.WriteLine(exception.ToString());
 					}
-
-					double score = CalculateScore(layout);
-
-					layoutsScores[n] = score;
-					layouts[n] = layout;
-
-				});
+				}
 
 				int newBestLayout = 0;
 				for (int j = 1; j < workGroupSize; ++j)
-					if (layoutsScores[j] > layoutsScores[newBestLayout])
-						newBestLayout = j;
-
-				if (layoutsScores[newBestLayout] == 0)
 				{
-					//return layouts[newBestLayout];
-					vertices = layouts[newBestLayout];
-					CreateEdges();
-					return;
+					if (layoutsScores[j] == FiniteStateMachineLayoutScore.Perfect)
+					{
+						newBestLayout = j;
+						break;
+					}
+					if (layoutsScores[j].CompareTo(layoutsScores[newBestLayout]) > 0)
+						newBestLayout = j;
 				}
 
-				layoutsAll.Add(new KeyValuePair<Dictionary<int, Point>, double>(layouts[newBestLayout], layoutsScores[newBestLayout]));
+				layoutsAll.Add(new KeyValuePair<Dictionary<int, Point>, FiniteStateMachineLayoutScore>(
+					layouts[newBestLayout], layoutsScores[newBestLayout]));
 
-				if (layoutsScores[newBestLayout] > layoutsAll[bestLayout].Value)
+				if (layoutsScores[newBestLayout] == FiniteStateMachineLayoutScore.Perfect)
+				{
+					bestLayout = layoutsAll.Count - 1;
+					break;
+				}
+
+				if (layoutsScores[newBestLayout].CompareTo(layoutsAll[bestLayout].Value) > 0)
 					bestLayout = layoutsAll.Count - 1;
 			}
 
-			//return layoutsAll[bestLayout].Key;
 			vertices = layoutsAll[bestLayout].Key;
+			layoutScore = layoutsAll[bestLayout].Value;
 			CreateEdges();
 			return;
-
 		}
 
 		//private IDictionary<string, Point> Create1()
@@ -204,6 +243,10 @@ namespace Phinite
 		//	return algo1.SortedVertices;
 		//}
 
+		/// <summary>
+		/// Nodes are too close to each other.
+		/// </summary>
+		/// <returns></returns>
 		private IDictionary<string, Point> Create2()
 		{
 			// 2nd algorithm
@@ -216,21 +259,30 @@ namespace Phinite
 			return algo2.VertexPositions;
 		}
 
+		/// <summary>
+		/// Crazy distances between nodes, and yet often nodes overlap the edges and edges intersect each other...
+		/// </summary>
+		/// <returns></returns>
 		private IDictionary<string, Point> Create3()
 		{
-			// 3rd algorithm
 			var params3 = new BalloonTreeLayoutParameters();
-			params3.MinRadius = 50;
-			params3.Border = 1;
+			params3.MinRadius = (int)MinimumStateDistance;
+			params3.Border = (int)MinimumStateDistance;
 			var algo3 = new BalloonTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
-				graph, null/*vertexPositions*/, vertexSizes, params3, "q0");
+				graph, vertexPositions, vertexSizes, params3, vertexLabels[0]);
 			algo3.Compute();
-			while (algo3.State != ComputationState.Finished)
-				Thread.Sleep(100);
+			//while (algo3.State != ComputationState.Finished)
+			//	Thread.Sleep(100);
 
 			return algo3.VertexPositions;
 		}
 
+		/// <summary>
+		/// Uses GraphSharp CompoundFDPLayoutAlgorithm, i.e. a force-based algorithm.
+		/// 
+		/// Pretty effective - for not too complicated graphs it is capable of providing flawless solution.
+		/// </summary>
+		/// <returns>raw set of coordinates of vertices</returns>
 		private IDictionary<string, Point> Create4()
 		{
 			var algo4 = new CompoundFDPLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
@@ -239,6 +291,44 @@ namespace Phinite
 			//while (algo4.State != ComputationState.Finished)
 			//	Thread.Sleep(250);
 			return algo4.VertexPositions;
+		}
+
+		/// <summary>
+		/// Nodes frequently overlap edges. Pretty useless.
+		/// </summary>
+		/// <returns></returns>
+		private IDictionary<string, Point> Create5()
+		{
+			DoubleTreeLayoutParameters params5;
+			DoubleTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>> algo5;
+
+			params5 = new DoubleTreeLayoutParameters();
+			params5.Direction = LayoutDirection.LeftToRight;
+			params5.LayerGap = MinimumStateDistance;
+			params5.PrioritizedTreeSide = DoubleTreeSides.Side2;
+			params5.VertexGap = MinimumStateDistance;
+			algo5 = new DoubleTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+					graph, Create4(), vertexSizes, params5, vertexLabels[0]);
+			algo5.Compute();
+			return algo5.VertexPositions;
+		}
+
+		/// <summary>
+		/// It seems it does not do anything...
+		/// </summary>
+		/// <returns></returns>
+		private IDictionary<string, Point> Create6()
+		{
+			RadialTreeLayoutParameters params6;
+			RadialTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>> algo6;
+
+			params6 = new RadialTreeLayoutParameters(); // no actual params here
+			algo6 = new RadialTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
+					graph, Create4(), params6, vertexLabels[0]);
+			// selected vertex is 'root' or something of this kind
+
+			algo6.Compute();
+			return algo6.VertexPositions;
 		}
 
 		private object RemoveOverlaps1()
@@ -372,14 +462,12 @@ namespace Phinite
 		/// number of nodes that are very close to each other, etc.
 		/// </summary>
 		/// <returns>zero if layout is perfect, negative value if it is not</returns>
-		private double CalculateScore(Dictionary<int, Point> vertices)
+		private FiniteStateMachineLayoutScore CalculateScore(Dictionary<int, Point> vertices)
 		{
-			if (vertices == null || vertices.Count <= 1)
-				return 0;
+			FiniteStateMachineLayoutScore score = null;
 
-			double nodesDistanceScore = 0;
-			double nodesOnEdgesScore = 0;
-			double edgeIntersectionsScore = 0;
+			if (vertices == null || vertices.Count <= 1)
+				return FiniteStateMachineLayoutScore.Perfect;
 
 			foreach (var key1 in vertices.Keys)
 				foreach (var key2 in vertices.Keys)
@@ -390,17 +478,41 @@ namespace Phinite
 					var p1 = vertices[key1];
 					var p2 = vertices[key2];
 
+					#region state on state
 					// check if point are too close to each other
+					if (key1 < key2)
 					{
 						double dist = p1.Distance(p2);
-						if (dist < 50)
-							nodesDistanceScore -= Math.Sqrt(50 - dist);
+						if (dist < MinimumStateDistance)
+						{
+							//nodesDistanceScore -= Math.Sqrt(50 - dist);
+							if (score == null)
+								score = new FiniteStateMachineLayoutScore();
+							score.VerticesOnVertices.Add(new Tuple<int, int, double>(key1, key2, dist));
+						}
 					}
+					#endregion
 
 					// check connected vertices
-					if (!transitions.Any(x => x.InitialStateId == key1 && x.ResultingStateId == key2))
+					int transitionIndex = transitions.IndexOf(x => x.InitialStateId == key1 && x.ResultingStateId == key2);
+					//try
+					//{
+					//	transitionIndex = transitions.IndexOf(
+					//		transitions.First(x => x.InitialStateId == key1 && x.ResultingStateId == key2)
+					//		);
+					//}
+					//catch (InvalidOperationException)
+					//{
+					//	// silent catch
+					//}
+					if (transitionIndex == -1)
 						continue;
 
+					// old implementation of checking if connection exists:
+					//if (!transitions.Any(x => x.InitialStateId == key1 && x.ResultingStateId == key2))
+					//	continue;
+
+					#region state on edge
 					// check if any state is obstructed by the edge
 					foreach (var key in vertices.Keys)
 					{
@@ -410,10 +522,15 @@ namespace Phinite
 						double dist = vertices[key].DistanceToLine(p1, p2);
 
 						if (dist < 30)
-							nodesOnEdgesScore -= Math.Sqrt(StateEllipseDiameter - dist);
+						{
+							if (score == null)
+								score = new FiniteStateMachineLayoutScore();
+							score.VerticesOnEdges.Add(new Tuple<int, int, double>(key1, key2, dist));
+						}
 					}
+					#endregion
 
-					// TODO: check if the edge intersects with any other edge
+					// check if the edge intersects with any other edge
 					var line = new LineGeometry(p1, p2);
 					foreach (var keyOther1 in vertices.Keys)
 						foreach (var keyOther2 in vertices.Keys)
@@ -422,23 +539,37 @@ namespace Phinite
 								continue;
 							if (keyOther1 == key1 || keyOther2 == key2 || keyOther1 == key2 || keyOther2 == key1)
 								continue;
-							//if (keyOther1 == key1 && keyOther2 == key2)
-							//	continue;
-							//if (keyOther1 == key2 && keyOther2 == key1)
-							//	continue;
-							if (!transitions.Any(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2))
+							int transitionIndexOther = transitions.IndexOf(
+								x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2);
+							//try
+							//{
+							//	transitionIndexOther = transitions.IndexOf(
+							//		transitions.First(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2)
+							//		);
+							//}
+							//catch (InvalidOperationException)
+							//{
+							//	// silent catch
+							//}
+							if (transitionIndexOther == -1)
 								continue;
+
+							//if (!transitions.Any(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2))
+							//	continue;
 
 							var pOther1 = vertices[keyOther1];
 							var pOther2 = vertices[keyOther2];
 
-							//if (line.Intersects(new LineGeometry(pOther1, pOther2)))
-							if (Extensions.Intersects(p1, p2, pOther1, pOther2))
-								edgeIntersectionsScore -= 10;
+							if (p1.Intersects(p2, pOther1, pOther2))
+							{
+								if (score == null)
+									score = new FiniteStateMachineLayoutScore();
+								score.IntersectingEdges.Add(new Tuple<int, int>(transitionIndex, transitionIndexOther));
+							}
 						}
 				}
 
-			return nodesDistanceScore + nodesOnEdgesScore + edgeIntersectionsScore;
+			return score == null ? FiniteStateMachineLayoutScore.Perfect : score;
 		}
 
 		public void Draw(Canvas canvas, bool constructionMode, IList<RegularExpression> highlightedStates,
@@ -468,8 +599,10 @@ namespace Phinite
 			{
 				var location = vertices[i];
 
+				int transitionIndex = -1;
 				foreach (var transition in transitions)
 				{
+					++transitionIndex;
 					if (transition.InitialStateId != i)
 						continue;
 
@@ -537,6 +670,39 @@ namespace Phinite
 						double angle = location.Angle(endpoint) - 90;
 						Point translatePoint;
 
+						Point middle = new Point((location.X + endpoint.X) / 2, (location.Y + endpoint.Y) / 2);
+
+
+						// detect intersections with other edges and move label left/right to the longest uninterrupted segment
+						foreach (var intr in layoutScore.IntersectingEdges)
+						{
+							if (intr.Item1 != transitionIndex)
+								continue;
+							MachineTransition intersectingTransition = transitions[intr.Item2];
+							Point p1 = vertices[intersectingTransition.InitialStateId];
+							Point p2 = vertices[intersectingTransition.ResultingStateId];
+
+							Point intersection = location.FindIntersection(endpoint, p1, p2, true);
+
+							// TODO: instead of always moving away, find the best position for the label
+							// i.e. the longest fragment without intersections
+							if (intersection.Distance(middle) < 30)
+							{
+								Console.Out.WriteLine("HIT!");
+								// move label away from intersection
+								middle = intersection.Copy().MoveTo(middle, 20);
+
+								// TODO: don't move yet, collect info about vertices first
+							}
+						}
+						//TODO: detect overlapping vertices and move label away from them
+						//layoutScore.VerticesOnEdges.Select(x => x.
+
+
+						//TODO: take bent edges into account (i.e. case of two transitions: q1->q2 and q2->q1)
+						// because in such cases labels are sometimes too close to the edges they belong to
+
+
 						if (transitions.Any(x => x.InitialStateId == transition.ResultingStateId
 								&& x.ResultingStateId == transition.InitialStateId))
 						{
@@ -566,8 +732,6 @@ namespace Phinite
 						transforms.Children.Add(rotateTransform);
 						transforms.Children.Add(translateTransform);
 						letters.RenderTransform = transforms;
-
-						Point middle = new Point((location.X + endpoint.X) / 2, (location.Y + endpoint.Y) / 2);
 
 						Canvas.SetLeft(letters, middle.X - letters.Width / 2);
 						Canvas.SetTop(letters, middle.Y - TextBlockHeight / 2);
@@ -671,7 +835,7 @@ namespace Phinite
 			int index = anglesDiffs.IndexOf(anglesDiffs.Max());
 			if (index == anglesDiffs.Count - 1)
 			{
-				angle = (angles[index] - 360 + angles[0]) / 2;
+				angle = (angles[index] - 360 + angles.First()) / 2;
 				if (angle < 0)
 					angle += 360;
 			}

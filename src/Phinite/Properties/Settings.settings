@@ -6,10 +6,10 @@
       <Value Profile="(Default)">SumatraPDF\SumatraPDF.exe</Value>
     </Setting>
     <Setting Name="PdfViewer" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">SumatraPDF\SumatraPDF.exe</Value>
     </Setting>
     <Setting Name="Pdflatex" Type="System.String" Scope="User">
-      <Value Profile="(Default)">pdflatex</Value>
+      <Value Profile="(Default)">MiKTeX\miktex\bin\pdflatex</Value>
     </Setting>
     <Setting Name="PdflatexInUse" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>
@@ -31,6 +31,15 @@
     </Setting>
     <Setting Name="PdflatexTimeout" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">15</Value>
+    </Setting>
+    <Setting Name="LayoutCreationFrequency" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="LayoutCreationFrequencyDefault" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">20</Value>
+    </Setting>
+    <Setting Name="LayoutCreationFrequencyInUse" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

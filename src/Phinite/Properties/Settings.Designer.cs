@@ -34,7 +34,7 @@ namespace Phinite.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("SumatraPDF\\SumatraPDF.exe")]
         public string PdfViewer {
             get {
                 return ((string)(this["PdfViewer"]));
@@ -46,7 +46,7 @@ namespace Phinite.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pdflatex")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MiKTeX\\miktex\\bin\\pdflatex")]
         public string Pdflatex {
             get {
                 return ((string)(this["Pdflatex"]));
@@ -131,6 +131,39 @@ namespace Phinite.Properties {
             }
             set {
                 this["PdflatexTimeout"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int LayoutCreationFrequency {
+            get {
+                return ((int)(this["LayoutCreationFrequency"]));
+            }
+            set {
+                this["LayoutCreationFrequency"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public int LayoutCreationFrequencyDefault {
+            get {
+                return ((int)(this["LayoutCreationFrequencyDefault"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int LayoutCreationFrequencyInUse {
+            get {
+                return ((int)(this["LayoutCreationFrequencyInUse"]));
+            }
+            set {
+                this["LayoutCreationFrequencyInUse"] = value;
             }
         }
     }

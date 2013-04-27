@@ -1,9 +1,12 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows;
 
 namespace Phinite
 {
 	/// <summary>
+	/// Enables the user to change application settings.
+	/// 
 	/// Interaction logic for SettingsWindow.xaml
 	/// </summary>
 	public partial class SettingsWindow : Window, INotifyPropertyChanged
@@ -11,6 +14,33 @@ namespace Phinite
 		private PhiniteSettings phi;
 
 		public event PropertyChangedEventHandler PropertyChanged;
+
+		public int LayoutCreationFrequencyInUse
+		{
+			get { return phi.Settings.LayoutCreationFrequencyInUse; }
+			set
+			{
+				if (phi.Settings.LayoutCreationFrequencyInUse == value)
+					return;
+				phi.Settings.LayoutCreationFrequencyInUse = value;
+				InvokePropertyChanged("LayoutCreationFrequencyInUse");
+			}
+		}
+
+		public int LayoutCreationFrequencyDefault { get { return phi.Settings.LayoutCreationFrequencyDefault; } }
+
+		public decimal LayoutCreationFrequency
+		{
+			get { return phi.Settings.LayoutCreationFrequency; }
+			set
+			{
+				if (phi.Settings.LayoutCreationFrequency == (int)value)
+					return;
+				phi.Settings.LayoutCreationFrequency = (int)value;
+				InvokePropertyChanged("LayoutCreationFrequency");
+				LayoutCreationFrequencyInUse = 1;
+			}
+		}
 
 		public int PdflatexInUse
 		{
@@ -37,6 +67,7 @@ namespace Phinite
 					return;
 				phi.Settings.Pdflatex = value;
 				InvokePropertyChanged("Pdflatex");
+				PdflatexInUse = 2;
 			}
 		}
 
@@ -63,6 +94,7 @@ namespace Phinite
 					return;
 				phi.Settings.PdflatexTimeout = (int)value;
 				InvokePropertyChanged("PdflatexTimeout");
+				PdflatexTimeoutInUse = 1;
 			}
 		}
 
@@ -89,6 +121,7 @@ namespace Phinite
 					return;
 				phi.Settings.PdfViewer = value;
 				InvokePropertyChanged("PdfViewer");
+				PdfViewerInUse = 2;
 			}
 		}
 
@@ -117,6 +150,13 @@ namespace Phinite
 		{
 			DialogResult = false;
 			Close();
+		}
+
+		protected override void OnSourceInitialized(EventArgs e)
+		{
+			IconHelper.RemoveIcon(this);
+
+			base.OnSourceInitialized(e);
 		}
 
 	}

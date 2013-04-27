@@ -6,11 +6,31 @@ using Phinite.Properties;
 
 namespace Phinite
 {
+	/// <summary>
+	/// Makes the Phinite settings management easier.
+	/// 
+	/// Settings for Phinite are stored in two places, typical for Windows applications:
+	/// 1) Phinite.exe.config file in application directory,
+	/// 2) user/AppData/Local/Phinite
+	/// </summary>
 	public class PhiniteSettings
 	{
 
 		internal Settings Settings { get { return settings; } }
 		private Settings settings;
+
+		public int LayoutCreationFrequency
+		{
+			get
+			{
+				switch (settings.LayoutCreationFrequencyInUse)
+				{
+					case 0: return settings.LayoutCreationFrequencyDefault;
+					case 1: return settings.LayoutCreationFrequency;
+					default: return -1;
+				}
+			}
+		}
 
 		public string Pdflatex
 		{
@@ -61,10 +81,16 @@ namespace Phinite
 		public PhiniteSettings(PhiniteSettings source)
 		{
 			settings = new Settings();
+
+			settings.LayoutCreationFrequencyInUse = source.settings.LayoutCreationFrequencyInUse;
+			settings.LayoutCreationFrequency = source.settings.LayoutCreationFrequency;
+
 			settings.PdflatexInUse = source.settings.PdflatexInUse;
 			settings.Pdflatex = source.settings.Pdflatex;
+
 			settings.PdflatexTimeoutInUse = source.settings.PdflatexTimeoutInUse;
 			settings.PdflatexTimeout = source.settings.PdflatexTimeout;
+
 			settings.PdfViewerInUse = source.settings.PdfViewerInUse;
 			settings.PdfViewer = source.settings.PdfViewer;
 		}

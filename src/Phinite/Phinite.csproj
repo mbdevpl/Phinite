@@ -38,6 +38,9 @@
     </DocumentationFile>
     <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Phi.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="GraphSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -78,6 +81,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Extensions.cs" />
+    <Compile Include="FiniteStateMachineLayoutScore.cs" />
     <Compile Include="IconHelper.cs" />
     <Compile Include="LatexWriter.cs" />
     <Compile Include="FiniteStateMachineLayout.cs" />

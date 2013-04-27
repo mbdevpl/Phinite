@@ -475,15 +475,16 @@ namespace Phinite
 				// remove single letter
 				var letter = evaluatedWordRemainingFragment[0].ToString();
 
-				MachineTransition transition = null;
-				try
-				{
-					transition = transitions.First(x => x.InitialStateId == currentState && x.ContainsLetter(letter));
-				}
-				catch (InvalidOperationException)
-				{
-					// silent catch, matching transition was not found
-				}
+				MachineTransition transition = transitions.FirstOrNull(
+					x => x.InitialStateId == currentState && x.ContainsLetter(letter));
+				//try
+				//{
+				//	transition = transitions.First(x => x.InitialStateId == currentState && x.ContainsLetter(letter));
+				//}
+				//catch (InvalidOperationException)
+				//{
+				//	// silent catch, matching transition was not found
+				//}
 
 				evaluatedWordProcessedFragment = new StringBuilder(evaluatedWordProcessedFragment)
 					.Append(letter).ToString();
@@ -574,6 +575,10 @@ namespace Phinite
 			return acceptingStatesIds.Any(x => x == stateIndex);
 		}
 
+		/// <summary>
+		/// Converts this object into a single line of text that describes its current state.
+		/// </summary>
+		/// <returns>a description of current state of this instance</returns>
 		public override string ToString()
 		{
 			return String.Format("States:{0} Accepting:{1} Transitions:{2} notLabeled:{3} notDerived:{4} CurrentState:{5}",

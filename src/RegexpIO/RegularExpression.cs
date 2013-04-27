@@ -34,6 +34,9 @@ namespace Phinite
 		/// </summary>
 		public static readonly string[] IgnoredSymbols;
 
+		/// <summary>
+		/// Maximum lenght of any of IgnoredSymbols.
+		/// </summary>
 		public static readonly int IgnoredSymbolMaxLength;
 
 		/// <summary>
@@ -42,6 +45,9 @@ namespace Phinite
 		/// </summary>
 		public static readonly string[] ForbiddenSymbols;
 
+		/// <summary>
+		/// Maximum lenght of any of ForbiddenSymbols.
+		/// </summary>
 		public static readonly int ForbiddenSymbolMaxLength;
 
 		static RegularExpression()
