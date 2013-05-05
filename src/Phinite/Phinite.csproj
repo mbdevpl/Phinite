@@ -91,17 +91,20 @@
     </Compile>
     <Compile Include="ParseTreeDrawing.cs" />
     <Compile Include="Petzold\ArrowEnds.cs" />
+    <Compile Include="WindowUserHelp.xaml.cs">
+      <DependentUpon>WindowUserHelp.xaml</DependentUpon>
+    </Compile>
     <None Include="Petzold\ArrowheadsDemo.cs" />
     <Compile Include="Petzold\ArrowLine.cs" />
     <Compile Include="Petzold\ArrowLineBase.cs" />
     <Compile Include="Petzold\ArrowPolyline.cs" />
     <Compile Include="PhiniteSettings.cs" />
-    <Compile Include="SettingsWindow.xaml.cs">
-      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    <Compile Include="WindowSettings.xaml.cs">
+      <DependentUpon>WindowSettings.xaml</DependentUpon>
     </Compile>
     <Compile Include="UIState.cs" />
     <Compile Include="UIStateInfo.cs" />
-    <Page Include="MainWindow.xaml">
+    <Page Include="WindowMain.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -109,15 +112,19 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="WindowMain.xaml.cs">
+      <DependentUpon>WindowMain.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MessageFrame.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="SettingsWindow.xaml">
+    <Page Include="WindowSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WindowUserHelp.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

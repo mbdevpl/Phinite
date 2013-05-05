@@ -27,6 +27,7 @@ namespace Phinite
 
 				// ConstructionPhase
 				{UIState.BusyConstructing, "busy"},
+				{UIState.WaitingForUserHelp, "waiting until user help window is closed"},
 
 				// ConstructionStepResultsPhase
 				{UIState.ReadyForNextConstructionStep, "ready for next step of construction"},

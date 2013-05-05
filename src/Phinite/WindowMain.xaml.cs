@@ -19,40 +19,11 @@ namespace Phinite
 	/// 
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	public partial class MainWindow : Window, INotifyPropertyChanged
+	public partial class WindowMain : Window, INotifyPropertyChanged
 	{
-		public static Dictionary<string, string> Examples
-			= new Dictionary<string, string>
-			{
-				{"Empty word", "."},
-				{"Concatenation", "ababa"},
-				{"Union", "aa+ab+ba+bb"},
-				{"Empty word, concat. & union", "a(a+.)b(a+b)"},
-				{"Kleene star", "ab^*"},
-				{"Empty word, concat., union & star", "(a(a+.)(b(a+b))^*)^*"},
-				{"Kleene plus", "a+b^+"},
-				{"Parentheses", "(ab)^*+ab^*"},
-				{"Binary numbers", "0+1(0+1)^*"},
-				{"3 digit hexadecimal numbers", "(1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)(0+1+2+3+4+5+6+7)"},
-				{"Example from old BA", "a^+c^+ + ab^+c"},
-				{"Example from BA", "a(a+b)^*b"},
-				{"Example from TA", "a^+b^+ + ab^+c"},
-				{"High tree", "((((((((a^+b)^+c)^+d)^+e)^+f)^+g)^+i)^+j)^+k"},
-				{"4 long paths", "aaaaaaae+bbbbbbe+ccccce+dddde"},
-				{"Seemingly hard 1", "(a+ab+abc+abcd+abcde+abcdef)^*"},
-				{"Seemingly hard 2", "(f+ef+def+cdef+bcdef+abcdef)^*"},
-				{"Seemingly hard 3", "(a+.)^*b"},
-				{"Seemingly hard 4", "(ab^*)^*"},
-				{"Hard", "(((b)^*)((a((b)^*))^*))"},
-				{"Pseudo e-mail", "(a+b+c+d+e+f+g+h+i+m+l+u+v+w+x+y+z)^+@(a+b+c+d+e+f+g+h+i+m+l+u+v+w+x+y+z)^+_(pl+eu+com+org+net)"},
-				{"Yay!", "(A^+B^*C^+D^*E^+F^*G^+H^*I^+J^*K^+L^*M^+N^*O^+P^*R^+S^*T^+U^*V^+W^*X^+Y^*Z^+)^*"},
-				{"Mess!", "(A^+B^*C^*D^*E^*F^*G^*H^*I^*J^*K^*L^*M^*N^*O^*P^*R^*S^+T^*U^*V^*W^*X^*Y^*Z^*)^*"},
-				{"Infinite loop", "(a^*a)^*"},
-				{"Infinite loop 2", "(a(a+.)b^*)^*"},
-				{"Max processor use test", "0+(1+2+3+4+5+6+7+8+9)((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*"},
-				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
-				
-			};
+		private PhiniteSettings settings;
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		private object regexpAndFsmLock = new object();
 		private RegularExpression regexp;
@@ -61,181 +32,99 @@ namespace Phinite
 		private object uiStateLock = new object();
 		private UIState uiState;
 
+		private int computationSessionId;
+		private int thisComputationSessionId;
+
 		private bool stepByStep;
-
-		private PhiniteSettings settings;
-
-		private int layoutAge = 0;
-		private FiniteStateMachineLayout fsmLayout = null;
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		/// <summary>
-		/// Plain text input to be converted to a regular expression
-		/// </summary>
-		public string InputRegexpText
-		{
-			get { return inputRegexpText; }
-			set
-			{
-				if (inputRegexpText == value)
-					return;
-				inputRegexpText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("InputRegexpText"));
-			}
-		}
-		private string inputRegexpText = Examples["Yay!"];
-
-		/// <summary>
-		/// Plain text that represents a preprocessed (validated and optimized) regular expression.
-		/// </summary>
-		public string ValidatedRegexpText
-		{
-			get { return validatedRegexpText; }
-			set
-			{
-				if (validatedRegexpText == value)
-					return;
-				validatedRegexpText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ValidatedRegexpText"));
-			}
-		}
-		private string validatedRegexpText = String.Empty;
-
-		/// <summary>
-		/// Plain text to be evaluated as an input word for a finite-state machine.
-		/// </summary>
-		public string InputWordText
-		{
-			get { return inputWordText; }
-			set
-			{
-				if (inputWordText == value)
-					return;
-				inputWordText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("InputWordText"));
-			}
-		}
-		private string inputWordText = "ABCDEFGHIJKLMNOPRSTUVWXYZ";
-
-		public string ProcessedWordFragmentText
-		{
-			get { return processedWordFragmentText; }
-			set
-			{
-				if (processedWordFragmentText == value)
-					return;
-				processedWordFragmentText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ProcessedWordFragmentText"));
-			}
-		}
-		private string processedWordFragmentText = String.Empty;
-
-		public string RemainingWordFragmentText
-		{
-			get { return remainingWordFragmentText; }
-			set
-			{
-				if (remainingWordFragmentText == value)
-					return;
-				remainingWordFragmentText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("RemainingWordFragmentText"));
-			}
-		}
-		private string remainingWordFragmentText = String.Empty;
-
-		public string CurrentStateText
-		{
-			get { return currentStateText; }
-			set
-			{
-				if (currentStateText == value)
-					return;
-				currentStateText = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("CurrentStateText"));
-			}
-		}
-		private string currentStateText = String.Empty;
 
 		/// <summary>
 		/// Text visible in the status bar.
 		/// </summary>
 		public string StatusText
-		{
-			get { return statusText; }
-			set
-			{
-				if (statusText == value)
-					return;
-				statusText = value;
+		{ get { return statusText; } set { this.ChangeProperty(PropertyChanged, ref statusText, value, "StatusText"); } }
+		private string statusText = String.Empty;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("StatusText"));
-			}
-		}
-		private string statusText = "busy";
+		#region fields for fsm construction phase
 
-		public string LatexOutputText
-		{
-			get { return latexOutputText; }
-			set
-			{
-				if (latexOutputText == value)
-					return;
-				latexOutputText = value;
+		// TODO: handle current example in word input
+		private String currentExample = App.DefaultExample;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("LatexOutputText"));
-			}
-		}
-		private string latexOutputText = "";
+		/// <summary>
+		/// Plain text input to be converted to a regular expression
+		/// </summary>
+		public string InputRegexpText
+		{ get { return inputRegexpText; } set { this.ChangeProperty(PropertyChanged, ref inputRegexpText, value, "InputRegexpText"); } }
+		private string inputRegexpText = App.ExpressionExamples[App.DefaultExample];
+
+		/// <summary>
+		/// Plain text that represents a preprocessed (validated and optimized) regular expression.
+		/// </summary>
+		public string ValidatedRegexpText
+		{ get { return validatedRegexpText; } set { this.ChangeProperty(PropertyChanged, ref validatedRegexpText, value, "ValidatedRegexpText"); } }
+		private string validatedRegexpText = String.Empty;
+
+		private int layoutAge;
+		private FiniteStateMachineLayout fsmLayout;
 
 		public List<Tuple<RegularExpression, string, string>> LabeledExpressionsData
-		{
-			get { return labeledExpressionsData; }
-			set
-			{
-				if (labeledExpressionsData == value)
-					return;
-				labeledExpressionsData = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("LabeledExpressionsData"));
-			}
-		}
+		{ get { return labeledExpressionsData; } set { this.ChangeProperty(PropertyChanged, ref labeledExpressionsData, value, "LabeledExpressionsData"); } }
 		private List<Tuple<RegularExpression, string, string>> labeledExpressionsData;
 
 		public List<Tuple<RegularExpression, string, string, string, RegularExpression>> TransitionsData
-		{
-			get { return transitionsData; }
-			set
-			{
-				if (transitionsData == value)
-					return;
-				transitionsData = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("TransitionsData"));
-			}
-		}
+		{ get { return transitionsData; } set { this.ChangeProperty(PropertyChanged, ref transitionsData, value, "TransitionsData"); } }
 		private List<Tuple<RegularExpression, string, string, string, RegularExpression>> transitionsData;
 
-		public MainWindow()
-		{
-			DataContext = this;
+		public string LatexOutputText
+		{ get { return latexOutputText; } set { this.ChangeProperty(PropertyChanged, ref latexOutputText, value, "LatexOutputText"); } }
+		private string latexOutputText = "";
 
+		public int StatesLeftCount
+		{ get { return statesLeftCount; } set { this.ChangeProperty(PropertyChanged, ref statesLeftCount, ref value, "StatesLeftCount"); } }
+		private int statesLeftCount;
+
+		public int TransitionsLeftCount
+		{ get { return transitionsLeftCount; } set { this.ChangeProperty(PropertyChanged, ref transitionsLeftCount, ref value, "TransitionsLeftCount"); } }
+		private int transitionsLeftCount;
+
+		public int StatesLabeledCount
+		{ get { return statesLabeledCount; } set { this.ChangeProperty(PropertyChanged, ref statesLabeledCount, ref value, "StatesLabeledCount"); } }
+		private int statesLabeledCount;
+
+		public int TransitionsLabeledCount
+		{ get { return transitionsLabeledCount; } set { this.ChangeProperty(PropertyChanged, ref transitionsLabeledCount, ref value, "TransitionsLabeledCount"); } }
+		private int transitionsLabeledCount;
+
+		#endregion
+
+		#region fields for word evaluation phase
+
+		/// <summary>
+		/// Plain text to be evaluated as an input word for a finite-state machine.
+		/// </summary>
+		public string InputWordText
+		{ get { return inputWordText; } set { this.ChangeProperty(PropertyChanged, ref inputWordText, value, "InputWordText"); } }
+		private string inputWordText = App.WordExamples[App.DefaultExample];
+
+		public string ProcessedWordFragmentText
+		{ get { return processedWordFragmentText; } set { this.ChangeProperty(PropertyChanged, ref processedWordFragmentText, value, "ProcessedWordFragmentText"); } }
+		private string processedWordFragmentText = String.Empty;
+
+		public string RemainingWordFragmentText
+		{ get { return remainingWordFragmentText; } set { this.ChangeProperty(PropertyChanged, ref remainingWordFragmentText, value, "RemainingWordFragmentText"); } }
+		private string remainingWordFragmentText = String.Empty;
+
+		public string CurrentStateText
+		{ get { return currentStateText; } set { this.ChangeProperty(PropertyChanged, ref currentStateText, value, "CurrentStateText"); } }
+		private string currentStateText = String.Empty;
+
+		#endregion
+
+		public WindowMain()
+		{
+			computationSessionId = 0;
+			layoutAge = 0;
+
+			DataContext = this;
 			InitializeComponent();
 
 			SetUIState(UIState.Loading);
@@ -321,6 +210,16 @@ namespace Phinite
 								OptionSettings.IsEnabled = false;
 
 								OptionAbort.IsEnabled = true;
+								OptionNextStep.IsEnabled = false;
+								OptionFinalResult.IsEnabled = false;
+								OptionLatex.IsEnabled = false;
+								OptionEvaluate.IsEnabled = false;
+							} break;
+						case UIState.WaitingForUserHelp:
+							{
+								OptionSettings.IsEnabled = false;
+
+								OptionAbort.IsEnabled = false;
 								OptionNextStep.IsEnabled = false;
 								OptionFinalResult.IsEnabled = false;
 								OptionLatex.IsEnabled = false;
@@ -515,27 +414,27 @@ namespace Phinite
 			t.Start();
 		}
 
-		private bool CheckIfComputationAbortedAndDealWithIt(object obj)
+		private bool CheckIfComputationAbortedAndDealWithIt(int checkedSessionId, params object[] objectsThatMustNotBeNull)
 		{
-			if (obj != null)
+			bool allNotNull = true;
+			foreach (var o in objectsThatMustNotBeNull)
+				if (o == null)
+				{
+					allNotNull = false;
+					break;
+				}
+
+			if (computationSessionId == checkedSessionId && allNotNull)
 				return false;
 
-			regexp = null;
-			fsm = null;
+			if (thisComputationSessionId != computationSessionId)
+			{
+				thisComputationSessionId = 0;
+				regexp = null;
+				fsm = null;
 
-			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
-			return true;
-		}
-
-		private bool CheckIfComputationAbortedAndDealWithIt(object obj1, object obj2)
-		{
-			if (obj1 != null && obj2 != null)
-				return false;
-
-			regexp = null;
-			fsm = null;
-
-			SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+				SetUIState(UIState.ReadyForNewInputAfterAbortedComputation);
+			}
 			return true;
 		}
 
@@ -543,7 +442,7 @@ namespace Phinite
 		{
 			Dispatcher.BeginInvoke((Action)delegate
 			{
-				foreach (var example in Examples)
+				foreach (var example in App.ExpressionExamples)
 				{
 					var item = new MenuItem();
 					item.Header = String.Format("{0}, \"{1}\"", example.Key, example.Value);
@@ -579,10 +478,14 @@ namespace Phinite
 
 		private void ValidationWorker()
 		{
+			int sessionId = 0;
 			try
 			{
 				lock (regexpAndFsmLock)
 				{
+					thisComputationSessionId = ++computationSessionId;
+					sessionId = thisComputationSessionId;
+
 					regexp = new RegularExpression(InputRegexpText);
 					regexp.EvaluateInput();
 				}
@@ -605,7 +508,7 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				if (CheckIfComputationAbortedAndDealWithIt(regexp))
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, regexp))
 					return;
 
 				ValidatedRegexpText = regexp.ToString();
@@ -618,10 +521,12 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (CheckIfComputationAbortedAndDealWithIt(regexp))
+					if (CheckIfComputationAbortedAndDealWithIt(sessionId, regexp))
 						return;
 
 					fsm = new FiniteStateMachine(regexp);
+
+					layoutAge = settings.LayoutCreationFrequency;
 				}
 			}
 			catch (Exception e)
@@ -641,8 +546,6 @@ namespace Phinite
 				return;
 			}
 
-			layoutAge = settings.LayoutCreationFrequency;
-
 			Dispatcher.BeginInvoke((Action)delegate
 			{
 				foreach (DataGridColumn column in DataGridForStates.Columns)
@@ -659,16 +562,27 @@ namespace Phinite
 			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
+		/// <summary>
+		/// Performs a single step of fsm construction, and then
+		/// puts intermediate results into AreaForMachineCreation.
+		/// 
+		/// </summary>
 		private void ConstructionStepWorker()
 		{
+			int sessionId = 0;
+			lock (regexpAndFsmLock)
+			{
+				sessionId = thisComputationSessionId;
+			}
+			bool constructionStepResult = false;
 			try
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (CheckIfComputationAbortedAndDealWithIt(fsm))
+					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 						return;
 
-					fsm.Construct(1);
+					constructionStepResult = fsm.Construct(1, true);
 				}
 			}
 			catch (Exception e)
@@ -680,13 +594,75 @@ namespace Phinite
 				return;
 			}
 
-			CallMethodInNewThread(ConstructionStepResultsWorker, "ConstructionStepResults");
+			if (!ShowCurrentConstructionState(sessionId))
+				return; // cannot show construction state, abort
+
+			if (constructionStepResult == false)
+			{
+				WindowUserHelp windowUserHelp = null;
+
+				Dispatcher.Invoke((Action)delegate
+				{
+					lock (regexpAndFsmLock)
+					{
+						if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+							return;
+
+						windowUserHelp = new WindowUserHelp(regexpAndFsmLock, fsm);
+					}
+
+					windowUserHelp.Owner = this;
+					windowUserHelp.Closed += WindowUserHelp_Closed;
+
+					SetUIState(UIState.WaitingForUserHelp);
+
+					windowUserHelp.Show();
+				});
+
+				return;
+			}
+
+			lock (regexpAndFsmLock)
+			{
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+					return;
+
+				if (fsm.IsConstructionFinished())
+				{
+					//fsmLayout = layout;
+
+					Dispatcher.BeginInvoke((Action)delegate
+					{
+						lock (regexpAndFsmLock)
+						{
+							if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+								return;
+						}
+						// draw the fsm behind word input controls
+						fsmLayout.Draw(WordInputBackgroundCanvas);
+					});
+
+					SetUIState(UIState.ReadyForEvaluation);
+					return;
+				}
+			}
+
+			if (stepByStep)
+			{
+				SetUIState(UIState.ReadyForNextConstructionStep);
+				return;
+			}
+
+			SetUIState(UIState.BusyConstructing);
+			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
 		}
 
 		/// <summary>
-		/// Puts intermediate results into AreaForMachineCreation.
+		/// Return value indicates whether the state is shown or not.
 		/// </summary>
-		private void ConstructionStepResultsWorker()
+		/// <returns>false if the construction process was interrupted,
+		/// true if the current construction state was correctly shown</returns>
+		private bool ShowCurrentConstructionState(int sessionId)
 		{
 			ReadOnlyCollection<RegularExpression> accepting = null;
 			ReadOnlyCollection<RegularExpression> states = null;
@@ -695,49 +671,68 @@ namespace Phinite
 			ReadOnlyCollection<MachineTransition> latestTransitions = null;
 			FiniteStateMachineLayout layout = null;
 			bool constructionFinished = false;
+			bool layoutIsTooOld = false;
 			lock (regexpAndFsmLock)
 			{
-				if (CheckIfComputationAbortedAndDealWithIt(fsm))
-					return;
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+					return false;
 
 				accepting = fsm.AcceptingStates;
 				states = fsm.States;
 				transitions = fsm.Transitions;
 
 				constructionFinished = fsm.IsConstructionFinished();
+				layoutIsTooOld = layoutAge == settings.LayoutCreationFrequency;
 
-				if (stepByStep || layoutAge == settings.LayoutCreationFrequency || constructionFinished)
+				if (stepByStep || layoutIsTooOld || constructionFinished)
 				{
 
 					latestStates = fsm.LatestStates;
 					latestTransitions = fsm.LatestTransitions;
 
-					layout = new FiniteStateMachineLayout(fsm);
+					// draw new layout only if it differs from the last one
+					if (latestStates.Count != 0 || latestTransitions.Count != 0)
+					{
+						layout = new FiniteStateMachineLayout(fsm);
+						fsmLayout = layout;
+					}
 				}
 			}
 
 			//do not create everytime in case of "immediate solution", rather every N steps
-			if (stepByStep || layoutAge == settings.LayoutCreationFrequency || constructionFinished)
+			if (stepByStep || layoutIsTooOld || constructionFinished)
 			{
 				//TODO: abort layout creation on computation abort
-				layout.Create();
+				if (layout == null)
+					layout = fsmLayout;
+				else
+					layout.Create();
 
 				Dispatcher.BeginInvoke((Action)delegate
 				{
 					lock (regexpAndFsmLock)
 					{
-						if (CheckIfComputationAbortedAndDealWithIt(fsm))
+						if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 							return;
 					}
 					layout.Draw(ConstructedMachineCanvas, latestStates, latestTransitions);
 				});
 			}
+
+			// layoutAge access must also be synchronized due to case when:
+			//  user aborts computation while the layout is being created
 			if (!stepByStep)
 			{
-				if (layoutAge < settings.LayoutCreationFrequency)
-					++layoutAge;
-				else
-					layoutAge = 1;
+				lock (regexpAndFsmLock)
+				{
+					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+						return false;
+
+					if (layoutAge < settings.LayoutCreationFrequency)
+						++layoutAge;
+					else
+						layoutAge = 1;
+				}
 			}
 
 			var data = new List<Tuple<RegularExpression, string, string>>();
@@ -771,48 +766,32 @@ namespace Phinite
 
 			lock (regexpAndFsmLock)
 			{
-				if (CheckIfComputationAbortedAndDealWithIt(fsm))
-					return;
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+					return false;
 
-				if (constructionFinished)
-				{
-					fsmLayout = layout;
-
-					Dispatcher.BeginInvoke((Action)delegate
-					{
-						lock (regexpAndFsmLock)
-						{
-							if (CheckIfComputationAbortedAndDealWithIt(fsm))
-								return;
-						}
-						// draw the fsm behind word input controls
-						layout.Draw(WordInputBackgroundCanvas);
-					});
-
-					SetUIState(UIState.ReadyForEvaluation);
-					return;
-				}
+				StatesLeftCount = fsm.RemainingStatesCount;
+				TransitionsLeftCount = fsm.RemainingTransitionsCount;
+				StatesLabeledCount = fsm.LabeledStatesCount;
+				TransitionsLabeledCount = fsm.LabeledTransitionsCount;
 			}
 
-			if (stepByStep)
-			{
-				SetUIState(UIState.ReadyForNextConstructionStep);
-				return;
-			}
-
-			SetUIState(UIState.BusyConstructing);
-			CallMethodInNewThread(ConstructionStepWorker, "ConstructionStep");
+			return true;
 		}
 
 		private void EvaluationStepWorker()
 		{
+			int sessionId = 0;
+			lock (regexpAndFsmLock)
+			{
+				sessionId = thisComputationSessionId;
+			}
 			bool finished = false;
 			int previous = -1;
 			int state = -1;
 
 			lock (regexpAndFsmLock)
 			{
-				if (CheckIfComputationAbortedAndDealWithIt(fsm))
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 					return;
 
 				if (fsm.IsEvaluationFinished())
@@ -849,7 +828,7 @@ namespace Phinite
 			{
 				lock (regexpAndFsmLock)
 				{
-					if (CheckIfComputationAbortedAndDealWithIt(fsm))
+					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 						return;
 				}
 				fsmLayout.Draw(WordEvaluationCanvas, previous, state, finished);
@@ -869,12 +848,17 @@ namespace Phinite
 
 		private void LatexGenerationWorker()
 		{
+			int sessionId = 0;
+			lock (regexpAndFsmLock)
+			{
+				sessionId = thisComputationSessionId;
+			}
 			RegularExpression r = null;
 			FiniteStateMachine f = null;
 
 			lock (regexpAndFsmLock)
 			{
-				if (CheckIfComputationAbortedAndDealWithIt(regexp, fsm))
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, regexp, fsm))
 					return;
 
 				r = regexp;
@@ -1010,13 +994,13 @@ namespace Phinite
 				return;
 			var item = (HeaderedItemsControl)sender;
 			var itemHeaderString = item.Header.ToString();
-			InputRegexpText = Examples[itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""))];
+			InputRegexpText = App.ExpressionExamples[itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""))];
 		}
 
 		private void OptionSettings_Click(object sender, RoutedEventArgs e)
 		{
 			var backup = new PhiniteSettings(settings);
-			var s = new SettingsWindow(settings);
+			var s = new WindowSettings(settings);
 			s.Owner = this;
 			if (s.ShowDialog() != true)
 				settings = backup;
@@ -1125,6 +1109,7 @@ namespace Phinite
 		{
 			lock (regexpAndFsmLock)
 			{
+				thisComputationSessionId = 0;
 				fsm = null;
 				regexp = null;
 			}
@@ -1264,7 +1249,7 @@ namespace Phinite
 
 			s.Append("Use buttons on the left side to control the construction process.");
 			s.Append("\n\n");
-			s.Append("When the construction is complete, you may continue right to word evaluation screen,");
+			s.Append("When the construction is complete, you may go right to word evaluation screen,");
 			s.Append(" or before that stop for a moment to view a PDF with construction results report.");
 			s.Append("\n\n");
 			s.Append("To do the former, select \"Go to word evaluation\", and to do the latter select \"Generate LaTeX code\".");
@@ -1306,7 +1291,7 @@ namespace Phinite
 
 		#endregion
 
-		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		private void WindowMain_Loaded(object sender, RoutedEventArgs e)
 		{
 			var sett = Properties.Settings.Default;
 			settings = new PhiniteSettings(sett);
@@ -1318,7 +1303,31 @@ namespace Phinite
 			var sett = Properties.Settings.Default;
 		}
 
-		private void MainWindow_Closing(object sender, CancelEventArgs e)
+		void WindowUserHelp_Closed(object sender, EventArgs e)
+		{
+			if (sender is WindowUserHelp == false)
+				return;
+
+			var w = (WindowUserHelp)sender;
+
+			if (w.ResolvedEquivalent.HasValue == false)
+			{
+				OptionAbort_Click(sender, null);
+				return;
+			}
+
+			if (stepByStep)
+			{
+				ShowCurrentConstructionState(thisComputationSessionId);
+
+				SetUIState(UIState.ReadyForNextConstructionStep);
+				return;
+			}
+
+			OptionNextStep_Click(sender, null);
+		}
+
+		private void WindowMain_Closing(object sender, CancelEventArgs e)
 		{
 			SetUIState(UIState.Loading);
 

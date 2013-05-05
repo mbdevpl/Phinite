@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace Phinite
@@ -363,6 +365,63 @@ namespace Phinite
 				return thisPoint.Copy().MoveTo(endPoint, thisPoint.DistanceToLine(otherLineStartPoint, otherLineEndPoint, false));
 
 			throw new InvalidOperationException("these lines do not intersect");
+		}
+
+		/// <summary>
+		/// If the new value differs from the current private field value, this method will change
+		/// the given private field value and will raise the PropertyChanged event.
+		/// 
+		/// Checks for equality between object using Equals()
+		/// </summary>
+		/// <typeparam name="T">a struct type</typeparam>
+		/// <param name="sender">an object that implements INotifyPropertyChanged</param>
+		/// <param name="handler">PropertyChanged event handler</param>
+		/// <param name="privateField">a struct</param>
+		/// <param name="newValue">a struct</param>
+		/// <param name="propertyName">name of the public property</param>
+		public static void ChangeProperty<T>(this INotifyPropertyChanged sender, PropertyChangedEventHandler handler,
+			ref T privateField, ref T newValue, string propertyName) where T : struct
+		{
+			if (privateField.Equals(newValue))
+				return;
+			privateField = newValue;
+			sender.InvokePropertyChanged(handler, propertyName);
+		}
+
+		/// <summary>
+		/// If the new value is a different object than (and it is not equal to) the current private field value,
+		/// this method will change the given private field value and will raise the PropertyChanged event.
+		/// 
+		/// Checks for equality between objects using == and then Equals()
+		/// </summary>
+		/// <typeparam name="T">a class</typeparam>
+		/// <param name="sender">an object that implements INotifyPropertyChanged</param>
+		/// <param name="handler">PropertyChanged event handler</param>
+		/// <param name="privateField">instance of a class</param>
+		/// <param name="newValue">instance of a class</param>
+		/// <param name="propertyName">name of the public property</param>
+		public static void ChangeProperty<T>(this INotifyPropertyChanged sender, PropertyChangedEventHandler handler,
+			ref T privateField, T newValue, string propertyName) where T : class
+		{
+			if (privateField == newValue)
+				return;
+			if (privateField != null && privateField.Equals(newValue))
+				return;
+			privateField = newValue;
+			sender.InvokePropertyChanged(handler, propertyName);
+		}
+
+		/// <summary>
+		/// Raises the PropertyChanged event handler on an object that implements INotifyPropertyChanged.
+		/// </summary>
+		/// <param name="sender">an object that implements INotifyPropertyChanged</param>
+		/// <param name="handler">PropertyChanged event handler</param>
+		/// <param name="propertyName">name of the public property</param>
+		public static void InvokePropertyChanged(this INotifyPropertyChanged sender, PropertyChangedEventHandler handler,
+			string propertyName)
+		{
+			if (handler != null)
+				handler(sender, new PropertyChangedEventArgs(propertyName));
 		}
 
 	}

@@ -405,151 +405,157 @@ namespace Phinite
 		public void Derive(string removedLetter)
 		{
 			// to properly derive expressions with unary operators, they have to be transformed
-			if (_operator.Equals(UnaryOperator.KleeneStar))
+			switch (_operator)
 			{
-				// (a)* becomes .+a(a)* because those expressions are equivalent
-
-				var extracted = new PartialExpression(this);
-				extracted._operator = UnaryOperator.None;
-
-				var remaining = new PartialExpression(this);
-
-				var concat = new PartialExpression(this, new List<PartialExpression> { extracted, remaining }, true);
-				extracted.root = concat;
-				remaining.root = concat;
-
-				role = PartialExpressionRole.Union;
-				parts = new List<PartialExpression> { new PartialExpression(PartialExpressionRole.EmptyWord, this), concat };
-				_operator = UnaryOperator.None;
-			}
-			else if (_operator.Equals(UnaryOperator.KleenePlus))
-			{
-				// (a)^+ becomes a(a)^* because those expressions are equivalent
-
-				var extracted = new PartialExpression(this);
-				extracted._operator = UnaryOperator.None;
-				extracted.root = this;
-
-				var remaining = new PartialExpression(this);
-				remaining._operator = UnaryOperator.KleeneStar;
-				remaining.root = this;
-
-				role = PartialExpressionRole.Concatenation;
-				parts = new List<PartialExpression> { extracted, remaining };
-				_operator = UnaryOperator.None;
-			}
-
-			if (role.Equals(PartialExpressionRole.EmptyWord))
-			{
-				//if(root != null && root.role.Equals(PartialExpressionRole.Union))
-				role = PartialExpressionRole.Invalid;
-			}
-			else if (role.Equals(PartialExpressionRole.Letter))
-			{
-				if (_value.Equals(removedLetter))
-					role = PartialExpressionRole.EmptyWord;
-				else
-					role = PartialExpressionRole.Invalid;
-				_value = null;
-			}
-			else if (role.Equals(PartialExpressionRole.Concatenation))
-			{
-				var firstPart = parts[0];
-				if (firstPart._operator.Equals(UnaryOperator.KleeneStar))
-				{
-					// here also derivation can split into two variants
-
-					PartialExpression new1firstPart = new PartialExpression(firstPart);
-					new1firstPart._operator = UnaryOperator.None;
-					//new1firstPart.parts.RemoveAll(x => x.role.Equals(PartialExpressionRole.EmptyWord));
-
-					var new1 = new PartialExpression(this);
-					new1.parts.RemoveAt(0);
-					new1.Optimize();
-					new1.root = this;
-
-					var new2 = new PartialExpression(this);
-					new2.parts.Insert(0, new1firstPart);
-					new1firstPart.root = new2;
-					new2.root = this;
-
-					role = PartialExpressionRole.Union;
-					parts = new List<PartialExpression> { new1, new2 };
-
-					Derive(removedLetter);
-				}
-				else if (firstPart.role.Equals(PartialExpressionRole.Union)
-					&& firstPart.parts.Any(x => x.role.Equals(PartialExpressionRole.EmptyWord)))
-				{
-					// this union contains an empty word, so the derivation can be split in two variants
-
-					PartialExpression new1firstPart = new PartialExpression(firstPart);
-					new1firstPart.parts.RemoveAll(x => x.role.Equals(PartialExpressionRole.EmptyWord));
-
-					var new1 = new PartialExpression(this);
-					new1.parts.RemoveAt(0);
-					new1.parts.Insert(0, new1firstPart);
-					new1firstPart.root = new1;
-					new1.root = this;
-
-					var new2 = new PartialExpression(this);
-					new2.parts.RemoveAt(0);
-					new2.Optimize();
-					new2.root = this;
-
-					role = PartialExpressionRole.Union;
-					parts = new List<PartialExpression> { new1, new2 };
-
-					Derive(removedLetter);
-				}
-				else
-				{
-					parts[0].Derive(removedLetter);
-					if (parts[0].Role.Equals(PartialExpressionRole.Invalid))
+				case UnaryOperator.KleeneStar:
 					{
-						parts.Clear();
-						parts = null;
+						// (a)* becomes .+a(a)* because those expressions are equivalent
+
+						var extracted = new PartialExpression(this);
+						extracted._operator = UnaryOperator.None;
+
+						var remaining = new PartialExpression(this);
+
+						var concat = new PartialExpression(this, new List<PartialExpression> { extracted, remaining }, true);
+						extracted.root = concat;
+						remaining.root = concat;
+
+						role = PartialExpressionRole.Union;
+						parts = new List<PartialExpression> { new PartialExpression(PartialExpressionRole.EmptyWord, this), concat };
+						_operator = UnaryOperator.None;
+					} break;
+				case UnaryOperator.KleenePlus:
+					{
+						// (a)^+ becomes a(a)^* because those expressions are equivalent
+
+						var extracted = new PartialExpression(this);
+						extracted._operator = UnaryOperator.None;
+						extracted.root = this;
+
+						var remaining = new PartialExpression(this);
+						remaining._operator = UnaryOperator.KleeneStar;
+						remaining.root = this;
+
+						role = PartialExpressionRole.Concatenation;
+						parts = new List<PartialExpression> { extracted, remaining };
+						_operator = UnaryOperator.None;
+					} break;
+			}
+
+			switch (role)
+			{
+				case PartialExpressionRole.EmptyWord:
+					{
+						//if(root != null && root.role.Equals(PartialExpressionRole.Union))
 						role = PartialExpressionRole.Invalid;
-					}
-					else if (parts.Count > 1)
+					} break;
+				case PartialExpressionRole.Letter:
 					{
-						if (parts[0].Role.Equals(PartialExpressionRole.EmptyWord))
-						{
-							parts.RemoveAt(0);
-							if (parts.Count == 1)
-								Optimize();
-						}
-					}
-					else
-					{
-						if (parts[0].Role.Equals(PartialExpressionRole.EmptyWord))
-						{
-							parts.RemoveAt(0);
-							parts = null;
+						if (_value.Equals(removedLetter))
 							role = PartialExpressionRole.EmptyWord;
+						else
+							role = PartialExpressionRole.Invalid;
+						_value = null;
+					} break;
+				case PartialExpressionRole.Concatenation:
+					{
+						var firstPart = parts[0];
+						if (firstPart._operator == UnaryOperator.KleeneStar)
+						{
+							// here also derivation can split into two variants
+
+							PartialExpression new1firstPart = new PartialExpression(firstPart);
+							new1firstPart._operator = UnaryOperator.None;
+							//new1firstPart.parts.RemoveAll(x => x.role.Equals(PartialExpressionRole.EmptyWord));
+
+							var new1 = new PartialExpression(this);
+							new1.parts.RemoveAt(0);
+							new1.Optimize();
+							new1.root = this;
+
+							var new2 = new PartialExpression(this);
+							new2.parts.Insert(0, new1firstPart);
+							new1firstPart.root = new2;
+							new2.root = this;
+
+							role = PartialExpressionRole.Union;
+							parts = new List<PartialExpression> { new1, new2 };
+
+							Derive(removedLetter);
 						}
-					}
-				}
+						else if (firstPart.role == PartialExpressionRole.Union
+							&& firstPart.parts.Any(x => x.role == PartialExpressionRole.EmptyWord))
+						{
+							// this union contains an empty word, so the derivation can be split in two variants
+
+							PartialExpression new1firstPart = new PartialExpression(firstPart);
+							new1firstPart.parts.RemoveAll(x => x.role == PartialExpressionRole.EmptyWord);
+
+							var new1 = new PartialExpression(this);
+							new1.parts.RemoveAt(0);
+							new1.parts.Insert(0, new1firstPart);
+							new1firstPart.root = new1;
+							new1.root = this;
+
+							var new2 = new PartialExpression(this);
+							new2.parts.RemoveAt(0);
+							new2.Optimize();
+							new2.root = this;
+
+							role = PartialExpressionRole.Union;
+							parts = new List<PartialExpression> { new1, new2 };
+
+							Derive(removedLetter);
+						}
+						else
+						{
+							parts[0].Derive(removedLetter);
+							if (parts[0].role == PartialExpressionRole.Invalid)
+							{
+								parts.Clear();
+								parts = null;
+								role = PartialExpressionRole.Invalid;
+							}
+							else if (parts.Count > 1)
+							{
+								if (parts[0].role == PartialExpressionRole.EmptyWord)
+								{
+									parts.RemoveAt(0);
+									if (parts.Count == 1)
+										Optimize();
+								}
+							}
+							else
+							{
+								if (parts[0].role == PartialExpressionRole.EmptyWord)
+								{
+									parts.RemoveAt(0);
+									parts = null;
+									role = PartialExpressionRole.EmptyWord;
+								}
+							}
+						}
+					} break;
+				case PartialExpressionRole.Union:
+					{
+						foreach (var part in parts)
+							part.Derive(removedLetter);
+						for (int i = parts.Count - 1; i >= 0; --i)
+						{
+							if (parts[i].role == PartialExpressionRole.Invalid)
+								parts.RemoveAt(i);
+						}
+						if (parts.Count == 1)
+							Optimize();
+						else if (parts.Count == 0)
+						{
+							parts = null;
+							role = PartialExpressionRole.Invalid;
+						}
+					} break;
+				default:
+					throw new ArgumentException("encountered partial expression with role that is not allowed");
 			}
-			else if (role.Equals(PartialExpressionRole.Union))
-			{
-				foreach (var part in parts)
-					part.Derive(removedLetter);
-				for (int i = parts.Count - 1; i >= 0; --i)
-				{
-					if (parts[i].role.Equals(PartialExpressionRole.Invalid))
-						parts.RemoveAt(i);
-				}
-				if (parts.Count == 1)
-					Optimize();
-				else if (parts.Count == 0)
-				{
-					parts = null;
-					role = PartialExpressionRole.Invalid;
-				}
-			}
-			else
-				throw new ArgumentException("encountered partial expression with role that is not allowed");
 		}
 
 		/// <summary>

@@ -24,6 +24,7 @@ namespace Phinite
 
 		ConstructionPhase = 1 << 14,
 		BusyConstructing = ConstructionPhase | 1,
+		WaitingForUserHelp = ConstructionPhase | 1 << 1,
 
 		ConstructionStepResultsPhase = 1 << 15,
 		ReadyForNextConstructionStep = ConstructionStepResultsPhase | 1,

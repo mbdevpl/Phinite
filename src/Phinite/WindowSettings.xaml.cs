@@ -9,7 +9,7 @@ namespace Phinite
 	/// 
 	/// Interaction logic for SettingsWindow.xaml
 	/// </summary>
-	public partial class SettingsWindow : Window, INotifyPropertyChanged
+	public partial class WindowSettings : Window, INotifyPropertyChanged
 	{
 		private PhiniteSettings phi;
 
@@ -125,7 +125,7 @@ namespace Phinite
 			}
 		}
 
-		public SettingsWindow(PhiniteSettings settings)
+		public WindowSettings(PhiniteSettings settings)
 		{
 			phi = settings;
 

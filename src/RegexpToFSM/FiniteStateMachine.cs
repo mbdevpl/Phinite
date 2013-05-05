@@ -32,6 +32,21 @@ namespace Phinite
 		private List<RegularExpression> notLabeled;
 
 		/// <summary>
+		/// The expression that should be labeled in the next step of construction,
+		/// it is null if there are no expressions to label.
+		/// </summary>
+		public RegularExpression NextNotLabeledState
+		{ get { return (notLabeled == null || notLabeled.Count == 0) ? null : notLabeled[0]; } }
+
+		public Double[] NextNotLabeledStateSimilarities { get { return nextNotLabeledStateSimilarities; } }
+		private Double[] nextNotLabeledStateSimilarities;
+
+		/// <summary>
+		/// Number of states that cannot be displayed yet.
+		/// </summary>
+		public int RemainingStatesCount { get { return notLabeled == null ? 0 : notLabeled.Count; } }
+
+		/// <summary>
 		/// List of all expressions that need to be derived.
 		/// </summary>
 		private List<int> notDerivedIds;
@@ -82,7 +97,25 @@ namespace Phinite
 		/// </summary>
 		private List<KeyValuePair<int, List<RegularExpression>>> equivalentStatesGroups;
 
+		public int LabeledStatesCount { get { return equivalentStatesGroups.Count; } }
+
+		/// <summary>
+		/// Transitions that are not attached to labeled states, because at least one of the states
+		/// that they belong to is not yet labeled.
+		/// </summary>
 		private List<Tuple<int, string, RegularExpression>> notOptimizedTransitions;
+
+		/// <summary>
+		/// Number of transactions that cannot be displayed yet.
+		/// </summary>
+		public int RemainingTransitionsCount
+		{
+			get
+			{
+				return (notDerivedIds == null ? 0 : notDerivedIds.Count)
+					+ (notOptimizedTransitions == null ? 0 : notOptimizedTransitions.Count);
+			}
+		}
 
 		/// <summary>
 		/// A read-only collection of transitions of the machine.
@@ -97,6 +130,8 @@ namespace Phinite
 			}
 		}
 		private List<MachineTransition> transitions;
+
+		public int LabeledTransitionsCount { get { return transitions.Count; } }
 
 		/// <summary>
 		/// Collection of transitions added since last reading of this property,
@@ -182,7 +217,7 @@ namespace Phinite
 
 			InitializeConstruction();
 			if (constructImmediately)
-				Construct(0);
+				Construct(0, false);
 
 			InitializeEvaluation();
 		}
@@ -212,16 +247,36 @@ namespace Phinite
 		/// The method may end prematurely when the machine is already constructed.
 		/// </summary>
 		/// <param name="numberOfSteps">maximum number of steps that will be taken,
-		/// when set to zero or a negative number, the construction is performed until it has completed</param>
-		public void Construct(int numberOfSteps = 0)
+		/// when set to zero or a negative number, the construction is performed until it has completed
+		/// or interrupted because of uncertainty</param>
+		/// <param name="breakIfUncertain">if false, the algorithm treats all uncertain states
+		/// as not equivalent to existing ones</param>
+		/// <returns>false if construction was interrupted, true otherwise</returns>
+		public bool Construct(int numberOfSteps, bool breakIfUncertain)
 		{
 			if (numberOfSteps <= 0)
 				numberOfSteps = -1;
 			while (numberOfSteps != 0 && !IsConstructionFinished())
 			{
-				if (!LabelNextExpression() && notLabeled.Count > 0)
+				if (!LabelNextExpression(breakIfUncertain) && notLabeled.Count > 0)
 				{
-					// automatically handle uncertain cases
+					// automatically handle some uncertain cases
+					int count = equivalentStatesGroups.Count;
+					double[] similarities = new double[count];
+					Parallel.For(0, count, (int n) =>
+						{
+							similarities[n] = notLabeled[0].Similarity(equivalentStatesGroups[n].Value[0]);
+						});
+					if (similarities.Max() == 0)
+					{
+						nextNotLabeledStateSimilarities = null;
+						ManuallyLabelNextExpression(null);
+					}
+					else
+					{
+						nextNotLabeledStateSimilarities = similarities;
+						return false;
+					}
 				}
 				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
 				{
@@ -230,6 +285,7 @@ namespace Phinite
 				if (numberOfSteps > 0)
 					--numberOfSteps;
 			}
+			return true;
 		}
 
 		/// <summary>
@@ -244,17 +300,16 @@ namespace Phinite
 		/// <summary>
 		/// Labels the next expression from the not-labeled-expressions queue.
 		/// </summary>
-		/// <param name="breakOnNotFound"></param>
+		/// <param name="breakIfUncertain"></param>
 		/// <returns>true if an expression was labeled during execution of this method,
 		/// or if an expression was evaluated and it was determined with 100% certainty
 		/// that it is equivalent to some already labeled expression</returns>
-		public bool LabelNextExpression(bool breakOnNotFound = false)
+		public bool LabelNextExpression(bool breakIfUncertain)
 		{
 			if (notLabeled.Count == 0)
 				return false;
 
 			var labeled = notLabeled[0];
-			int labeledId = -1;
 			var foundNew = false;
 
 			if (initialState == null)
@@ -263,7 +318,6 @@ namespace Phinite
 			if (equivalentStatesGroups.Count == 0)
 			{
 				foundNew = true;
-				labeledId = 0;
 			}
 			else
 			{
@@ -277,10 +331,13 @@ namespace Phinite
 					}
 				}
 				//TODO: handle the unsure situation here!
-				if (breakOnNotFound)
+				if (breakIfUncertain)
 				{
 					// this looks like a new state, but it may as well be still equivalent of one existing state
 					// because equivalence checking is not perfect
+
+					// TODO: put some checking here, in some cases a state can be determined that it is for sure new.
+
 					return false;
 				}
 
@@ -288,6 +345,22 @@ namespace Phinite
 			}
 
 			if (foundNew)
+			{
+				ManuallyLabelNextExpression(null);
+			}
+			return foundNew;
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="equivalentToExpression"></param>
+		public void ManuallyLabelNextExpression(RegularExpression equivalentToExpression)
+		{
+			RegularExpression labeled = notLabeled[0];
+			int labeledId = -1;
+
+			if (equivalentToExpression == null)
 			{
 				labeledId = equivalentStatesGroups.Count;
 				notLabeled.RemoveAt(0);
@@ -300,33 +373,42 @@ namespace Phinite
 					acceptingStatesIds.Add(labeledId);
 
 				notDerivedIds.Add(labeledId);
-
-				if (notOptimizedTransitions.Count > 0)
-				{
-					var transitionsForOptimization = notOptimizedTransitions.FindAll(x => x.Item3.Equals(labeled));
-
-					transitionsForOptimization.ForEach(x =>
-					{
-						var foundTransition = transitions.FindIndex(y => y.Item1 == x.Item1 && y.Item3 == labeledId);
-						if (foundTransition >= 0)
-							// this can happen if more than one transition is optimized in this step
-							transitions[foundTransition].AddLetter(x.Item2);
-						else
-						{
-							MachineTransition transition = new MachineTransition(x.Item1, x.Item2, labeledId);
-							transitions.Add(transition);
-							latestTransitions.Add(transition);
-						}
-					});
-					transitionsForOptimization.ForEach(x => notOptimizedTransitions.Remove(x));
-				}
 			}
-			return foundNew;
-		}
+			else
+			{
+				foreach (var group in equivalentStatesGroups)
+				{
+					if (!group.Value.Any(x => x.Equals(equivalentToExpression)))
+						continue;
+					labeledId = group.Key;
+					break;
+				}
 
-		public void ManuallyLabelNextExpression(RegularExpression equivalentToExpression)
-		{
-			throw new NotImplementedException();
+				if (labeledId < 0 && labeledId >= equivalentStatesGroups.Count)
+					throw new ArgumentException("must be either null or an expression that is already labeled", "equivalentToExpression");
+
+				equivalentStatesGroups[labeledId].Value.Add(labeled);
+			}
+
+			if (notOptimizedTransitions == null || notOptimizedTransitions.Count == 0)
+				return;
+
+			var transitionsForOptimization = notOptimizedTransitions.FindAll(x => x.Item3.Equals(labeled));
+
+			transitionsForOptimization.ForEach(x =>
+			{
+				var foundTransition = transitions.FindIndex(y => y.Item1 == x.Item1 && y.Item3 == labeledId);
+				if (foundTransition >= 0)
+					// this can happen if more than one transition is optimized in this step
+					transitions[foundTransition].AddLetter(x.Item2);
+				else
+				{
+					MachineTransition transition = new MachineTransition(x.Item1, x.Item2, labeledId);
+					transitions.Add(transition);
+					latestTransitions.Add(transition);
+				}
+			});
+			transitionsForOptimization.ForEach(x => notOptimizedTransitions.Remove(x));
 		}
 
 		/// <summary>
@@ -377,26 +459,29 @@ namespace Phinite
 					derivationThreads[i].Join();
 
 				****/
-				
+
 				#endregion
 
 				// derive in parallel
-				Parallel.For(0, count, (int n) =>
-				{
-					derivations[n] = current.Derive(alphabet[n]);
-				});
+				if (count > 1)
+					Parallel.For(0, count, (int n) =>
+					{
+						derivations[n] = current.Derive(alphabet[n]);
+					});
+				else
+					derivations[0] = current.Derive(alphabet[0]);
 
 				// analyze results in sequence
 				for (int i = 0; i < count; ++i)
 				{
-					var letter = alphabet[i];
 					var derived = derivations[i];
 
 					if (derived == null)
 						continue;
 
-					var derivedId = equivalentStatesGroups.FindIndex(x => x.Value.Any(y => y.Equals(derived)));
+					var letter = alphabet[i];
 
+					var derivedId = equivalentStatesGroups.FindIndex(x => x.Value.Any(y => y.Equals(derived)));
 					if (derivedId >= 0)
 					{
 						var foundTransition = transitions.FindIndex(x => x.Item1 == currentId && x.Item3 == derivedId);

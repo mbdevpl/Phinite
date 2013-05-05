@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Phinite
 {
@@ -436,7 +437,7 @@ namespace Phinite
 				return null; // this can be simply handled, no need for exception
 
 			if (taggedInput == null || tagCount == null || parsedInput == null)
-				EvaluateInput();
+				throw new ArgumentNullException(); //EvaluateInput();
 
 			//var copy = new RegularExpression(this.input, true);
 			//copy.parsedInput.Derive(removedLetter);
@@ -463,6 +464,7 @@ namespace Phinite
 			return parsedInput.GeneratesEmptyWord();
 		}
 
+		/****
 		/// <summary>
 		/// Checks if given expression is equivalent to this one.
 		/// </summary>
@@ -506,6 +508,50 @@ namespace Phinite
 
 			return true;
 		}
+		 ****/
+
+		/// <summary>
+		/// Estimates similarity between two regular expressions, on a scale from 0 to 1.
+		/// </summary>
+		/// <param name="expr"></param>
+		/// <returns>value from 0 to 1</returns>
+		public double Similarity(RegularExpression expr)
+		{
+			if (Equals(expr))
+				return 1.0;
+
+			bool isAccepting = GeneratesEmptyWord();
+			bool exprIsAccepting = expr.GeneratesEmptyWord();
+
+			if (isAccepting != exprIsAccepting)
+				return 0.0; // empty word generation properties differ
+
+			if (alphabet.Count != expr.alphabet.Count)
+				return 0.0; // alphabet lengths differ
+
+			if (alphabet.Intersect(expr.alphabet).Count() != alphabet.Count)
+				return 0.0; // alphabet contents differ
+
+			bool inequalFound = false;
+			object _lock = new object();
+			Parallel.For(0, alphabet.Count, (int n) =>
+				{
+					var derived = Derive(alphabet[n]);
+					var exprDerived = expr.Derive(alphabet[n]);
+					lock (_lock)
+					{
+						if(!inequalFound)
+							if ((derived == null && exprDerived != null) || (derived != null && exprDerived == null))
+							inequalFound = true;
+					}
+				});
+			if (inequalFound)
+				return 0.0; // outgoing transitions differ
+
+			//double similarity = 0.0;
+
+			return 0.35;
+		}
 
 		public override bool Equals(object obj)
 		{
@@ -514,23 +560,29 @@ namespace Phinite
 			if (obj is RegularExpression == false)
 				return false;
 
+			if (this == obj)
+				return true;
+
 			var regexp = (RegularExpression)obj;
 
 			if (input.Equals(regexp.input))
 				return true;
 
 			if (alphabet == null || taggedInput == null || tagCount == null)
-				TagInput();
+				throw new ArgumentNullException(); //TagInput();
 			if (regexp.alphabet == null || regexp.taggedInput == null || regexp.tagCount == null)
-				regexp.TagInput();
+				throw new ArgumentNullException(); //regexp.TagInput();
 
-			if (alphabet.Count != regexp.alphabet.Count || alphabet.Count != alphabet.Intersect(regexp.alphabet).Count())
+			if (alphabet.Count != regexp.alphabet.Count)
+				return false;
+
+			if (alphabet.Count != alphabet.Intersect(regexp.alphabet).Count())
 				return false;
 
 			if (parsedInput == null)
-				ParseInput();
+				throw new ArgumentNullException(); // ParseInput();
 			if (regexp.parsedInput == null)
-				regexp.ParseInput();
+				throw new ArgumentNullException(); // regexp.ParseInput();
 			//throw new ArgumentException("cannot compare regular expressions that were not evaluated");
 			// this is easily handled
 
