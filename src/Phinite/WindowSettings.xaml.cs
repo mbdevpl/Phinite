@@ -42,6 +42,33 @@ namespace Phinite
 			}
 		}
 
+		public int EnableAutoResolutionModeInUse
+		{
+			get { return phi.Settings.EnableAutoResolutionModeInUse; }
+			set
+			{
+				if (phi.Settings.EnableAutoResolutionModeInUse == value)
+					return;
+				phi.Settings.EnableAutoResolutionModeInUse = value;
+				InvokePropertyChanged("EnableAutoResolutionModeInUse");
+			}
+		}
+
+		public bool EnableAutoResolutionModeDefault { get { return phi.Settings.EnableAutoResolutionModeDefault; } }
+
+		public bool EnableAutoResolutionMode
+		{
+			get { return phi.Settings.EnableAutoResolutionMode; }
+			set
+			{
+				if (phi.Settings.EnableAutoResolutionMode == value)
+					return;
+				phi.Settings.EnableAutoResolutionMode = value;
+				InvokePropertyChanged("EnableAutoResolutionMode");
+				EnableAutoResolutionModeInUse = 1;
+			}
+		}
+
 		public int PdflatexInUse
 		{
 			get { return phi.Settings.PdflatexInUse; }

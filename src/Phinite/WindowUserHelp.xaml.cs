@@ -118,7 +118,7 @@ namespace Phinite
 				if (!newExpressionProcessed)
 				{
 					resolvedEquivalent = true;
-					fsm.ManuallyLabelNextExpression(LabeledExpressionsData[SelectedExpression].Item1);
+					fsm.Construct(1, LabeledExpressionsData[SelectedExpression].Item1, true);
 					newExpressionProcessed = true;
 				}
 			}
@@ -131,7 +131,7 @@ namespace Phinite
 				if (!newExpressionProcessed)
 				{
 					resolvedEquivalent = false;
-					fsm.ManuallyLabelNextExpression(null);
+					fsm.Construct(1, null, true);
 					newExpressionProcessed = true;
 				}
 			}

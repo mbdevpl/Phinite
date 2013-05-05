@@ -32,6 +32,19 @@ namespace Phinite
 			}
 		}
 
+		public bool EnableAutoResolutionMode
+		{
+			get
+			{
+				switch (settings.EnableAutoResolutionModeInUse)
+				{
+					case 0: return settings.EnableAutoResolutionModeDefault;
+					case 1: return settings.EnableAutoResolutionMode;
+					default: return false;
+				}
+			}
+		}
+
 		public string Pdflatex
 		{
 			get

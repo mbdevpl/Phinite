@@ -166,5 +166,38 @@ namespace Phinite.Properties {
                 this["LayoutCreationFrequencyInUse"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool EnableAutoResolutionMode {
+            get {
+                return ((bool)(this["EnableAutoResolutionMode"]));
+            }
+            set {
+                this["EnableAutoResolutionMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableAutoResolutionModeDefault {
+            get {
+                return ((bool)(this["EnableAutoResolutionModeDefault"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int EnableAutoResolutionModeInUse {
+            get {
+                return ((int)(this["EnableAutoResolutionModeInUse"]));
+            }
+            set {
+                this["EnableAutoResolutionModeInUse"] = value;
+            }
+        }
     }
 }

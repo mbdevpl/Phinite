@@ -4,17 +4,14 @@
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
 		xmlns:ex="http://schemas.xceed.com/wpf/xaml/toolkit"
 		xmlns:con="http://schemas.kent.boogaart.com/converters"
-		Title="Phinite Settings" Height="440" Width="400"
+		Title="Phinite Settings" Height="350" Width="550"
 		WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
 	<Window.Resources>
 		<Style TargetType="ColumnDefinition" x:Key="LeftColumn">
-			<Setter Property="Width" Value="*" />
+			<Setter Property="Width" Value="120" />
 		</Style>
 		<Style TargetType="ColumnDefinition" x:Key="RightColumn">
 			<Setter Property="Width" Value="*" />
-		</Style>
-		<Style TargetType="StackPanel">
-			<Setter Property="Margin" Value="5,0,5,0" />
 		</Style>
 		<Style TargetType="RadioButton">
 			<Setter Property="Grid.Column" Value="0" />
@@ -28,6 +25,10 @@
 			<Setter Property="Margin" Value="0,0,0,2" />
 			<Setter Property="Grid.Column" Value="1" />
 		</Style>
+		<Style TargetType="CheckBox">
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="Grid.Column" Value="1" />
+		</Style>
 	</Window.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -35,8 +36,12 @@
 			<RowDefinition />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<StackPanel>
-			<Label Content="Machine creation in immediate mode:&#013;  layout creation frequency" />
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="3*" />
+			<ColumnDefinition Width="4*" />
+		</Grid.ColumnDefinitions>
+		<StackPanel Margin="5,0,5,0">
+			<Label Content="Machine creation in immediate mode:&#013;  layout creation frequency (steps)" />
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Style="{StaticResource LeftColumn}" />
@@ -86,6 +91,59 @@
 				</RadioButton>
 				<ex:DecimalUpDown Grid.Row="1" Value="{Binding LayoutCreationFrequency}" Minimum="1" Maximum="50" />
 			</Grid>
+
+			<Label Content="Automatic resolution of problem&#013;  of similar regular expressions" />
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Style="{StaticResource LeftColumn}" />
+					<ColumnDefinition Style="{StaticResource RightColumn}" />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<RadioButton Grid.Row="0" Content="default option">
+					<RadioButton.IsChecked>
+						<Binding Path="EnableAutoResolutionModeInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>0</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<TextBlock Grid.Row="0" Grid.Column="1" Margin="0,3" Text="don't auto-resolve" />
+				<!--<CheckBox Grid.Row="0" Content="auto-resolve" IsChecked="{Binding EnableAutoResolutionModeDefault}" IsEnabled="False" />-->
+				<RadioButton Grid.Row="1" Content="custom option">
+					<RadioButton.IsChecked>
+						<Binding Path="EnableAutoResolutionModeInUse">
+							<Binding.Converter>
+								<con:MapConverter FallbackBehavior="ReturnUnsetValue">
+									<con:Mapping>
+										<con:Mapping.From>
+											<sys:Int32>1</sys:Int32>
+										</con:Mapping.From>
+										<con:Mapping.To>
+											<sys:Boolean>True</sys:Boolean>
+										</con:Mapping.To>
+									</con:Mapping>
+								</con:MapConverter>
+							</Binding.Converter>
+						</Binding>
+					</RadioButton.IsChecked>
+				</RadioButton>
+				<CheckBox Grid.Row="1" Content="auto-resolve" Margin="0,3" IsChecked="{Binding EnableAutoResolutionMode}" />
+			</Grid>
+		</StackPanel>
+		<StackPanel Grid.Column="1" Margin="5,0,5,0">
 			<Label Content="LaTeX: location of pdflatex executable" />
 			<Grid>
 				<Grid.ColumnDefinitions>
@@ -116,7 +174,7 @@
 					</RadioButton.IsChecked>
 				</RadioButton>
 				<TextBox Grid.Row="0" Text="{Binding PdflatexInternal, Mode=OneWay}" IsEnabled="False" />
-				<RadioButton Grid.Row="1" Content="default, external location" GroupName="pdflatex">
+				<RadioButton Grid.Row="1" Content="default, external" GroupName="pdflatex">
 					<RadioButton.IsChecked>
 						<Binding Path="PdflatexInUse">
 							<Binding.Converter>
@@ -155,7 +213,7 @@
 				</RadioButton>
 				<TextBox Grid.Row="2" Text="{Binding Pdflatex}" />
 			</Grid>
-			<Label Content="LaTeX: pdflatex process timeout" />
+			<Label Content="LaTeX: pdflatex process timeout (seconds)" />
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Style="{StaticResource LeftColumn}" />
@@ -215,7 +273,7 @@
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="Auto" />
 				</Grid.RowDefinitions>
-				<RadioButton Grid.Row="0" Content="default internal viewer" GroupName="pdfviewer">
+				<RadioButton Grid.Row="0" Content="default, internal" GroupName="pdfviewer">
 					<RadioButton.IsChecked>
 						<Binding Path="PdfViewerInUse">
 							<Binding.Converter>
@@ -234,7 +292,7 @@
 					</RadioButton.IsChecked>
 				</RadioButton>
 				<TextBox Grid.Row="0" Text="{Binding PdfViewerInternal, Mode=OneWay}" IsEnabled="False" />
-				<RadioButton Grid.Row="1" Content="system default viewer" GroupName="pdfviewer">
+				<RadioButton Grid.Row="1" Content="system default" GroupName="pdfviewer">
 					<RadioButton.IsChecked>
 						<Binding Path="PdfViewerInUse">
 							<Binding.Converter>
@@ -274,13 +332,11 @@
 				<TextBox Grid.Row="2" Text="{Binding PdfViewer}" />
 			</Grid>
 		</StackPanel>
-		<StatusBar>
-			<Grid>
-				<StackPanel Orientation="Horizontal" Style="{StaticResource DialogButtonContainer}">
-					<Button Content="Ok" Click="ButtonOk_Click" />
-					<Button Content="Cancel" Click="ButtonCancel_Click" />
-				</StackPanel>
-			</Grid>
+		<StatusBar Grid.ColumnSpan="2">
+			<StackPanel Orientation="Horizontal" Style="{StaticResource DialogButtonContainer}">
+				<Button Content="Ok" Click="ButtonOk_Click" />
+				<Button Content="Cancel" Click="ButtonCancel_Click" />
+			</StackPanel>
 		</StatusBar>
 	</Grid>
 </Window>

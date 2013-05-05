@@ -582,7 +582,7 @@ namespace Phinite
 					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 						return;
 
-					constructionStepResult = fsm.Construct(1, true);
+					constructionStepResult = fsm.Construct(1, !settings.EnableAutoResolutionMode);
 				}
 			}
 			catch (Exception e)

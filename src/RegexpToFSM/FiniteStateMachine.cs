@@ -258,25 +258,43 @@ namespace Phinite
 				numberOfSteps = -1;
 			while (numberOfSteps != 0 && !IsConstructionFinished())
 			{
-				if (!LabelNextExpression(breakIfUncertain) && notLabeled.Count > 0)
+				if (!LabelNextExpression() && notLabeled.Count > 0)
 				{
 					// automatically handle some uncertain cases
-					int count = equivalentStatesGroups.Count;
-					double[] similarities = new double[count];
-					Parallel.For(0, count, (int n) =>
-						{
-							similarities[n] = notLabeled[0].Similarity(equivalentStatesGroups[n].Value[0]);
-						});
-					if (similarities.Max() == 0)
+					if (breakIfUncertain)
 					{
-						nextNotLabeledStateSimilarities = null;
-						ManuallyLabelNextExpression(null);
+						return false;
 					}
 					else
 					{
-						nextNotLabeledStateSimilarities = similarities;
-						return false;
+						// TODO: analyze similarities
+						nextNotLabeledStateSimilarities = null;
+						ManuallyLabelNextExpression(null);
 					}
+				}
+				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
+				{
+					// automatically handle uncertain cases
+				}
+				if (numberOfSteps > 0)
+					--numberOfSteps;
+			}
+			return true;
+		}
+
+		public bool Construct(int numberOfSteps, RegularExpression equivalentToExpressionIfUncertain, bool assumeNotLabeled)
+		{
+			if (numberOfSteps != 1)
+				throw new ArgumentException("multiple default steps not currently supported");
+			if (numberOfSteps <= 0)
+				numberOfSteps = -1;
+			while (numberOfSteps != 0 && !IsConstructionFinished())
+			{
+				if (assumeNotLabeled || (!LabelNextExpression() && notLabeled.Count > 0))
+				{
+					// automatically handle some uncertain cases
+					nextNotLabeledStateSimilarities = null;
+					ManuallyLabelNextExpression(equivalentToExpressionIfUncertain);
 				}
 				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
 				{
@@ -300,11 +318,10 @@ namespace Phinite
 		/// <summary>
 		/// Labels the next expression from the not-labeled-expressions queue.
 		/// </summary>
-		/// <param name="breakIfUncertain"></param>
 		/// <returns>true if an expression was labeled during execution of this method,
 		/// or if an expression was evaluated and it was determined with 100% certainty
 		/// that it is equivalent to some already labeled expression</returns>
-		public bool LabelNextExpression(bool breakIfUncertain)
+		private bool LabelNextExpression()
 		{
 			if (notLabeled.Count == 0)
 				return false;
@@ -330,17 +347,23 @@ namespace Phinite
 						return true;
 					}
 				}
-				//TODO: handle the unsure situation here!
-				if (breakIfUncertain)
+				// this looks like a new state, but it may as well be still equivalent of one existing state
+				// because equivalence checking is not perfect
+
+				int count = equivalentStatesGroups.Count;
+				double[] similarities = new double[count];
+				Parallel.For(0, count, (int n) =>
 				{
-					// this looks like a new state, but it may as well be still equivalent of one existing state
-					// because equivalence checking is not perfect
+					similarities[n] = notLabeled[0].Similarity(equivalentStatesGroups[n].Value[0]);
+				});
 
-					// TODO: put some checking here, in some cases a state can be determined that it is for sure new.
-
+				if (similarities.Max() > 0)
+				{
+					nextNotLabeledStateSimilarities = similarities;
 					return false;
 				}
 
+				nextNotLabeledStateSimilarities = null;
 				foundNew = true;
 			}
 
@@ -355,7 +378,7 @@ namespace Phinite
 		/// 
 		/// </summary>
 		/// <param name="equivalentToExpression"></param>
-		public void ManuallyLabelNextExpression(RegularExpression equivalentToExpression)
+		private void ManuallyLabelNextExpression(RegularExpression equivalentToExpression)
 		{
 			RegularExpression labeled = notLabeled[0];
 			int labeledId = -1;
@@ -415,7 +438,7 @@ namespace Phinite
 		/// Derives next expression from the not-derived-expressions queue.
 		/// </summary>
 		/// <returns>true if any expression was derived during execution of this method</returns>
-		public bool DeriveNextExpression()
+		private bool DeriveNextExpression()
 		{
 			if (notDerivedIds.Count == 0)
 				return false;
