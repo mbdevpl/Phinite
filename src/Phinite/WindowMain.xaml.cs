@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -1003,6 +1005,9 @@ namespace Phinite
 			currentExample = itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""));
 			InputRegexpText = App.ExpressionExamples[currentExample];
 			InputWordText = App.WordExamples[currentExample];
+
+			//InputRegexpDocument.Blocks.Clear();
+			//InputRegexpDocument.Blocks.Add(new Paragraph(new Run(inputRegexpText)));
 		}
 
 		private void OptionSettings_Click(object sender, RoutedEventArgs e)
@@ -1093,6 +1098,10 @@ namespace Phinite
 		{
 			if (uiState == UIState.ReadyForNewInputAfterInvalidInput)
 				SetUIState(UIState.ReadyForRegexpInput);
+
+			// change to binding if possible
+			//if(InputRegexpDocument != null)
+			//	InputRegexpText = new TextRange(InputRegexpDocument.ContentStart, InputRegexpDocument.ContentEnd).Text;
 		}
 
 		private void OptionImmediate_Click(object sender, RoutedEventArgs e)

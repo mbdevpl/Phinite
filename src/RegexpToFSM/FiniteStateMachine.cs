@@ -329,7 +329,9 @@ namespace Phinite
 			if (initialState == null)
 				initialState = labeled; // first state becomes the initial state
 
-			if (equivalentStatesGroups.Count == 0)
+			int count = equivalentStatesGroups.Count;
+
+			if (count == 0)
 			{
 				foundNew = true;
 			}
@@ -347,14 +349,24 @@ namespace Phinite
 				// this looks like a new state, but it may as well be still equivalent of one existing state
 				// because equivalence checking is not perfect
 
-				int count = equivalentStatesGroups.Count;
 				double[] similarities = new double[count];
-				Parallel.For(0, count, (int n) =>
+				bool foundUncertainty = false;
+				if (count > 1)
 				{
-					similarities[n] = notLabeled[0].Similarity(equivalentStatesGroups[n].Value[0]);
-				});
+					Parallel.For(0, count, (int n) =>
+					{
+						similarities[n] = notLabeled[0].Similarity(equivalentStatesGroups[n].Value[0]);
+					});
+					foundUncertainty = similarities.Max() > 0;
+				}
+				else
+				{
+					// count == 1
+					similarities[0] = notLabeled[0].Similarity(equivalentStatesGroups[0].Value[0]);
+					foundUncertainty = similarities[0] > 0;
+				}
 
-				if (similarities.Max() > 0)
+				if (foundUncertainty)
 				{
 					nextNotLabeledStateSimilarities = similarities;
 					return false;

@@ -198,18 +198,11 @@ namespace Phinite
 							CheckIfTagSequenceValid(i, previous2, previous, current);
 						}
 					}
-					else
-					{
-						if (
-								current == InputSymbolTag.Union
-								|| current == InputSymbolTag.KleeneStar
-								|| current == InputSymbolTag.KleenePlus
-								|| current == InputSymbolTag.ClosingParenthesis
-							)
-							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-								"error at character {0} of input: "
-								+ "the expression can start only with letter or opening parenthesis", i));
-					}
+					else if (current == InputSymbolTag.Union || current == InputSymbolTag.KleeneStar
+							|| current == InputSymbolTag.KleenePlus || current == InputSymbolTag.ClosingParenthesis)
+						throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+							"error at beginning of input: "
+							+ "the expression can start only with letter or opening parenthesis"));
 
 					taggedInput.Add(ReservedSymbols[n]);
 					if (ReservedSymbols[n].Key.Length > 1)
@@ -224,9 +217,19 @@ namespace Phinite
 				{
 					if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
 						continue;
+
+					if (i == 0)
+						throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+							"error at beginning of input: "
+							+ "use of the symbol \"{0}\" is forbidden here", ForbiddenSymbols[n]));
+
+					string sample = String.Join("", taggedInput
+						.GetRange(Math.Max(taggedInput.Count - 5, 0), Math.Min(5, taggedInput.Count))
+						.Select((pair, index) => pair.Key)
+						);
 					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-						"error at character {0} of input: "
-						+ "use of the symbol \"{1}\" is forbidden here", i, ForbiddenSymbols[n]));
+						"error at character {0} of input, just after \"{1}\": "
+						+ "use of the symbol \"{2}\" is forbidden here", i, sample, ForbiddenSymbols[n]));
 				}
 
 				var letter = input[i].ToString();
@@ -532,21 +535,36 @@ namespace Phinite
 			if (alphabet.Intersect(expr.alphabet).Count() != alphabet.Count)
 				return 0.0; // alphabet contents differ
 
-			bool inequalFound = false;
-			object _lock = new object();
-			Parallel.For(0, alphabet.Count, (int n) =>
+			/*
+			if (alphabet.Count > 1)
+			{
+			 */
+			//bool inequalFound = false;
+			//object _lock = new object();
+			RegularExpression[] derived = new RegularExpression[2 * alphabet.Count];
+			Parallel.For(0, 2 * alphabet.Count, (int n) =>
 				{
-					var derived = Derive(alphabet[n]);
-					var exprDerived = expr.Derive(alphabet[n]);
-					lock (_lock)
-					{
-						if (!inequalFound)
-							if ((derived == null && exprDerived != null) || (derived != null && exprDerived == null))
-								inequalFound = true;
-					}
+					derived[n] = Derive(alphabet[n / 2]);
+					//lock (_lock)
+					//{
+					//	if (!inequalFound)
+					//			inequalFound = true;
+					//}
 				});
-			if (inequalFound)
-				return 0.0; // outgoing transitions differ
+			for (int i = 0; i < alphabet.Count; ++i)
+				if ((derived[2 * i] == null && derived[2 * i + 1] != null) || (derived[2 * i] != null && derived[2 * i + 1] == null))
+					return 0.0; // outgoing transitions differ
+			/*
+			}
+			else
+			{
+				var derived = Derive(alphabet[0]);
+				var exprDerived = expr.Derive(alphabet[0]);
+				if ((derived == null && exprDerived != null) || (derived != null && exprDerived == null))
+					return 0.0;
+			}
+			 */
+
 
 			//double similarity = 0.0;
 
