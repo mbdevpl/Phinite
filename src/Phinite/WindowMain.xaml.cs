@@ -457,7 +457,7 @@ namespace Phinite
 				var a1 = new RegularExpression("abc+def", true);
 				var a2 = new FiniteStateMachine(a1, true);
 				var a3 = new FiniteStateMachineLayout(a2);
-				a3.Create();
+				a3.Create(-1, ref computationSessionId);
 
 				// System.Xml.Linq
 				System.Xml.Linq.Extensions.Equals(a1, a2);
@@ -712,8 +712,12 @@ namespace Phinite
 				//TODO: abort layout creation on computation abort
 				if (layout == null)
 					layout = fsmLayout;
-				else
-					layout.Create();
+				else if (!layout.Create(sessionId, ref thisComputationSessionId))
+				{
+					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+						return false;
+				}
+
 
 				Dispatcher.BeginInvoke((Action)delegate
 				{

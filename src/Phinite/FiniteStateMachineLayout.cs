@@ -127,7 +127,7 @@ namespace Phinite
 
 		}
 
-		public void Create()
+		public bool Create(int sessionId, ref int currentSessionId)
 		{
 			int workGroupSize = 8;
 
@@ -201,6 +201,9 @@ namespace Phinite
 					}
 				}
 
+				if (sessionId != currentSessionId)
+					return false;
+
 				int newBestLayout = 0;
 				for (int j = 1; j < workGroupSize; ++j)
 				{
@@ -229,7 +232,7 @@ namespace Phinite
 			vertices = layoutsAll[bestLayout].Key;
 			layoutScore = layoutsAll[bestLayout].Value;
 			CreateEdges();
-			return;
+			return true;
 		}
 
 		//private IDictionary<string, Point> Create1()
