@@ -93,6 +93,9 @@ namespace Phinite
 
 		public PhiniteSettings(PhiniteSettings source)
 		{
+			if (source == null)
+				throw new ArgumentNullException("source");
+
 			settings = new Settings();
 
 			settings.LayoutCreationFrequencyInUse = source.settings.LayoutCreationFrequencyInUse;

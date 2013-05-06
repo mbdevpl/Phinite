@@ -14,12 +14,12 @@ namespace Phinite
 	public partial class App : Application
 	{
 
-		public static String DefaultExample = "Yay!";
+		public static readonly String DefaultExample = "Yay!";
 
 		/// <summary>
 		/// Set of example regular expressions.
 		/// </summary>
-		public static Dictionary<string, string> ExpressionExamples
+		public static readonly Dictionary<string, string> ExpressionExamples
 			= new Dictionary<string, string>
 			{
 				{"Empty word", "."},
@@ -51,7 +51,7 @@ namespace Phinite
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 			};
 
-		public static Dictionary<string, string> WordExamples
+		public static readonly Dictionary<string, string> WordExamples
 			= new Dictionary<string, string>
 			{
 				{"Empty word", ""},

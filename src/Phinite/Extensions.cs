@@ -181,6 +181,11 @@ namespace Phinite
 
 		public static bool Intersects(this LineGeometry thisLine, LineGeometry line)
 		{
+			if (thisLine == null)
+				throw new ArgumentNullException("thisLine");
+			if (line == null)
+				throw new ArgumentNullException("line");
+
 			var p11 = thisLine.StartPoint;
 			var p12 = thisLine.EndPoint;
 			var p21 = line.StartPoint;
@@ -370,6 +375,9 @@ namespace Phinite
 
 		public static int IndexOfMax<T>(this IList<T> collection) where T: IComparable
 		{
+			if (collection == null)
+				throw new ArgumentNullException("collection");
+
 			if(collection.Count == 0)
 				return -1;
 			if(collection.Count == 1)

@@ -181,56 +181,16 @@ namespace Phinite
 				if (tagged)
 					continue;
 
-				for (int n = 0; n < ReservedSymbols.Length; ++n)
+				int iNew = CheckReservedSymbolsAt(i);
+				if (iNew >= 0)
 				{
-					if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) != i)
-						continue;
-
-					var current = ReservedSymbols[n].Value;
-					if (taggedInput.Count > 0)
-					{
-						var previous = taggedInput[taggedInput.Count - 1].Value;
-						CheckIfTagSequenceValid(i, previous, current);
-
-						if (taggedInput.Count > 1)
-						{
-							var previous2 = taggedInput[taggedInput.Count - 2].Value;
-							CheckIfTagSequenceValid(i, previous2, previous, current);
-						}
-					}
-					else if (current == InputSymbolTag.Union || current == InputSymbolTag.KleeneStar
-							|| current == InputSymbolTag.KleenePlus || current == InputSymbolTag.ClosingParenthesis)
-						throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-							"error at beginning of input: "
-							+ "the expression can start only with letter or opening parenthesis"));
-
-					taggedInput.Add(ReservedSymbols[n]);
-					if (ReservedSymbols[n].Key.Length > 1)
-						i += ReservedSymbols[n].Key.Length - 1;
 					tagged = true;
-					break;
+					i = iNew;
 				}
 				if (tagged)
 					continue;
 
-				for (int n = 0; n < ForbiddenSymbols.Length; ++n)
-				{
-					if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
-						continue;
-
-					if (i == 0)
-						throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-							"error at beginning of input: "
-							+ "use of the symbol \"{0}\" is forbidden here", ForbiddenSymbols[n]));
-
-					string sample = String.Join("", taggedInput
-						.GetRange(Math.Max(taggedInput.Count - 5, 0), Math.Min(5, taggedInput.Count))
-						.Select((pair, index) => pair.Key)
-						);
-					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-						"error at character {0} of input, just after \"{1}\": "
-						+ "use of the symbol \"{2}\" is forbidden here", i, sample, ForbiddenSymbols[n]));
-				}
+				CheckForbiddenSymbolsAt(i);
 
 				var letter = input[i].ToString();
 				if (!alphabet.Contains(letter))
@@ -255,7 +215,40 @@ namespace Phinite
 				throw new ArgumentException("regular expression cannot end with union operator or an opening parenthesis");
 		}
 
-		private void CheckIfTagSequenceValid(int index, params InputSymbolTag[] tags)
+		private int CheckReservedSymbolsAt(int i)
+		{
+			for (int n = 0; n < ReservedSymbols.Length; ++n)
+			{
+				if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) != i)
+					continue;
+
+				var current = ReservedSymbols[n].Value;
+				if (taggedInput.Count > 0)
+				{
+					var previous = taggedInput[taggedInput.Count - 1].Value;
+					CheckIfTagSequenceValid(i, previous, current);
+
+					if (taggedInput.Count > 1)
+					{
+						var previous2 = taggedInput[taggedInput.Count - 2].Value;
+						CheckIfTagSequenceValid(i, previous2, previous, current);
+					}
+				}
+				else if (current == InputSymbolTag.Union || current == InputSymbolTag.KleeneStar
+						|| current == InputSymbolTag.KleenePlus || current == InputSymbolTag.ClosingParenthesis)
+					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+						"error at beginning of input: "
+						+ "the expression can start only with letter or opening parenthesis"));
+
+				taggedInput.Add(ReservedSymbols[n]);
+				if (ReservedSymbols[n].Key.Length > 1)
+					i += ReservedSymbols[n].Key.Length - 1;
+				return i;
+			}
+			return -1;
+		}
+
+		private static void CheckIfTagSequenceValid(int index, params InputSymbolTag[] tags)
 		{
 			switch (tags.Length)
 			{
@@ -302,6 +295,28 @@ namespace Phinite
 								"error at character {0} of input: "
 								+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", index));
 					} break;
+			}
+		}
+
+		private void CheckForbiddenSymbolsAt(int i)
+		{
+			for (int n = 0; n < ForbiddenSymbols.Length; ++n)
+			{
+				if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
+					continue;
+
+				if (i == 0)
+					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+						"error at beginning of input: "
+						+ "use of the symbol \"{0}\" is forbidden here", ForbiddenSymbols[n]));
+
+				string sample = String.Join("", taggedInput
+					.GetRange(Math.Max(taggedInput.Count - 5, 0), Math.Min(5, taggedInput.Count))
+					.Select((pair, index) => pair.Key)
+					);
+				throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+					"error at character {0} of input, just after \"{1}\": "
+					+ "use of the symbol \"{2}\" is forbidden here", i, sample, ForbiddenSymbols[n]));
 			}
 		}
 
@@ -361,7 +376,10 @@ namespace Phinite
 							if (current.Root == null)
 							{
 								var newCurrent = new PartialExpression(PartialExpressionRole.Undetermined, null);
-								var newRoot = new PartialExpression(null, new List<PartialExpression> { current, newCurrent }, false);
+								//var newRoot = new PartialExpression(null, new List<PartialExpression> { current, newCurrent }, false);
+								var newRoot = new PartialExpression(PartialExpressionRole.Union, null);
+								newRoot.AddToUnion(current);
+								newRoot.AddToUnion(newCurrent);
 
 								current.Root = newRoot;
 								newCurrent.Root = newRoot;
@@ -439,8 +457,8 @@ namespace Phinite
 				//throw new ArgumentException("this letter does not belong to the alphabet", "removedLetter");
 				return null; // this can be simply handled, no need for exception
 
-			if (taggedInput == null || tagCount == null || parsedInput == null)
-				throw new ArgumentNullException(); //EvaluateInput();
+			//if (taggedInput == null || tagCount == null || parsedInput == null)
+			//	throw new ArgumentNullException("parsedInput"); //EvaluateInput();
 
 			//var copy = new RegularExpression(this.input, true);
 			//copy.parsedInput.Derive(removedLetter);
@@ -516,23 +534,26 @@ namespace Phinite
 		/// <summary>
 		/// Estimates similarity between two regular expressions, on a scale from 0 to 1.
 		/// </summary>
-		/// <param name="expr"></param>
+		/// <param name="regexp"></param>
 		/// <returns>value from 0 to 1</returns>
-		public double Similarity(RegularExpression expr)
+		public double Similarity(RegularExpression regexp)
 		{
-			if (Equals(expr))
+			if (regexp == null)
+				return 0.0;
+
+			if (Equals(regexp))
 				return 1.0;
 
 			bool isAccepting = GeneratesEmptyWord();
-			bool exprIsAccepting = expr.GeneratesEmptyWord();
+			bool exprIsAccepting = regexp.GeneratesEmptyWord();
 
 			if (isAccepting != exprIsAccepting)
 				return 0.0; // empty word generation properties differ
 
-			if (alphabet.Count != expr.alphabet.Count)
+			if (alphabet.Count != regexp.alphabet.Count)
 				return 0.0; // alphabet lengths differ
 
-			if (alphabet.Intersect(expr.alphabet).Count() != alphabet.Count)
+			if (alphabet.Intersect(regexp.alphabet).Count() != alphabet.Count)
 				return 0.0; // alphabet contents differ
 
 			/*
@@ -586,10 +607,10 @@ namespace Phinite
 			if (input.Equals(regexp.input))
 				return true;
 
-			if (alphabet == null || taggedInput == null || tagCount == null)
-				throw new ArgumentNullException(); //TagInput();
-			if (regexp.alphabet == null || regexp.taggedInput == null || regexp.tagCount == null)
-				throw new ArgumentNullException(); //regexp.TagInput();
+			//if (alphabet == null || taggedInput == null || tagCount == null)
+			//	throw new ArgumentNullException(); //TagInput();
+			//if (regexp.alphabet == null || regexp.taggedInput == null || regexp.tagCount == null)
+			//	throw new ArgumentNullException(); //regexp.TagInput();
 
 			if (alphabet.Count != regexp.alphabet.Count)
 				return false;
@@ -597,10 +618,10 @@ namespace Phinite
 			if (alphabet.Count != alphabet.Intersect(regexp.alphabet).Count())
 				return false;
 
-			if (parsedInput == null)
-				throw new ArgumentNullException(); // ParseInput();
-			if (regexp.parsedInput == null)
-				throw new ArgumentNullException(); // regexp.ParseInput();
+			//if (parsedInput == null)
+			//	throw new ArgumentNullException(); // ParseInput();
+			//if (regexp.parsedInput == null)
+			//	throw new ArgumentNullException(); // regexp.ParseInput();
 			//throw new ArgumentException("cannot compare regular expressions that were not evaluated");
 			// this is easily handled
 

@@ -85,10 +85,10 @@ namespace Phinite
 			if (!dataAnalyzed)
 				AnalyzeData();
 
-			if (this == Perfect)
+			if (ReferenceEquals(this, Perfect))
 				return "Perfect";
 
-			if (this == Worst)
+			if (ReferenceEquals(this, Worst))
 				return "Worst";
 
 			return String.Format("Penalty={0:0.00} Edge^2={1} Vertex*Edge={2} Vertex^2={3} Scale={4:0.00}",
@@ -102,13 +102,13 @@ namespace Phinite
 
 			var score = (FiniteStateMachineLayoutScore)obj;
 
-			if (this == score)
+			if (ReferenceEquals(this, score))
 				return 0;
 
-			if (this == Perfect)
+			if (ReferenceEquals(this, Perfect))
 				return 1;
 
-			if (score == Perfect)
+			if (ReferenceEquals(score, Perfect))
 				return -1;
 
 			if (!dataAnalyzed)
@@ -123,5 +123,58 @@ namespace Phinite
 
 			return 0;
 		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj == null)
+				return false;
+			if (obj is FiniteStateMachineLayoutScore == false)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+
+			var arg = (FiniteStateMachineLayoutScore)obj;
+
+			return Penalty == arg.Penalty;
+		}
+
+		public override int GetHashCode()
+		{
+			return Penalty.GetHashCode() + 3 * VerticesOnVertices.GetHashCode()
+				+ 7 * VerticesOnEdges.GetHashCode() + 11 * IntersectingEdges.GetHashCode();
+		}
+
+		public static bool operator ==(FiniteStateMachineLayoutScore arg1, FiniteStateMachineLayoutScore arg2)
+		{
+			if(ReferenceEquals(arg1, arg2))
+				return true;
+			return ReferenceEquals(arg1, null)
+				? (ReferenceEquals(arg2, null) ? true : false)
+				: (ReferenceEquals(arg2, null) ? false : arg1.Penalty == arg2.Penalty);
+		}
+
+		public static bool operator !=(FiniteStateMachineLayoutScore arg1, FiniteStateMachineLayoutScore arg2)
+		{
+			if (ReferenceEquals(arg1, arg2))
+				return false;
+			return ReferenceEquals(arg1, null)
+				? (ReferenceEquals(arg2, null) ? false : true)
+				: (ReferenceEquals(arg2, null) ? true : arg1.Penalty != arg2.Penalty);
+		}
+
+		public static bool operator <(FiniteStateMachineLayoutScore arg1, FiniteStateMachineLayoutScore arg2)
+		{
+			if (ReferenceEquals(arg1, arg2))
+				return false;
+			return arg1.Penalty < arg2.Penalty;
+		}
+
+		public static bool operator >(FiniteStateMachineLayoutScore arg1, FiniteStateMachineLayoutScore arg2)
+		{
+			if (ReferenceEquals(arg1, arg2))
+				return false;
+			return arg1.Penalty > arg2.Penalty;
+		}
+
 	}
 }

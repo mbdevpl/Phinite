@@ -43,26 +43,6 @@
 				</Setter.Value>
 			</Setter>
 		</Style>
-		<Style TargetType="StackPanel" x:Key="PanelWithText">
-			<Setter Property="Margin" Value="10,0,10,0" />
-			<Setter Property="Orientation" Value="Horizontal" />
-		</Style>
-		<Style TargetType="TextBlock" x:Key="TextWithinPanelWithText">
-			<Setter Property="TextWrapping" Value="Wrap" />
-			<Setter Property="MaxWidth">
-				<Setter.Value>
-					<MultiBinding Mode="OneWay">
-						<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=1}"
-								Path="ActualWidth" />
-						<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=StackPanel, AncestorLevel=1}"
-								Path="Children[0].ActualWidth" />
-						<MultiBinding.Converter>
-							<con:ExpressionConverter Expression="{}{0} - {1} - 20" />
-						</MultiBinding.Converter>
-					</MultiBinding>
-				</Setter.Value>
-			</Setter>
-		</Style>
 	</Window.Resources>
 	<Grid Name="MainWindowGrid">
 		<Grid.RowDefinitions>
@@ -92,7 +72,7 @@
 			<!--<Image.LayoutTransform>
 			</Image.LayoutTransform>-->
 		</Image>
-		<Grid Name="AreaForRegexpInput" Grid.Row="1" Visibility="Visible">
+		<Grid Name="AreaForRegexpInput" Grid.Row="1" Visibility="Hidden">
 			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 				<Label Content="Construct machine from reg. expr." />
 				<TextBlock Text="Enter a valid regular expression:" />
@@ -181,13 +161,31 @@
 				<Button Style="{StaticResource Info}" Click="Info_ParseTree" />
 			</StackPanel>
 		</Grid>
-		<Grid Name="AreaForMachineCreation" Grid.Row="1" Visibility="Hidden">
+		<Grid Name="AreaForMachineCreation" Grid.Row="1" Visibility="Visible">
 			<Grid.RowDefinitions>
 				<RowDefinition />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 			<ScrollViewer Grid.Row="0" Name="FSMCreationScrollView">
 				<StackPanel Orientation="Vertical">
+					<Label Content="Computation statistics" />
+					<StackPanel Style="{StaticResource PanelWithText}">
+						<TextBlock Text="Current number of states left to be labeled (and then derived): " />
+						<TextBlock Text="{Binding StatesLeftCount}" />
+					</StackPanel>
+					<StackPanel Style="{StaticResource PanelWithText}">
+						<TextBlock Text="Current number of transitions that begin and/or end with a not labeled state: " />
+						<TextBlock Text="{Binding TransitionsLeftCount}" />
+					</StackPanel>
+					<StackPanel Style="{StaticResource PanelWithText}">
+						<TextBlock Text="Number of labeled states: " />
+						<TextBlock Text="{Binding StatesLabeledCount}" />
+					</StackPanel>
+					<StackPanel Style="{StaticResource PanelWithText}">
+						<TextBlock Text="Number of labeled transitions: " />
+						<TextBlock Text="{Binding TransitionsLabeledCount}" />
+					</StackPanel>
+					<Separator Height="5" />
 					<Label Name="FSMCreationDepictionLabel" Content="Depction of the machine" />
 					<ScrollViewer MinHeight="100"
 							HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
@@ -224,24 +222,6 @@
 							<DataGridTextColumn Header="Resulting expression" Binding="{Binding Item5}" Width="Auto" />
 						</DataGrid.Columns>
 					</DataGrid>
-					<Separator Height="5" />
-					<Label Content="Other information" />
-					<StackPanel Style="{StaticResource PanelWithText}">
-						<TextBlock Text="Number of currently detected states left to be labeled:" />
-						<TextBlock Text="{Binding StatesLeftCount}" />
-					</StackPanel>
-					<StackPanel Style="{StaticResource PanelWithText}">
-						<TextBlock Text="Number of currently detected transitions that begin or end with not labeled state:" />
-						<TextBlock Text="{Binding TransitionsLeftCount}" />
-					</StackPanel>
-					<StackPanel Style="{StaticResource PanelWithText}">
-						<TextBlock Text="Number of labeled states:" />
-						<TextBlock Text="{Binding StatesLabeledCount}" />
-					</StackPanel>
-					<StackPanel Style="{StaticResource PanelWithText}">
-						<TextBlock Text="Number of labeled transitions:" />
-						<TextBlock Text="{Binding TransitionsLabeledCount}" />
-					</StackPanel>
 				</StackPanel>
 			</ScrollViewer>
 			<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left">
@@ -302,13 +282,15 @@
 						<TextBlock Text="Back to construction results" />
 					</StackPanel>
 				</Button>
-				<Button Name="OptionGeneratePDF" Content="Save LaTeX, then generate and view PDF" Click="OptionGenerateAndViewPDF_Click" />
+				<Button Name="OptionGeneratePDF" Click="OptionGenerateAndViewPDF_Click"
+						Content="Save LaTeX, then generate and view PDF" />
 				<Button Name="OptionEvaluateFromLatex" Click="OptionEvaluate_Click">
 					<StackPanel Orientation="Horizontal">
 						<TextBlock Style="{StaticResource ButtonSpecialTextGreen}" Text="&#x2937;" />
 						<TextBlock Text="Go to word evaluation" />
 					</StackPanel>
 				</Button>
+				<Button Style="{StaticResource Info}" Click="Info_Latex" />
 			</StackPanel>
 		</Grid>
 		<Grid Name="AreaForWordInput" Grid.Row="1" Visibility="Hidden">

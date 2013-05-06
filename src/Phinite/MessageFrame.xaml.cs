@@ -238,12 +238,12 @@ namespace Phinite
 			//this.Close();
 		}
 
-		private void SetContent(string windowTitle, string messageTitle, string messageText,
+		private void SetContent(string newWindowTitle, string newMessageTitle, string newMessageText,
 				ImageSource image)
 		{
-			WindowTitle = windowTitle;
-			MessageTitle = messageTitle;
-			MessageText = messageText;
+			WindowTitle = newWindowTitle;
+			MessageTitle = newMessageTitle;
+			MessageText = newMessageText;
 			if (image == null)
 				ToggleImage = false;
 			else

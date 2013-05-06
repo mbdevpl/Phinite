@@ -20,6 +20,7 @@ namespace Phinite
 	/// </summary>
 	public partial class WindowUserHelp : Window, INotifyPropertyChanged
 	{
+
 		private static string infoUserHelp;
 
 		private object fsmLock;
@@ -36,7 +37,7 @@ namespace Phinite
 		{ get { return newExpression; } set { this.ChangeProperty(PropertyChanged, ref newExpression, value, "NewExpression"); } }
 		private RegularExpression newExpression;
 
-		private double[] newExpressionSimilarities;
+		private ReadOnlyCollection<double> newExpressionSimilarities;
 
 		private bool newExpressionProcessed;
 
@@ -57,6 +58,11 @@ namespace Phinite
 
 		public WindowUserHelp(object machineOperationsLock, FiniteStateMachine machine)
 		{
+			if (machineOperationsLock == null)
+				throw new ArgumentNullException("machineOperationsLock");
+			if (machine == null)
+				throw new ArgumentNullException("machine");
+
 			fsmLock = machineOperationsLock;
 			fsm = machine;
 

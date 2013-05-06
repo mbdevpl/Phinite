@@ -23,6 +23,17 @@ namespace Phinite
 	/// </summary>
 	public partial class WindowMain : Window, INotifyPropertyChanged
 	{
+
+		private static string infoInput;
+
+		private static string infoParseTree;
+
+		private static string infoMachineConstruction;
+
+		private static string infoLatex;
+
+		private static string infoInputWord;
+
 		private PhiniteSettings settings;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -406,7 +417,7 @@ namespace Phinite
 				AreaForWordEvaluation.Visibility = Visibility.Hidden;
 		}
 
-		private void CallMethodInNewThread(ThreadStart method, string name)
+		private static void CallMethodInNewThread(ThreadStart method, string name)
 		{
 			Thread t = new Thread(method);
 			t.Name = name + "Thread";
@@ -676,9 +687,10 @@ namespace Phinite
 			ReadOnlyCollection<MachineTransition> transitions = null;
 			ReadOnlyCollection<RegularExpression> latestStates = null;
 			ReadOnlyCollection<MachineTransition> latestTransitions = null;
+
 			FiniteStateMachineLayout layout = null;
-			bool constructionFinished = false;
-			bool layoutIsTooOld = false;
+			bool recreateLayout = false;
+
 			lock (regexpAndFsmLock)
 			{
 				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
@@ -688,12 +700,10 @@ namespace Phinite
 				states = fsm.States;
 				transitions = fsm.Transitions;
 
-				constructionFinished = fsm.IsConstructionFinished();
-				layoutIsTooOld = layoutAge == settings.LayoutCreationFrequency;
+				recreateLayout = fsm.IsConstructionFinished() || (layoutAge == settings.LayoutCreationFrequency);
 
-				if (stepByStep || layoutIsTooOld || constructionFinished)
+				if (stepByStep || recreateLayout)
 				{
-
 					latestStates = fsm.LatestStates;
 					latestTransitions = fsm.LatestTransitions;
 
@@ -707,17 +717,16 @@ namespace Phinite
 			}
 
 			//do not create everytime in case of "immediate solution", rather every N steps
-			if (stepByStep || layoutIsTooOld || constructionFinished)
+			if (stepByStep || recreateLayout)
 			{
-				//TODO: abort layout creation on computation abort
 				if (layout == null)
 					layout = fsmLayout;
+				// session is needed to abort layout creation on computation abort
 				else if (!layout.Create(sessionId, ref thisComputationSessionId))
 				{
 					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 						return false;
 				}
-
 
 				Dispatcher.BeginInvoke((Action)delegate
 				{
@@ -746,6 +755,31 @@ namespace Phinite
 				}
 			}
 
+			// tables
+			if (recreateLayout)
+			{
+				RefillLabeledExpressionsData(states, accepting);
+				RefillTransitionsData(states, transitions);
+			}
+
+			// status below tables
+			lock (regexpAndFsmLock)
+			{
+				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+					return false;
+
+				StatesLeftCount = fsm.RemainingStatesCount;
+				TransitionsLeftCount = fsm.RemainingTransitionsCount;
+				StatesLabeledCount = fsm.LabeledStatesCount;
+				TransitionsLabeledCount = fsm.LabeledTransitionsCount;
+			}
+
+			return true;
+		}
+
+		private void RefillLabeledExpressionsData(IEnumerable<RegularExpression> states,
+			ICollection<RegularExpression> accepting)
+		{
 			var data = new List<Tuple<RegularExpression, string, string>>();
 			int i = 0;
 			foreach (var state in states)
@@ -764,7 +798,11 @@ namespace Phinite
 			}
 
 			LabeledExpressionsData = data;
+		}
 
+		private void RefillTransitionsData(IList<RegularExpression> states,
+			IEnumerable<MachineTransition> transitions)
+		{
 			var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
 			foreach (var transition in transitions)
 			{
@@ -773,20 +811,8 @@ namespace Phinite
 					String.Join(", ", transition.Item2),
 					String.Format("q{0}", transition.Item3), states[transition.Item3]));
 			}
+
 			TransitionsData = data2;
-
-			lock (regexpAndFsmLock)
-			{
-				if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
-					return false;
-
-				StatesLeftCount = fsm.RemainingStatesCount;
-				TransitionsLeftCount = fsm.RemainingTransitionsCount;
-				StatesLabeledCount = fsm.LabeledStatesCount;
-				TransitionsLabeledCount = fsm.LabeledTransitionsCount;
-			}
-
-			return true;
 		}
 
 		private void EvaluationStepWorker()
@@ -1226,88 +1252,125 @@ namespace Phinite
 
 		private void Info_Input(object sender, RoutedEventArgs e)
 		{
-			var s = new StringBuilder();
+			if (infoInput == null)
+			{
+				var s = new StringBuilder();
 
-			s.Append("Enter here an expression that is a valid regular expression.");
-			s.Append(" You can use any symbol,\nbut remember that spaces will be ignored and some symbols have special meaning:");
-			s.Append("\n\"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]);
-			s.Append("\" - empty word\n\"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.Union]);
-			s.Append("\" - union\n\"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]);
-			s.Append("\" - Kleene star\n\"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]);
-			s.Append("\" - Kleene plus\n\"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]);
-			s.Append("\" and \"");
-			s.Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]);
-			s.Append("\" -  parentheses\n\n");
-			s.Append("If you are unsure, load one of the example expressions to see how it works.");
+				s.Append("Enter here an expression that is a valid regular expression.");
+				s.Append(" You can use any symbol,\nbut remember that spaces will be ignored and some symbols have special meaning:");
+				s.Append("\n\"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]);
+				s.Append("\" - empty word\n\"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.Union]);
+				s.Append("\" - union\n\"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]);
+				s.Append("\" - Kleene star\n\"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]);
+				s.Append("\" - Kleene plus\n\"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]);
+				s.Append("\" and \"");
+				s.Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]);
+				s.Append("\" -  parentheses\n\n");
+				s.Append("If you are unsure, load one of the example expressions to see how it works.");
 
-			ShowMessageFrame("Phinite information", "Regular expression input", s.ToString(), false);
+				infoInput = s.ToString();
+			}
+
+			ShowMessageFrame("Phinite information", "Regular expression input", infoInput, false);
 		}
 
 		private void Info_ParseTree(object sender, RoutedEventArgs e)
 		{
-			var s = new StringBuilder();
+			if (infoParseTree == null)
+			{
+				var s = new StringBuilder();
 
-			s.Append("This screen presents a parse tree and two versions of the input regular expression above it.");
-			s.Append(" If you check that the second, (\"").Append("Validated and optimized input")
-				.Append("\"), has the same meaning as you intended, you may safely continue.");
-			s.Append("\n\n");
+				s.Append("This screen presents a parse tree and two versions of the input regular expression above it.");
+				s.Append(" If you check that the second, (\"").Append("Validated and optimized input")
+					.Append("\"), has the same meaning as you intended, you may safely continue.");
+				s.Append("\n\n");
 
-			s.Append("If not, please cancel the computation and enter the expression in such way that it is properly understood by the program.");
+				s.Append("If not, please cancel the computation and enter the expression in such way that it is properly understood by the program.");
 
-			s.Append(" Please remember to follow the rules of regular expression operators precedence, use special symbols properly, etc.");
+				s.Append(" Please remember to follow the rules of regular expression operators precedence, use special symbols properly, etc.");
 
-			ShowMessageFrame("Phinite information", "Parse tree: first interpretation of the input", s.ToString(), false);
+				infoParseTree = s.ToString();
+			}
+
+			ShowMessageFrame("Phinite information", "Parse tree: first interpretation of the input", infoParseTree, false);
 		}
 
 		private void Info_MachineConstruction(object sender, RoutedEventArgs e)
 		{
-			var s = new StringBuilder();
+			if (infoMachineConstruction == null)
+			{
+				var s = new StringBuilder();
 
-			s.Append("Use buttons on the left side to control the construction process.");
-			s.Append("\n\n");
-			s.Append("When the construction is complete, you may go right to word evaluation screen,");
-			s.Append(" or before that stop for a moment to view a PDF with construction results report.");
-			s.Append("\n\n");
-			s.Append("To do the former, select \"Go to word evaluation\", and to do the latter select \"Generate LaTeX code\".");
+				s.AppendLine("Use buttons on the left side to control the construction process.");
+				s.AppendLine();
 
-			ShowMessageFrame("Phinite information", "Finite-state machine construction", s.ToString(), false);
+				s.Append("When the construction is complete, you may go right to word evaluation screen,");
+				s.AppendLine(" or before that stop for a moment to view a PDF with construction results report.");
+				s.AppendLine();
+
+				s.Append("To do the former, select \"Go to word evaluation\", and to do the latter select \"Generate LaTeX code\".");
+
+				infoMachineConstruction = s.ToString();
+			}
+
+			ShowMessageFrame("Phinite information", "Finite-state machine construction", infoMachineConstruction, false);
 		}
 
 		private void Info_Latex(object sender, RoutedEventArgs e)
 		{
-			var s = new StringBuilder();
+			if (infoLatex == null)
+			{
+				var s = new StringBuilder();
 
-			s.Append("");
-			s.Append("");
+				s.AppendLine("You may edit/copy the contents of this screen to, for example, use it as a part of some other LaTeX document,");
+				s.AppendLine("because this content is copyleft (no rights reserved).");
+				s.AppendLine();
 
-			ShowMessageFrame("Phinite information", "Regular expression input", s.ToString(), false);
+				s.AppendLine("You can generate new report after editing the latex source code - the new generated PDF file will reflect");
+				s.AppendLine("changes made by you.");
+				s.AppendLine();
+
+				s.AppendLine("All .tex and .pdf files are saved in the directory where the Phinite application resides.");
+				s.AppendLine();
+
+				infoLatex = s.ToString();
+			}
+
+			ShowMessageFrame("Phinite information", "Using LaTeX to generate PDF report", infoLatex, false);
 		}
 
 		private void Info_InputWord(object sender, RoutedEventArgs e)
 		{
-			var s = new StringBuilder();
-
-			s.Append("Enter some word.");
-			s.Append(" You can use any symbols,\nbut remember that spaces will be ignored and some symbols are forbidden:");
-			s.Append("\n");
-			foreach (var symbol in RegularExpression.ForbiddenSymbols)
+			if (infoInputWord == null)
 			{
-				s.Append("\"");
-				s.Append(symbol);
-				s.Append("\"\n");
-			}
-			s.Append("\n");
-			s.Append("Leave the field blank to evaluate (i.e. check if the machine accepts) the empty word.");
-			s.Append("\n");
-			s.Append("If you are unsure, just start computing without any input\n");
-			s.Append("or write just a single letter to see how the basic case works.");
+				var s = new StringBuilder();
 
-			ShowMessageFrame("Phinite information", "Word input", s.ToString(), false);
+				s.AppendLine("Enter some word. You can use any symbols,");
+				s.AppendLine("but remember that spaces will be ignored and some symbols are forbidden:");
+				
+				foreach (var symbol in RegularExpression.ForbiddenSymbols)
+				{
+					s.Append("\"");
+					s.Append(symbol);
+					s.AppendLine("\"");
+				}
+				s.AppendLine();
+
+				s.Append("Leave the field blank to evaluate (i.e. check if the machine accepts) the empty word.");
+				s.AppendLine();
+
+				s.AppendLine("If you are unsure, just start computing without any input");
+				s.Append("or write just a single letter to see how the basic case works.");
+
+				infoInputWord = s.ToString();
+			}
+
+			ShowMessageFrame("Phinite information", "Word input", infoInputWord, false);
 		}
 
 		#endregion

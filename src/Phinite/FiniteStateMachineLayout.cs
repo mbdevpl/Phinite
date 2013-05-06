@@ -99,6 +99,9 @@ namespace Phinite
 
 		public FiniteStateMachineLayout(FiniteStateMachine fsm)
 		{
+			if (fsm == null)
+				throw new ArgumentNullException("fsm");
+
 			states = fsm.States;
 			acceptingStates = fsm.AcceptingStates;
 			transitions = fsm.Transitions;
@@ -340,6 +343,18 @@ namespace Phinite
 			params1.HorizontalGap = 40;
 			params1.VerticalGap = 40;
 
+			var vertexRectangles = new Dictionary<string, Rectangle>();
+			for (int i = 0; i < vertexLabels.Length; ++i)
+			{
+				var vertex = vertexPositions[vertexLabels[i]];
+				var border = vertexBorders[vertexLabels[i]];
+
+				var rect = new Rectangle();
+				rect.Width = border.Right - border.Left;
+				rect.Height = border.Bottom - border.Top;
+				vertexRectangles.Add(vertexLabels[i], rect);
+			}
+
 			OneWayFSAAlgorithm<string> algo1;
 			algo1 = new OneWayFSAAlgorithm<string>(null, params1);
 			algo1.Compute();
@@ -354,6 +369,18 @@ namespace Phinite
 			OverlapRemovalParameters params2 = new OverlapRemovalParameters();
 			params2.HorizontalGap = 40;
 			params2.VerticalGap = 40;
+
+			var vertexRectangles = new Dictionary<string, Rectangle>();
+			for (int i = 0; i < vertexLabels.Length; ++i)
+			{
+				var vertex = vertexPositions[vertexLabels[i]];
+				var border = vertexBorders[vertexLabels[i]];
+
+				var rect = new Rectangle();
+				rect.Width = border.Right - border.Left;
+				rect.Height = border.Bottom - border.Top;
+				vertexRectangles.Add(vertexLabels[i], rect);
+			}
 
 			FSAAlgorithm<string> algo2;
 			algo2 = new FSAAlgorithm<string>(null, params2);
@@ -467,7 +494,7 @@ namespace Phinite
 		/// <returns>zero if layout is perfect, negative value if it is not</returns>
 		private FiniteStateMachineLayoutScore CalculateScore(Dictionary<int, Point> vertices)
 		{
-			FiniteStateMachineLayoutScore score = null;
+			FiniteStateMachineLayoutScore currentScore = null;
 
 			if (vertices == null || vertices.Count <= 1)
 				return FiniteStateMachineLayoutScore.Perfect;
@@ -489,9 +516,9 @@ namespace Phinite
 						if (dist < MinimumStateDistance)
 						{
 							//nodesDistanceScore -= Math.Sqrt(50 - dist);
-							if (score == null)
-								score = new FiniteStateMachineLayoutScore();
-							score.VerticesOnVertices.Add(new Tuple<int, int, double>(key1, key2, dist));
+							if (currentScore == null)
+								currentScore = new FiniteStateMachineLayoutScore();
+							currentScore.VerticesOnVertices.Add(new Tuple<int, int, double>(key1, key2, dist));
 						}
 					}
 					#endregion
@@ -526,9 +553,9 @@ namespace Phinite
 
 						if (dist < 30)
 						{
-							if (score == null)
-								score = new FiniteStateMachineLayoutScore();
-							score.VerticesOnEdges.Add(new Tuple<int, int, double>(key, transitionIndex, dist));
+							if (currentScore == null)
+								currentScore = new FiniteStateMachineLayoutScore();
+							currentScore.VerticesOnEdges.Add(new Tuple<int, int, double>(key, transitionIndex, dist));
 						}
 					}
 					#endregion
@@ -552,20 +579,23 @@ namespace Phinite
 
 							if (p1.Intersects(p2, pOther1, pOther2))
 							{
-								if (score == null)
-									score = new FiniteStateMachineLayoutScore();
-								score.IntersectingEdges.Add(new Tuple<int, int>(transitionIndex, transitionIndexOther));
+								if (currentScore == null)
+									currentScore = new FiniteStateMachineLayoutScore();
+								currentScore.IntersectingEdges.Add(new Tuple<int, int>(transitionIndex, transitionIndexOther));
 							}
 						}
 				}
 
-			return score == null ? FiniteStateMachineLayoutScore.Perfect : score;
+			return currentScore == null ? FiniteStateMachineLayoutScore.Perfect : currentScore;
 		}
 
 		public void Draw(Canvas canvas, bool constructionMode, IList<RegularExpression> highlightedStates,
 			IList<MachineTransition> highlightedTransitions, bool evaluationMode, int previousState,
 			int currentState, bool evaluationEnded)
 		{
+			if (canvas == null)
+				throw new ArgumentNullException("canvas");
+
 			var canvasContent = canvas.Children;
 			canvasContent.Clear();
 
@@ -883,7 +913,7 @@ namespace Phinite
 			Draw(canvas, false, null, null, false, -1, -1, false);
 		}
 
-		private void DrawDot(Canvas canvas, Brush brush, Point location)
+		private static void DrawDot(Canvas canvas, Brush brush, Point location)
 		{
 			var canvasContent = canvas.Children;
 
@@ -900,7 +930,7 @@ namespace Phinite
 			Canvas.SetZIndex(border, 0);
 		}
 
-		private void DrawStartArrow(Canvas canvas, Brush brush, Brush borderBrush,
+		private static void DrawStartArrow(Canvas canvas, Brush brush, Brush borderBrush,
 			Point location, double angle)
 		{
 			var canvasContent = canvas.Children;
@@ -926,7 +956,7 @@ namespace Phinite
 			Canvas.SetZIndex(poly, -9);
 		}
 
-		private void DrawState(Canvas canvas, Brush borderBrush, Brush backgroundBrush, Brush labelBrush,
+		private static void DrawState(Canvas canvas, Brush borderBrush, Brush backgroundBrush, Brush labelBrush,
 			Point location, string label, bool isAccepting)
 		{
 			var canvasContent = canvas.Children;
@@ -983,7 +1013,7 @@ namespace Phinite
 		/// <param name="brush"></param>
 		/// <param name="start"></param>
 		/// <param name="end"></param>
-		private void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
+		private static void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point start, Point end)
 		{
 			var canvasContent = canvas.Children;
@@ -1037,7 +1067,7 @@ namespace Phinite
 		/// <param name="startAngle"></param>
 		/// <param name="end"></param>
 		/// <param name="endAngle"></param>
-		private void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
+		private static void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point start, double startAngle, Point end, double endAngle)
 		{
 			var canvasContent = canvas.Children;
@@ -1139,7 +1169,7 @@ namespace Phinite
 			Canvas.SetZIndex(arrow, -9);
 		}
 
-		private void DrawLoop(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
+		private static void DrawLoop(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point location, double angle)
 		{
 			var canvasContent = canvas.Children;

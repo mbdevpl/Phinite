@@ -38,7 +38,8 @@ namespace Phinite
 		public RegularExpression NextNotLabeledState
 		{ get { return (notLabeled == null || notLabeled.Count == 0) ? null : notLabeled[0]; } }
 
-		public Double[] NextNotLabeledStateSimilarities { get { return nextNotLabeledStateSimilarities; } }
+		public ReadOnlyCollection<double> NextNotLabeledStateSimilarities
+		{ get { return nextNotLabeledStateSimilarities == null ? null : new ReadOnlyCollection<double>(nextNotLabeledStateSimilarities); } }
 		private Double[] nextNotLabeledStateSimilarities;
 
 		/// <summary>
@@ -579,8 +580,8 @@ namespace Phinite
 		/// <summary>
 		/// Tries to perform at most given number of steps of word evaluation.
 		/// </summary>
-		/// <param name="numberOfSteps"></param>
-		public void Evaluate(int numberOfSteps = 0)
+		/// <param name="numberOfSteps">if zero, the evaluation continues until it is complete</param>
+		public void Evaluate(int numberOfSteps)
 		{
 			if (!IsConstructionFinished())
 				throw new InvalidOperationException("cannot evaluate word when the fsm is not yet completely constructed");

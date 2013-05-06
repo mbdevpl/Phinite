@@ -35,6 +35,11 @@ namespace Phinite
 			RegularExpression regexp, FiniteStateMachine fsm,
 			bool includeOpening, bool includeEnding)
 		{
+			if (regexp == null)
+				throw new ArgumentNullException("originalInput");
+			if (originalInput == null)
+				throw new ArgumentNullException("originalInput");
+
 			StringBuilder s = new StringBuilder();
 
 			if (includeOpening)
