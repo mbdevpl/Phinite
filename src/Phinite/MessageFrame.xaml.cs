@@ -188,6 +188,7 @@ namespace Phinite
 			SetContent(String.Empty, String.Empty, String.Empty, null);
 			SetButtons();
 
+			DataContext = this;
 			InitializeComponent();
 		}
 
@@ -200,6 +201,7 @@ namespace Phinite
 			SetContent(windowTitle, messageTitle, messageText, image);
 			SetButtons(toggleOk, toggleCancel, toggleHelp, captionOk, captionCancel, captionHelp);
 
+			DataContext = this;
 			InitializeComponent();
 		}
 

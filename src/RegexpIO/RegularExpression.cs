@@ -201,10 +201,10 @@ namespace Phinite
 					else
 					{
 						if (
-								current.Equals(InputSymbolTag.Union)
-								|| current.Equals(InputSymbolTag.KleeneStar)
-								|| current.Equals(InputSymbolTag.KleenePlus)
-								|| current.Equals(InputSymbolTag.ClosingParenthesis)
+								current == InputSymbolTag.Union
+								|| current == InputSymbolTag.KleeneStar
+								|| current == InputSymbolTag.KleenePlus
+								|| current == InputSymbolTag.ClosingParenthesis
 							)
 							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
 								"error at character {0} of input: "
@@ -540,9 +540,9 @@ namespace Phinite
 					var exprDerived = expr.Derive(alphabet[n]);
 					lock (_lock)
 					{
-						if(!inequalFound)
+						if (!inequalFound)
 							if ((derived == null && exprDerived != null) || (derived != null && exprDerived == null))
-							inequalFound = true;
+								inequalFound = true;
 					}
 				});
 			if (inequalFound)

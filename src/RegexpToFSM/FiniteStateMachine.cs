@@ -59,14 +59,13 @@ namespace Phinite
 			get
 			{
 				if (equivalentStatesGroups == null)
-					//return new ReadOnlyCollection<RegularExpression>(new List<RegularExpression>());
 					return null;
+
 				var states = new List<RegularExpression>();
 				foreach (var stateGroup in equivalentStatesGroups)
 				{
 					if (stateGroup.Value.Count == 0)
-						states.Add(null); //throw new ArgumentException("an equivalent state group must have at least member state");
-					// TODO: use state with shortest string representation instead of the 1st state
+						states.Add(null);
 					states.Add(stateGroup.Value[0]);
 				}
 				return new ReadOnlyCollection<RegularExpression>(states);
@@ -158,7 +157,6 @@ namespace Phinite
 			get
 			{
 				if (acceptingStatesIds == null)
-					//return new ReadOnlyCollection<RegularExpression>(new List<RegularExpression>());
 					return null;
 
 				var acceptingStates = new List<RegularExpression>();
@@ -166,8 +164,7 @@ namespace Phinite
 				{
 					var stateGroup = equivalentStatesGroups[id].Value;
 					if (stateGroup.Count == 0)
-						acceptingStates.Add(null); //throw new ArgumentException("an equivalent state group must have at least member state");
-					// TODO: use state with shortest string representation instead of the 1st state
+						acceptingStates.Add(null);
 					acceptingStates.Add(stateGroup[0]);
 				}
 				return new ReadOnlyCollection<RegularExpression>(acceptingStates);

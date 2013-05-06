@@ -60,8 +60,26 @@ namespace Phinite
 				{"Empty word, concat. & union", "aabb"},
 				{"Kleene star", "abbb"},
 				{"Kleene plus", "bbbb"},
+				{"Parentheses", "ababab"},
 				{"Binary numbers", "11001010"},
+				{"3 digit hexadecimal numbers", "103"},
+				{"Example from old BA", "abbbc"},
+				{"Example from BA", "abbaab"},
+				{"Example from TA", "aaabbb"},
+				{"High tree", "abcdefgijk"},
+				{"4 long paths", "bbbbbbe"},
+				{"Seemingly hard 1", "abcdeabc"},
+				{"Seemingly hard 2", "defbcdef"},
+				{"Seemingly hard 3", "aaab"},
+				{"Seemingly hard 4", "abbabbb"},
+				{"Hard", "bbbabbab"},
+				{"Pseudo e-mail", "mb@mbdev_pl"},
 				{"Yay!", "ABCDEFGHIJKLMNOPRSTUVWXYZ"},
+				{"Mess!", "ABCDEFGHIJKLMNOPRSTUVWXYZ"},
+				{"Infinite loop", "aaaa"},
+				{"Infinite loop 2", "aabbabb"},
+				{"Max processor use test", "5320481"},
+				{"All features", "bbaabbaabbaabbaa"}
 			};
 
 	}

@@ -525,7 +525,7 @@ namespace Phinite
 						{
 							if (score == null)
 								score = new FiniteStateMachineLayoutScore();
-							score.VerticesOnEdges.Add(new Tuple<int, int, double>(key1, key2, dist));
+							score.VerticesOnEdges.Add(new Tuple<int, int, double>(key, transitionIndex, dist));
 						}
 					}
 					#endregion
@@ -541,21 +541,8 @@ namespace Phinite
 								continue;
 							int transitionIndexOther = transitions.IndexOf(
 								x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2);
-							//try
-							//{
-							//	transitionIndexOther = transitions.IndexOf(
-							//		transitions.First(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2)
-							//		);
-							//}
-							//catch (InvalidOperationException)
-							//{
-							//	// silent catch
-							//}
 							if (transitionIndexOther == -1)
 								continue;
-
-							//if (!transitions.Any(x => x.InitialStateId == keyOther1 && x.ResultingStateId == keyOther2))
-							//	continue;
 
 							var pOther1 = vertices[keyOther1];
 							var pOther2 = vertices[keyOther2];
@@ -672,36 +659,64 @@ namespace Phinite
 
 						Point middle = new Point((location.X + endpoint.X) / 2, (location.Y + endpoint.Y) / 2);
 
-
-						// detect intersections with other edges and move label left/right to the longest uninterrupted segment
-						foreach (var intr in layoutScore.IntersectingEdges)
+						List<Point> intersections = new List<Point>();
+						if (layoutScore.IntersectingEdges.Count > 0)
 						{
-							if (intr.Item1 != transitionIndex)
-								continue;
-							MachineTransition intersectingTransition = transitions[intr.Item2];
-							Point p1 = vertices[intersectingTransition.InitialStateId];
-							Point p2 = vertices[intersectingTransition.ResultingStateId];
 
-							Point intersection = location.FindIntersection(endpoint, p1, p2, true);
-
-							// TODO: instead of always moving away, find the best position for the label
-							// i.e. the longest fragment without intersections
-							if (intersection.Distance(middle) < 30)
+							// detect intersections with other edges to move label to the longest uninterrupted segment
+							foreach (var intr in layoutScore.IntersectingEdges)
 							{
-								Console.Out.WriteLine("HIT!");
-								// move label away from intersection
-								middle = intersection.Copy().MoveTo(middle, 20);
+								if (intr.Item1 != transitionIndex)
+									continue;
+								MachineTransition intersectingTransition = transitions[intr.Item2];
+								Point p1 = vertices[intersectingTransition.InitialStateId];
+								Point p2 = vertices[intersectingTransition.ResultingStateId];
 
-								// TODO: don't move yet, collect info about vertices first
+								Point intersection = location.FindIntersection(endpoint, p1, p2, true);
+
+								intersections.Add(intersection);
+							}
+
+							// detect overlapping vertices to move label away from them
+							foreach (var intr in layoutScore.VerticesOnEdges)
+							{
+								// the vertex must be near currently evaluated transition
+								if (intr.Item2 != transitionIndex)
+									continue;
+
+								//double angle = location.Angle(endpoint); // already got it
+
+								Point intersection = vertices[intr.Item1].Copy().MoveTo(angle, intr.Item3);
+
+								if (intersection.DistanceToLine(location, endpoint) > intr.Item3)
+									intersection = vertices[intr.Item1].Copy().MoveTo(angle + 180, intr.Item3);
+
+								intersections.Add(intersection);
+							}
+
+							if (intersections.Count > 0)
+							{
+								intersections.Add(location.MoveTo(endpoint, StateEllipseDiameter / 2));
+								intersections.Add(endpoint.MoveTo(location, StateEllipseDiameter / 2));
+								intersections.Sort((a, b) => a.X.CompareTo(b.X));
 							}
 						}
-						//TODO: detect overlapping vertices and move label away from them
-						//layoutScore.VerticesOnEdges.Select(x => x.
+						if (intersections.Count > 0)
+						{
+							var intersectionDistances = intersections.Zip(intersections.Skip(1), (x, y) => y.Distance(x)).ToArray();
+							Console.Out.WriteLine(String.Join("; ", intersectionDistances));
 
+							// find the best position for the label
+							// i.e. the longest fragment without intersections
+							double max = intersectionDistances.Max();
+							int index = intersectionDistances.IndexOfMax();
+							middle = intersections[index].MoveTo(intersections[index + 1], max / 2);
+
+							//DrawDot(canvas, Brushes.Red, middle);
+						}
 
 						//TODO: take bent edges into account (i.e. case of two transitions: q1->q2 and q2->q1)
 						// because in such cases labels are sometimes too close to the edges they belong to
-
 
 						if (transitions.Any(x => x.InitialStateId == transition.ResultingStateId
 								&& x.ResultingStateId == transition.InitialStateId))
@@ -863,6 +878,23 @@ namespace Phinite
 		public void Draw(Canvas canvas)
 		{
 			Draw(canvas, false, null, null, false, -1, -1, false);
+		}
+
+		private void DrawDot(Canvas canvas, Brush brush, Point location)
+		{
+			var canvasContent = canvas.Children;
+
+			var border = new Ellipse();
+			border.Width = 6;
+			border.Height = 6;
+
+			border.StrokeThickness = 0;
+			border.Fill = brush;
+
+			canvasContent.Add(border);
+			Canvas.SetLeft(border, location.X - border.Width / 2);
+			Canvas.SetTop(border, location.Y - border.Height / 2);
+			Canvas.SetZIndex(border, 0);
 		}
 
 		private void DrawStartArrow(Canvas canvas, Brush brush, Brush borderBrush,

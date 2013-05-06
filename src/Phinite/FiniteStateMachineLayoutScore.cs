@@ -23,12 +23,21 @@ namespace Phinite
 
 		private bool dataAnalyzed;
 
+		/// <summary>
+		/// Vertex1 ID, Vertex2 ID, distance
+		/// </summary>
 		public List<Tuple<int, int, double>> VerticesOnVertices;
 		public int VerticesOnVerticesCount { get { return VerticesOnVertices.Count; } }
 
+		/// <summary>
+		/// Vertex ID, Edge ID, distance
+		/// </summary>
 		public List<Tuple<int, int, double>> VerticesOnEdges;
 		public int VerticesOnEdgesCount { get { return VerticesOnEdges.Count; } }
 
+		/// <summary>
+		/// Edge1 ID, Edge2 ID
+		/// </summary>
 		public List<Tuple<int, int>> IntersectingEdges;
 		public int IntersectingEdgesCount { get { return IntersectingEdges.Count; } }
 

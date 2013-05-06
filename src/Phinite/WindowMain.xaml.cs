@@ -46,7 +46,6 @@ namespace Phinite
 
 		#region fields for fsm construction phase
 
-		// TODO: handle current example in word input
 		private String currentExample = App.DefaultExample;
 
 		/// <summary>
@@ -516,6 +515,12 @@ namespace Phinite
 
 			LabeledExpressionsData = null;
 			TransitionsData = null;
+
+			if (currentExample == null || !inputRegexpText.Equals(App.ExpressionExamples[currentExample]))
+			{
+				currentExample = null;
+				InputWordText = String.Empty;
+			}
 
 			try
 			{
@@ -994,7 +999,10 @@ namespace Phinite
 				return;
 			var item = (HeaderedItemsControl)sender;
 			var itemHeaderString = item.Header.ToString();
-			InputRegexpText = App.ExpressionExamples[itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""))];
+
+			currentExample = itemHeaderString.Substring(0, itemHeaderString.IndexOf(", \""));
+			InputRegexpText = App.ExpressionExamples[currentExample];
+			InputWordText = App.WordExamples[currentExample];
 		}
 
 		private void OptionSettings_Click(object sender, RoutedEventArgs e)

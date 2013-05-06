@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
@@ -365,6 +366,28 @@ namespace Phinite
 				return thisPoint.Copy().MoveTo(endPoint, thisPoint.DistanceToLine(otherLineStartPoint, otherLineEndPoint, false));
 
 			throw new InvalidOperationException("these lines do not intersect");
+		}
+
+		public static int IndexOfMax<T>(this IList<T> collection) where T: IComparable
+		{
+			if(collection.Count == 0)
+				return -1;
+			if(collection.Count == 1)
+				return 0;
+
+			T max = collection[0];
+			int maxIndex = 0;
+			int i = 0;
+			foreach (T element in collection)
+			{
+				if (element.CompareTo(max) > 0)
+				{
+					max = element;
+					maxIndex = i;
+				}
+				++i;
+			}
+			return maxIndex;
 		}
 
 		/// <summary>
