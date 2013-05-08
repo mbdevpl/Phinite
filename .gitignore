@@ -12,6 +12,7 @@ Thumbs.db
 *.v11.suo
 *.csproj.user
 *.cache
+*.vsp
 /src/*/obj
 /src/*/bin
 /src/TestResults

@@ -202,24 +202,26 @@
 					</ScrollViewer>
 					<Separator Height="5" />
 					<Label Content="Labeled expressions" />
-					<DataGrid Name="DataGridForStates" MinHeight="100"
-							ItemsSource="{Binding LabeledExpressionsData}" AutoGenerateColumns="False">
+					<DataGrid Name="DataGridForStates" MinHeight="100" AutoGenerateColumns="False"
+							ItemsSource="{Binding LabeledExpressionsData, Mode=OneWay}"
+							MouseDoubleClick="DataGrid_MouseDoubleClick">
 						<DataGrid.Columns>
-							<DataGridTextColumn Header="Label" Binding="{Binding Item2}" Width="Auto" />
-							<DataGridTextColumn Header="Remark(s)" Binding="{Binding Item3}" Width="Auto" />
-							<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1}" Width="Auto" />
+							<DataGridTextColumn Header="Label" Binding="{Binding Item2, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Remark(s)" Binding="{Binding Item3, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1, Mode=OneWay}" Width="Auto" />
 						</DataGrid.Columns>
 					</DataGrid>
 					<Separator Height="5" />
 					<Label Content="Transitions" />
-					<DataGrid Name="DataGridForTransitions" MinHeight="100"
-							ItemsSource="{Binding TransitionsData}" AutoGenerateColumns="False">
+					<DataGrid Name="DataGridForTransitions" MinHeight="100" AutoGenerateColumns="False"
+							ItemsSource="{Binding TransitionsData, Mode=OneWay}"
+							MouseDoubleClick="DataGrid_MouseDoubleClick">
 						<DataGrid.Columns>
-							<DataGridTextColumn Header="Initial state" Binding="{Binding Item2}" Width="Auto" />
-							<DataGridTextColumn Header="Letter(s)" Binding="{Binding Item3}" Width="Auto" />
-							<DataGridTextColumn Header="Resulting state" Binding="{Binding Item4}" Width="Auto" />
-							<DataGridTextColumn Header="Initial expression" Binding="{Binding Item1}" Width="Auto" />
-							<DataGridTextColumn Header="Resulting expression" Binding="{Binding Item5}" Width="Auto" />
+							<DataGridTextColumn Header="Initial state" Binding="{Binding Item2, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Letter(s)" Binding="{Binding Item3, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Resulting state" Binding="{Binding Item4, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Initial expression" Binding="{Binding Item1, Mode=OneWay}" Width="Auto" />
+							<DataGridTextColumn Header="Resulting expression" Binding="{Binding Item5, Mode=OneWay}" Width="Auto" />
 						</DataGrid.Columns>
 					</DataGrid>
 				</StackPanel>

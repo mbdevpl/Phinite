@@ -78,10 +78,16 @@ namespace Phinite
 		private int layoutAge;
 		private FiniteStateMachineLayout fsmLayout;
 
+		/// <summary>
+		/// expression, label, remarks
+		/// </summary>
 		public List<Tuple<RegularExpression, string, string>> LabeledExpressionsData
 		{ get { return labeledExpressionsData; } set { this.ChangeProperty(PropertyChanged, ref labeledExpressionsData, value, "LabeledExpressionsData"); } }
 		private List<Tuple<RegularExpression, string, string>> labeledExpressionsData;
 
+		/// <summary>
+		/// initial expression, initial label, set of letters, resulting label, resulting expression
+		/// </summary>
 		public List<Tuple<RegularExpression, string, string, string, RegularExpression>> TransitionsData
 		{ get { return transitionsData; } set { this.ChangeProperty(PropertyChanged, ref transitionsData, value, "TransitionsData"); } }
 		private List<Tuple<RegularExpression, string, string, string, RegularExpression>> transitionsData;
@@ -564,14 +570,15 @@ namespace Phinite
 				return;
 			}
 
-			Dispatcher.BeginInvoke((Action)delegate
+			Dispatcher.Invoke((Action)delegate
 			{
 				foreach (DataGridColumn column in DataGridForStates.Columns)
 					column.Width = DataGridLength.SizeToHeader;
-				foreach (DataGridColumn column in DataGridForTransitions.Columns)
-					column.Width = DataGridLength.SizeToHeader;
 				foreach (DataGridColumn column in DataGridForStates.Columns)
 					column.Width = DataGridLength.Auto;
+
+				foreach (DataGridColumn column in DataGridForTransitions.Columns)
+					column.Width = DataGridLength.SizeToHeader;
 				foreach (DataGridColumn column in DataGridForTransitions.Columns)
 					column.Width = DataGridLength.Auto;
 			});
@@ -625,6 +632,8 @@ namespace Phinite
 					{
 						if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
 							return;
+
+						fsm.RefineSimilarities();
 
 						windowUserHelp = new WindowUserHelp(regexpAndFsmLock, fsm);
 					}
@@ -756,7 +765,7 @@ namespace Phinite
 			}
 
 			// tables
-			if (recreateLayout)
+			if (stepByStep || recreateLayout)
 			{
 				RefillLabeledExpressionsData(states, accepting);
 				RefillTransitionsData(states, transitions);
@@ -1150,6 +1159,45 @@ namespace Phinite
 
 		#endregion
 
+		private void DataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			if (sender == null || sender is DataGrid == false)
+				return;
+			if (e == null || e.OriginalSource is DependencyObject == false)
+				return;
+
+			int row;
+			int column;
+
+			((DataGrid)sender).FindElementLocation((DependencyObject)e.OriginalSource, out column, out row);
+
+			PartialExpression parseTree = null;
+			if (ReferenceEquals(sender, DataGridForStates))
+			{
+				if (column != 2)
+					return;
+
+				parseTree = LabeledExpressionsData[row].Item1.ParseTree;
+			}
+			else if (ReferenceEquals(sender, DataGridForTransitions))
+			{
+				if (column != 3 && column != 4)
+					return;
+
+				if (column == 3)
+					parseTree = TransitionsData[row].Item1.ParseTree;
+				else
+					parseTree = TransitionsData[row].Item5.ParseTree;
+			}
+
+			if (parseTree == null)
+				return;
+
+			e.Handled = true;
+
+			new WindowSimpleCanvas(parseTree).ShowDialog();
+		}
+
 		#region fsm buttons handlers
 
 		private void OptionAbort_Click(object sender, RoutedEventArgs e)
@@ -1256,22 +1304,30 @@ namespace Phinite
 			{
 				var s = new StringBuilder();
 
-				s.Append("Enter here an expression that is a valid regular expression.");
-				s.Append(" You can use any symbol,\nbut remember that spaces will be ignored and some symbols have special meaning:");
-				s.Append("\n\"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]);
-				s.Append("\" - empty word\n\"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.Union]);
-				s.Append("\" - union\n\"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]);
-				s.Append("\" - Kleene star\n\"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]);
-				s.Append("\" - Kleene plus\n\"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]);
-				s.Append("\" and \"");
-				s.Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]);
-				s.Append("\" -  parentheses\n\n");
-				s.Append("If you are unsure, load one of the example expressions to see how it works.");
+				s.AppendLine("In a text box, enter aa regular expression that is valid. You can use any symbol,");
+				s.AppendLine("but remember that spaces will be ignored and some symbols have special meaning:");
+
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]).Append('"');
+				s.AppendLine(" - empty word");
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.Union]).Append('"');
+				s.AppendLine(" - union");
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]).Append('"');
+				s.AppendLine(" - Kleene star");
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]).Append('"');
+				s.AppendLine(" - Kleene plus");
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]).Append('"');
+				s.Append(" and ");
+				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]).Append('"');
+				s.AppendLine(" -  parentheses");
+				s.AppendLine();
+
+				s.AppendLine("If you abide by the following rules, your expression will surely be valid:");
+				int i = 0;
+				foreach (var rule in RegularExpression.Rules)
+					s.AppendLine(String.Format("  {0}.  {1}", ++i, rule));
+
+				s.Append("If in doubt, load one of the example expressions using leftmost menu option to see how it works.");
+				s.AppendLine();
 
 				infoInput = s.ToString();
 			}
@@ -1288,10 +1344,10 @@ namespace Phinite
 				s.Append("This screen presents a parse tree and two versions of the input regular expression above it.");
 				s.Append(" If you check that the second, (\"").Append("Validated and optimized input")
 					.Append("\"), has the same meaning as you intended, you may safely continue.");
-				s.Append("\n\n");
+				s.AppendLine();
+				s.AppendLine();
 
 				s.Append("If not, please cancel the computation and enter the expression in such way that it is properly understood by the program.");
-
 				s.Append(" Please remember to follow the rules of regular expression operators precedence, use special symbols properly, etc.");
 
 				infoParseTree = s.ToString();
@@ -1306,7 +1362,10 @@ namespace Phinite
 			{
 				var s = new StringBuilder();
 
-				s.AppendLine("Use buttons on the left side to control the construction process.");
+				s.AppendLine("Use buttons in the left-bottom corner to control the construction process.");
+				s.AppendLine();
+
+				s.AppendLine("You can doubleclick regular expressions in both tables to see their parse trees.");
 				s.AppendLine();
 
 				s.Append("When the construction is complete, you may go right to word evaluation screen,");
@@ -1352,7 +1411,7 @@ namespace Phinite
 
 				s.AppendLine("Enter some word. You can use any symbols,");
 				s.AppendLine("but remember that spaces will be ignored and some symbols are forbidden:");
-				
+
 				foreach (var symbol in RegularExpression.ForbiddenSymbols)
 				{
 					s.Append("\"");

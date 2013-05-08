@@ -37,6 +37,8 @@ namespace Phinite
 		{ get { return newExpression; } set { this.ChangeProperty(PropertyChanged, ref newExpression, value, "NewExpression"); } }
 		private RegularExpression newExpression;
 
+		private PartialExpression parseTree;
+
 		private ReadOnlyCollection<double> newExpressionSimilarities;
 
 		private bool newExpressionProcessed;
@@ -73,6 +75,8 @@ namespace Phinite
 
 				newExpression = fsm.NextNotLabeledState;
 
+				parseTree = newExpression.ParseTree;
+
 				newExpressionSimilarities = fsm.NextNotLabeledStateSimilarities;
 			}
 
@@ -83,6 +87,8 @@ namespace Phinite
 
 			DataContext = this;
 			InitializeComponent();
+
+			ParseTreeDrawing.Draw(ParseTreeCanvas, parseTree);
 
 			var data = new List<Tuple<RegularExpression, string, string, string>>();
 			int i = 0;
@@ -103,7 +109,7 @@ namespace Phinite
 				//double similarity = newExpression.Similarity(state);
 
 				data.Add(new Tuple<RegularExpression, string, string, string>(state, String.Format("q{0}", i), s.ToString(),
-					String.Format("{0:0}%", newExpressionSimilarities[i] * 100)));
+					String.Format("{0:0.00}%", newExpressionSimilarities[i] * 100)));
 
 				++i;
 			}
@@ -115,6 +121,31 @@ namespace Phinite
 		{
 			if (ExpressionIsSelected == false)
 				ExpressionIsSelected = true;
+		}
+
+		private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			if (sender == null || sender is DataGrid == false)
+				return;
+			if (e == null || e.OriginalSource is DependencyObject == false)
+				return;
+
+			int row;
+			int column;
+
+			((DataGrid)sender).FindElementLocation((DependencyObject)e.OriginalSource, out column, out row);
+
+			if (column != 3)
+				return;
+
+			var parseTree = LabeledExpressionsData[row].Item1.ParseTree;
+
+			if (parseTree == null)
+				return;
+
+			e.Handled = true;
+
+			new WindowSimpleCanvas(parseTree).ShowDialog();
 		}
 
 		private void ResolveEquivalent()
@@ -145,10 +176,34 @@ namespace Phinite
 
 		private void AutoResolveEquivalenceProblem()
 		{
-			// hard stuff...
+			lock (fsmLock)
+			{
+				if (!newExpressionProcessed)
+				{
+					// analyze similarities
+					int iMax = -1;
+					for (int i = 0; i < newExpressionSimilarities.Count; ++i)
+					{
+						if (newExpressionSimilarities[i] < FiniteStateMachine.SimilarityThresholdToInferEquivalence)
+							continue;
 
-			// TODO: really implement something here
-			ResolveDifferent();
+						if (iMax == -1 || newExpressionSimilarities[iMax] < newExpressionSimilarities[i])
+							iMax = i;
+					}
+
+					if (iMax == -1)
+					{
+						resolvedEquivalent = false;
+						fsm.Construct(1, null, true);
+					}
+					else
+					{
+						resolvedEquivalent = true;
+						fsm.Construct(1, LabeledExpressionsData[iMax].Item1, true);
+					}
+					newExpressionProcessed = true;
+				}
+			}
 		}
 
 		private void ButtonAbort_Click(object sender, RoutedEventArgs e)
@@ -191,7 +246,12 @@ namespace Phinite
 				s.AppendLine("Different - the expression is different from all labeled expressions.");
 				s.AppendLine("No idea - PHINITE will automatically solve this problem.");
 				s.AppendLine();
+
 				s.AppendLine("Hint: closing the window is the same as last option");
+				s.AppendLine();
+
+				s.AppendLine("You can doubleclick regular expressions in the table to see their parse trees.");
+				s.AppendLine("This might make the comparison of long expressions easier.");
 
 				infoUserHelp = s.ToString();
 			}

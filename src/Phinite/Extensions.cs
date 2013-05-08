@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Controls.Primitives;
 
 namespace Phinite
 {
@@ -356,31 +357,26 @@ namespace Phinite
 			if ((p11.Equals(p21) && p12.Equals(p22)) || (p11.Equals(p22) && p12.Equals(p21)))
 				return true;
 
-			//if (p11.Equals(p21) || p11.Equals(p22) || p12.Equals(p21) || p12.Equals(p22))
-			//	return true;
-
 			return false;
-
-			//throw new NotImplementedException("Not all cases of line intersection are handled");
 		}
 
 		public static Point FindIntersection(this Point thisPoint, Point endPoint,
 			Point otherLineStartPoint, Point otherLineEndPoint, bool intersectionExistsForSure)
 		{
-			if(intersectionExistsForSure || thisPoint.Intersects(endPoint, otherLineStartPoint, otherLineEndPoint))
+			if (intersectionExistsForSure || thisPoint.Intersects(endPoint, otherLineStartPoint, otherLineEndPoint))
 				return thisPoint.Copy().MoveTo(endPoint, thisPoint.DistanceToLine(otherLineStartPoint, otherLineEndPoint, false));
 
 			throw new InvalidOperationException("these lines do not intersect");
 		}
 
-		public static int IndexOfMax<T>(this IList<T> collection) where T: IComparable
+		public static int IndexOfMax<T>(this IList<T> collection) where T : IComparable
 		{
 			if (collection == null)
 				throw new ArgumentNullException("collection");
 
-			if(collection.Count == 0)
+			if (collection.Count == 0)
 				return -1;
-			if(collection.Count == 1)
+			if (collection.Count == 1)
 				return 0;
 
 			T max = collection[0];
@@ -453,6 +449,32 @@ namespace Phinite
 		{
 			if (handler != null)
 				handler(sender, new PropertyChangedEventArgs(propertyName));
+		}
+
+		public static void FindElementLocation(this DataGrid grid, DependencyObject element,
+			out int columnIndex, out int rowIndex)
+		{
+			columnIndex = -1;
+			rowIndex = -1;
+
+			if (grid == null)
+				return;
+
+			if (element == null)
+				return;
+
+			while (element != null && element is DataGridCell == false)
+				element = VisualTreeHelper.GetParent(element);
+
+			if (element == null || element is DataGridCell == false)
+				return;
+
+			DataGridCell cell = (DataGridCell)element;
+
+			DataGridColumn column = cell.Column;
+
+			columnIndex = grid.Columns.IndexOf(column);
+			rowIndex = grid.SelectedIndex;
 		}
 
 	}

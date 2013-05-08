@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Phinite
 {
-	public class FiniteStateMachineLayoutScore : IComparable
+	internal class FiniteStateMachineLayoutScore : IComparable
 	{
 		public static readonly FiniteStateMachineLayoutScore Perfect;
 

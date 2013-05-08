@@ -492,21 +492,21 @@ namespace Phinite
 		/// number of nodes that are very close to each other, etc.
 		/// </summary>
 		/// <returns>zero if layout is perfect, negative value if it is not</returns>
-		private FiniteStateMachineLayoutScore CalculateScore(Dictionary<int, Point> vertices)
+		private FiniteStateMachineLayoutScore CalculateScore(Dictionary<int, Point> layoutVertices)
 		{
 			FiniteStateMachineLayoutScore currentScore = null;
 
-			if (vertices == null || vertices.Count <= 1)
+			if (layoutVertices == null || layoutVertices.Count <= 1)
 				return FiniteStateMachineLayoutScore.Perfect;
 
-			foreach (var key1 in vertices.Keys)
-				foreach (var key2 in vertices.Keys)
+			foreach (var key1 in layoutVertices.Keys)
+				foreach (var key2 in layoutVertices.Keys)
 				{
 					if (key1 == key2)
 						continue;
 
-					var p1 = vertices[key1];
-					var p2 = vertices[key2];
+					var p1 = layoutVertices[key1];
+					var p2 = layoutVertices[key2];
 
 					#region state on state
 					// check if point are too close to each other
@@ -544,12 +544,12 @@ namespace Phinite
 
 					#region state on edge
 					// check if any state is obstructed by the edge
-					foreach (var key in vertices.Keys)
+					foreach (var key in layoutVertices.Keys)
 					{
 						if (key == key1 || key == key2)
 							continue;
 
-						double dist = vertices[key].DistanceToLine(p1, p2);
+						double dist = layoutVertices[key].DistanceToLine(p1, p2);
 
 						if (dist < 30)
 						{
@@ -561,9 +561,9 @@ namespace Phinite
 					#endregion
 
 					// check if the edge intersects with any other edge
-					var line = new LineGeometry(p1, p2);
-					foreach (var keyOther1 in vertices.Keys)
-						foreach (var keyOther2 in vertices.Keys)
+					//var line = new LineGeometry(p1, p2);
+					foreach (var keyOther1 in layoutVertices.Keys)
+						foreach (var keyOther2 in layoutVertices.Keys)
 						{
 							if (keyOther1 == keyOther2)
 								continue;
@@ -574,8 +574,8 @@ namespace Phinite
 							if (transitionIndexOther == -1)
 								continue;
 
-							var pOther1 = vertices[keyOther1];
-							var pOther2 = vertices[keyOther2];
+							var pOther1 = layoutVertices[keyOther1];
+							var pOther2 = layoutVertices[keyOther2];
 
 							if (p1.Intersects(p2, pOther1, pOther2))
 							{
@@ -741,8 +741,8 @@ namespace Phinite
 
 							// find the best position for the label
 							// i.e. the longest fragment without intersections
-							double max = intersectionDistances.Max();
 							int index = intersectionDistances.IndexOfMax();
+							double max = intersectionDistances[index];
 							middle = intersections[index].MoveTo(intersections[index + 1], max / 2);
 
 							//DrawDot(canvas, Brushes.Red, middle);

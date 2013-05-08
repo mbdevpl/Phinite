@@ -105,18 +105,55 @@ namespace Phinite
 		/// </summary>
 		/// <param name="origin">original partial expression</param>
 		public PartialExpression(PartialExpression origin)
-			: this(origin.role, origin.root)
 		{
+			if (origin == null)
+				throw new ArgumentNullException("origin");
+
+			role = origin.role;
+			root = origin.root;
+
 			_value = origin._value;
 			_operator = origin._operator;
 
-			if (role.Equals(PartialExpressionRole.Union)
-				|| role.Equals(PartialExpressionRole.Concatenation))
+			if (role == PartialExpressionRole.Union || role == PartialExpressionRole.Concatenation)
+			{
+				if (origin.parts.Count >= 2)
+				{
+					parts = new List<PartialExpression>(new PartialExpression[origin.parts.Count]);
+					Parallel.For(0, origin.parts.Count, (int n) =>
+						{
+							parts[n] = new PartialExpression(origin.parts[n]);
+							parts[n].root = this;
+						});
+				}
+				else if (origin.parts.Count == 1)
+				{
+					parts = new List<PartialExpression>(1);
+					var partCopy = new PartialExpression(origin.parts[0]);
+					partCopy.root = this;
+					parts.Add(partCopy);
+				}
+			}
+		}
+
+		private PartialExpression(PartialExpression origin, bool skipFirstPart)
+		{
+			role = origin.role;
+			root = origin.root;
+
+			_value = origin._value;
+			_operator = origin._operator;
+
+			if (role == PartialExpressionRole.Union || role == PartialExpressionRole.Concatenation)
 			{
 				parts = new List<PartialExpression>();
-				foreach (var part in origin.parts)
+				int i = 0;
+				if (skipFirstPart)
+					++i;
+				for (; i < origin.parts.Count; ++i)
 				{
-					parts.Add(new PartialExpression(part));
+					var part = new PartialExpression(origin.parts[i]);
+					parts.Add(part);
 					part.root = this;
 				}
 			}
@@ -129,7 +166,6 @@ namespace Phinite
 		/// <param name="root"></param>
 		public PartialExpression(PartialExpressionRole role, PartialExpression root)
 		{
-			//this.role = PartialExpressionRole.Undetermined;
 			this.role = role;
 			this.root = root;
 
@@ -138,17 +174,17 @@ namespace Phinite
 			this._operator = UnaryOperator.None;
 		}
 
-		/// <summary>
-		/// Constructs a new regular expression part.
-		/// </summary>
-		/// <param name="root"></param>
-		/// <param name="parts"></param>
-		/// <param name="concatenation"></param>
-		private PartialExpression(PartialExpression root, List<PartialExpression> parts, bool concatenation)
-			: this(concatenation ? PartialExpressionRole.Concatenation : PartialExpressionRole.Union, root)
-		{
-			this.parts = parts;
-		}
+		///// <summary>
+		///// Constructs a new regular expression part.
+		///// </summary>
+		///// <param name="root"></param>
+		///// <param name="parts"></param>
+		///// <param name="concatenation"></param>
+		//private PartialExpression(PartialExpression root, List<PartialExpression> parts, bool concatenation)
+		//	: this(concatenation ? PartialExpressionRole.Concatenation : PartialExpressionRole.Union, root)
+		//{
+		//	this.parts = parts;
+		//}
 
 		/// <summary>
 		/// Constructs a new regular expression part.
@@ -179,11 +215,31 @@ namespace Phinite
 		/// <param name="exp"></param>
 		public void AddToUnion(PartialExpression exp)
 		{
+			if (exp == null)
+				throw new ArgumentNullException("exp");
 			if (role != PartialExpressionRole.Union)
 				throw new ArgumentException("cannot add symbol to a partial expression that does not store union");
 			if (parts == null)
 				parts = new List<PartialExpression>();
 			parts.Add(exp);
+			exp.root = this;
+		}
+
+		/// <summary>
+		/// Inserts a new part to list of sub-parts that are in alternative with each other.
+		/// </summary>
+		/// <param name="index"></param>
+		/// <param name="exp"></param>
+		public void InsertToUnion(int index, PartialExpression exp)
+		{
+			if (exp == null)
+				throw new ArgumentNullException("exp");
+			if (role != PartialExpressionRole.Union)
+				throw new ArgumentException("cannot add symbol to a partial expression that does not store union");
+			if (parts == null)
+				parts = new List<PartialExpression>();
+			parts.Insert(index, exp);
+			exp.root = this;
 		}
 
 		/// <summary>
@@ -192,11 +248,31 @@ namespace Phinite
 		/// <param name="exp"></param>
 		public void AddToConcatenation(PartialExpression exp)
 		{
+			if (exp == null)
+				throw new ArgumentNullException("exp");
 			if (role != PartialExpressionRole.Concatenation)
 				throw new ArgumentException("cannot concatenate symbol with a partial expression that does not store concatenation");
 			if (parts == null)
 				parts = new List<PartialExpression>();
 			parts.Add(exp);
+			exp.root = this;
+		}
+
+		/// <summary>
+		/// Inserts a new part to list of sub-parts that are concatenated with each other.
+		/// </summary>
+		/// <param name="index"></param>
+		/// <param name="exp"></param>
+		public void InsertToConcatenation(int index, PartialExpression exp)
+		{
+			if (exp == null)
+				throw new ArgumentNullException("exp");
+			if (role != PartialExpressionRole.Concatenation)
+				throw new ArgumentException("cannot concatenate symbol with a partial expression that does not store concatenation");
+			if (parts == null)
+				parts = new List<PartialExpression>();
+			parts.Insert(index, exp);
+			exp.root = this;
 		}
 
 		/// <summary>
@@ -204,61 +280,68 @@ namespace Phinite
 		/// </summary>
 		public void Optimize()
 		{
-			if ((role == PartialExpressionRole.Concatenation
-				|| role == PartialExpressionRole.Union)
-				&& parts.Count == 1)
+			bool changes = true;
+			while (changes)
 			{
-				// this is a concatenation or union of one element, meaning that
-				// in fact it is not a union or a concatenation, but rather
-				// just this single element
+				changes = false;
 
-				#region Optimization 1.
-				var part = parts[0];
-
-				if (part.role == PartialExpressionRole.Concatenation
-					|| part.role == PartialExpressionRole.Union)
+				if ((role == PartialExpressionRole.Concatenation
+					|| role == PartialExpressionRole.Union)
+					&& parts.Count == 1)
 				{
-					foreach (var p in part.parts)
-						p.root = this;
+					// this is a concatenation or union of one element, meaning that
+					// in fact it is not a union or a concatenation, but rather
+					// just this single element
+
+					#region Optimization 1.
+					var part = parts[0];
+
+					if (part.role == PartialExpressionRole.Concatenation
+						|| part.role == PartialExpressionRole.Union)
+					{
+						foreach (var p in part.parts)
+							p.root = this;
+					}
+					if (_operator == UnaryOperator.None)
+						_operator = part._operator;
+					else if (part._operator == UnaryOperator.None)
+					{
+						// nothing needed here, the operator stays as it was
+					}
+					else if (_operator == UnaryOperator.KleeneStar || part._operator == UnaryOperator.KleeneStar)
+						_operator = UnaryOperator.KleeneStar;
+					else if (_operator == UnaryOperator.KleenePlus && part._operator == UnaryOperator.KleenePlus)
+						_operator = UnaryOperator.KleenePlus;
+					else
+						throw new NotImplementedException(
+							"not implemented case in operator pair handling in partial expression optimization algorithm");
+
+					_value = part._value;
+					parts = part.parts;
+					role = part.role;
+					// optmize once again
+					changes = true;
+					#endregion
+
+					//return;
 				}
-				if (_operator == UnaryOperator.None)
-					_operator = part._operator;
-				else if (part._operator == UnaryOperator.None)
+
+				switch (role)
 				{
-					// nothing needed here, the operator stays as it was
+					case PartialExpressionRole.Concatenation:
+						changes = changes | OptimizeConcatenation();
+						break;
+					case PartialExpressionRole.Union:
+						changes = changes | OptimizeUnion();
+						break;
 				}
-				else if (_operator == UnaryOperator.KleeneStar
-					|| part._operator == UnaryOperator.KleeneStar)
-					_operator = UnaryOperator.KleeneStar;
-				else if (_operator == UnaryOperator.KleenePlus
-					&& part._operator == UnaryOperator.KleenePlus)
-					_operator = UnaryOperator.KleenePlus;
-				else
-					throw new NotImplementedException(
-						"not implemented case in operator pair handling in partial expression optimization algorithm");
-
-				_value = part._value;
-				parts = part.parts;
-				role = part.role;
-				Optimize(); // optmize once again
-				#endregion
-
-				return;
-			}
-
-			switch (role)
-			{
-				case PartialExpressionRole.Concatenation:
-					OptimizeConcatenation();
-					break;
-				case PartialExpressionRole.Union:
-					OptimizeUnion();
-					break;
 			}
 		}
 
-		private void OptimizeConcatenation()
+		private bool OptimizeConcatenation()
 		{
+			bool anyOptimizationPerformed = false;
+
 			for (int i = parts.Count - 1; i >= 0; --i)
 			{
 				if (parts.Count == 1)
@@ -269,6 +352,7 @@ namespace Phinite
 				if (p.role == PartialExpressionRole.EmptyWord)
 				{
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 					continue;
 				}
 				else
@@ -281,14 +365,14 @@ namespace Phinite
 				{
 					var subParts = p.parts;
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 					for (int si = subParts.Count - 1; si >= 0; --si)
 					{
 						subParts[si].root = this;
 						parts.Insert(i, subParts[si]);
 					}
 					// optimize this partial expression once again due to changes in the structure
-					Optimize();
-					continue;
+					return true;
 				}
 				#endregion
 
@@ -297,23 +381,26 @@ namespace Phinite
 					continue;
 				var x = parts[i + 1];
 				if (x._operator != UnaryOperator.None && p._operator != UnaryOperator.None
-					&& x.ContentEquals(p))
+					&& x.ContentEquals(p, false))
 				{
 					if (x._operator == UnaryOperator.KleeneStar && p._operator == UnaryOperator.KleenePlus)
 						x._operator = UnaryOperator.KleenePlus;
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 				}
 				#endregion
 			}
 
-			if (parts.Count == 1)
-				Optimize();
-			else if (parts.Count == 0)
+			if (parts.Count == 0)
 				throw new ArgumentException("zero parts reached while optimizing a concatenation");
+
+			return anyOptimizationPerformed;
 		}
 
-		private void OptimizeUnion()
+		private bool OptimizeUnion()
 		{
+			bool anyOptimizationPerformed = false;
+
 			#region Optimization 8.
 			bool optimization8 = (_operator == UnaryOperator.KleeneStar);
 			for (int i = parts.Count - 1; i >= 0; --i)
@@ -324,26 +411,23 @@ namespace Phinite
 				{
 					// empty word will be generated by this expression anyway
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 				}
 			}
 			if (optimization8 && parts.Count == 1)
-			{
-				Optimize();
-				return;
-			}
+				return anyOptimizationPerformed;
 			#endregion
 
-			//foreach (var p in parts)
-			//	p.Optimize();
 			for (int i = parts.Count - 1; i >= 0; --i)
 			{
 				var p = parts[i];
 
 				#region Optimization 3.
-				if (parts.Any(x => (x != p && x.ContentEquals(p))))
+				if (parts.Any(x => (x != p && x.ContentEquals(p, false))))
 				{
 					// there are duplicates in this union
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 					continue;
 				}
 				#endregion
@@ -354,19 +438,19 @@ namespace Phinite
 				{
 					var subParts = p.parts;
 					parts.RemoveAt(i);
+					anyOptimizationPerformed = true;
 					for (int si = subParts.Count - 1; si >= 0; --si)
 					{
 						subParts[si].root = this;
 						parts.Insert(i, subParts[si]);
 					}
 					// optimize this partial expression once again due to changes in the structure
-					Optimize();
-					continue;
+					return true;
 				}
 				#endregion
 
 				#region Optimization 5.
-				var equal = parts.FindAll(x => (x != p && x.ContentEquals(p)));
+				var equal = parts.FindAll(x => (x != p && x.ContentEquals(p, false)));
 				foreach (var x in equal)
 				{
 					if (x._operator == UnaryOperator.KleenePlus && p._operator == UnaryOperator.None)
@@ -385,14 +469,16 @@ namespace Phinite
 					}
 					else
 						continue;
+					anyOptimizationPerformed = true;
 					break;
 				}
 				#endregion
 			}
-			if (parts.Count == 1)
-				Optimize();
-			else if (parts.Count == 0)
+
+			if (parts.Count == 0)
 				throw new ArgumentException("zero parts reached while optimizing a union");
+
+			return anyOptimizationPerformed;
 		}
 
 		/// <summary>
@@ -407,19 +493,21 @@ namespace Phinite
 			{
 				case UnaryOperator.KleeneStar:
 					{
-						// (a)* becomes .+a(a)* because those expressions are equivalent
+						// (a)^* becomes .+a(a)^* because those expressions are equivalent
 
 						var extracted = new PartialExpression(this);
 						extracted._operator = UnaryOperator.None;
 
 						var remaining = new PartialExpression(this);
 
-						var concat = new PartialExpression(this, new List<PartialExpression> { extracted, remaining }, true);
-						extracted.root = concat;
-						remaining.root = concat;
+						var concat = new PartialExpression(PartialExpressionRole.Concatenation, this);
+						concat.AddToConcatenation(extracted);
+						concat.AddToConcatenation(remaining);
 
+						parts = null;
 						role = PartialExpressionRole.Union;
-						parts = new List<PartialExpression> { new PartialExpression(PartialExpressionRole.EmptyWord, this), concat };
+						AddToUnion(new PartialExpression(PartialExpressionRole.EmptyWord, this));
+						AddToUnion(concat);
 						_operator = UnaryOperator.None;
 					} break;
 				case UnaryOperator.KleenePlus:
@@ -428,135 +516,201 @@ namespace Phinite
 
 						var extracted = new PartialExpression(this);
 						extracted._operator = UnaryOperator.None;
-						extracted.root = this;
 
 						var remaining = new PartialExpression(this);
 						remaining._operator = UnaryOperator.KleeneStar;
-						remaining.root = this;
 
+						parts = null;
 						role = PartialExpressionRole.Concatenation;
-						parts = new List<PartialExpression> { extracted, remaining };
+						AddToConcatenation(extracted);
+						AddToConcatenation(remaining);
 						_operator = UnaryOperator.None;
 					} break;
 			}
 
+
 			switch (role)
 			{
 				case PartialExpressionRole.EmptyWord:
-					{
-						//if(root != null && root.role.Equals(PartialExpressionRole.Union))
-						role = PartialExpressionRole.Invalid;
-					} break;
+					role = PartialExpressionRole.Invalid;
+					break;
 				case PartialExpressionRole.Letter:
-					{
-						if (_value.Equals(removedLetter))
-							role = PartialExpressionRole.EmptyWord;
-						else
-							role = PartialExpressionRole.Invalid;
-						_value = null;
-					} break;
+					if (_value.Equals(removedLetter))
+						role = PartialExpressionRole.EmptyWord;
+					else
+						role = PartialExpressionRole.Invalid;
+					_value = null;
+					break;
 				case PartialExpressionRole.Concatenation:
-					{
-						var firstPart = parts[0];
-						if (firstPart._operator == UnaryOperator.KleeneStar)
-						{
-							// here also derivation can split into two variants
-
-							PartialExpression new1firstPart = new PartialExpression(firstPart);
-							new1firstPart._operator = UnaryOperator.None;
-							//new1firstPart.parts.RemoveAll(x => x.role.Equals(PartialExpressionRole.EmptyWord));
-
-							var new1 = new PartialExpression(this);
-							new1.parts.RemoveAt(0);
-							new1.Optimize();
-							new1.root = this;
-
-							var new2 = new PartialExpression(this);
-							new2.parts.Insert(0, new1firstPart);
-							new1firstPart.root = new2;
-							new2.root = this;
-
-							role = PartialExpressionRole.Union;
-							parts = new List<PartialExpression> { new1, new2 };
-
-							Derive(removedLetter);
-						}
-						else if (firstPart.role == PartialExpressionRole.Union
-							&& firstPart.parts.Any(x => x.role == PartialExpressionRole.EmptyWord))
-						{
-							// this union contains an empty word, so the derivation can be split in two variants
-
-							PartialExpression new1firstPart = new PartialExpression(firstPart);
-							new1firstPart.parts.RemoveAll(x => x.role == PartialExpressionRole.EmptyWord);
-
-							var new1 = new PartialExpression(this);
-							new1.parts.RemoveAt(0);
-							new1.parts.Insert(0, new1firstPart);
-							new1firstPart.root = new1;
-							new1.root = this;
-
-							var new2 = new PartialExpression(this);
-							new2.parts.RemoveAt(0);
-							new2.Optimize();
-							new2.root = this;
-
-							role = PartialExpressionRole.Union;
-							parts = new List<PartialExpression> { new1, new2 };
-
-							Derive(removedLetter);
-						}
-						else
-						{
-							parts[0].Derive(removedLetter);
-							if (parts[0].role == PartialExpressionRole.Invalid)
-							{
-								parts.Clear();
-								parts = null;
-								role = PartialExpressionRole.Invalid;
-							}
-							else if (parts.Count > 1)
-							{
-								if (parts[0].role == PartialExpressionRole.EmptyWord)
-								{
-									parts.RemoveAt(0);
-									if (parts.Count == 1)
-										Optimize();
-								}
-							}
-							else
-							{
-								if (parts[0].role == PartialExpressionRole.EmptyWord)
-								{
-									parts.RemoveAt(0);
-									parts = null;
-									role = PartialExpressionRole.EmptyWord;
-								}
-							}
-						}
-					} break;
+					DeriveConcatenation(removedLetter);
+					break;
 				case PartialExpressionRole.Union:
-					{
-						Parallel.For(0, parts.Count, (int n) =>
-							{
-								parts[n].Derive(removedLetter);
-							});
-						//foreach (var part in parts)
-						//	part.Derive(removedLetter);
-						for (int i = parts.Count - 1; i >= 0; --i)
-						{
-							if (parts[i].role == PartialExpressionRole.Invalid)
-								parts.RemoveAt(i);
-						}
-						if (parts.Count == 1)
-							Optimize();
-						else if (parts.Count == 0)
-						{
-							parts = null;
-							role = PartialExpressionRole.Invalid;
-						}
-					} break;
+					DeriveUnion(removedLetter);
+					break;
 				default:
 					throw new ArgumentException("encountered partial expression with role that is not allowed");
+			}
+		}
+
+		private void DeriveConcatenation(string removedLetter)
+		{
+			var firstPart = parts[0];
+			if (firstPart._operator == UnaryOperator.KleeneStar)
+			{
+				// derivation can split into two variants
+				// (a^*)bc becomes (bc)+(a(a^*)bc) and only then it is derived
+
+				var new1 = new PartialExpression(this, true);
+				if (new1.parts.Count == 1)
+					new1.Optimize();
+				//new1.root = this;
+
+				PartialExpression new2firstPart = new PartialExpression(firstPart);
+				new2firstPart._operator = UnaryOperator.None;
+
+				var new2 = new PartialExpression(this);
+				new2.InsertToConcatenation(0, new2firstPart);
+
+				parts = null;
+				role = PartialExpressionRole.Union;
+				AddToUnion(new1);
+				AddToUnion(new2);
+
+				Derive(removedLetter);
+			}
+			else if (firstPart.role == PartialExpressionRole.Union
+				&& firstPart.parts.Any(x => x.role == PartialExpressionRole.EmptyWord))
+			{
+				// this union contains an empty word, so the derivation can be split in two variants
+				// (a+.)bc becomes (abc)+(bc) and only then it is derived
+
+				PartialExpression new1firstPart = new PartialExpression(firstPart);
+				new1firstPart.parts.RemoveAll(x => x.role == PartialExpressionRole.EmptyWord);
+
+				var new1 = new PartialExpression(this);
+				new1.parts[0] = new1firstPart; // instead
+				new1firstPart.root = new1;
+				new1.root = this;
+
+				var new2 = new PartialExpression(this, true);
+				if (new2.parts.Count == 1)
+					new2.Optimize();
+				new2.root = this;
+
+				role = PartialExpressionRole.Union;
+				parts = new List<PartialExpression> { new1, new2 };
+
+				Derive(removedLetter);
+			}
+			else
+			{
+				parts[0].Derive(removedLetter);
+				if (parts[0].role == PartialExpressionRole.Invalid)
+				{
+					parts = null;
+					role = PartialExpressionRole.Invalid;
+				}
+				else if (parts.Count > 1)
+				{
+					if (parts[0].role == PartialExpressionRole.EmptyWord)
+					{
+						parts.RemoveAt(0);
+						Optimize();
+					}
+				}
+				else if (parts[0].role == PartialExpressionRole.EmptyWord)
+				{
+					parts = null;
+					role = PartialExpressionRole.EmptyWord;
+				}
+			}
+		}
+
+		private void DeriveUnion(string removedLetter)
+		{
+			Parallel.For(0, parts.Count, (int n) =>
+			{
+				parts[n].Derive(removedLetter);
+			});
+
+			for (int i = parts.Count - 1; i >= 0; --i)
+				if (parts[i].role == PartialExpressionRole.Invalid)
+					parts.RemoveAt(i);
+
+			if (parts.Count >= 1)
+				Optimize();
+			else if (parts.Count == 0)
+			{
+				parts = null;
+				role = PartialExpressionRole.Invalid;
+			}
+		}
+
+		/// <summary>
+		/// Reduces expression to the longest non-reducable word.
+		/// </summary>
+		public void Reduce()
+		{
+			if (role == PartialExpressionRole.Undetermined)
+				return;
+			if (role == PartialExpressionRole.EmptyWord)
+				return;
+
+			if (GeneratesEmptyWord())
+			{
+				parts = null;
+				_operator = UnaryOperator.None;
+				_value = null;
+				role = PartialExpressionRole.EmptyWord;
+				return;
+			}
+
+			if ((role & PartialExpressionRole.Leaf) > 0)
+			{
+				_operator = UnaryOperator.None;
+				return;
+			}
+
+			if ((role & PartialExpressionRole.InternalNode) > 0)
+			{
+				if (_operator == UnaryOperator.KleenePlus)
+					_operator = UnaryOperator.None;
+
+				Parallel.For(0, parts.Count, (int n) =>
+					{
+						parts[n].Reduce();
+					}
+				);
+
+				for (int i = parts.Count - 1; i >= 0; --i)
+					if (parts[i].role == PartialExpressionRole.EmptyWord)
+						parts.RemoveAt(i);
+
+				if (parts.Count == 0)
+				{
+					parts = null;
+					_operator = UnaryOperator.None;
+					_value = null;
+					role = PartialExpressionRole.EmptyWord;
+				}
+			}
+
+			Optimize();
+
+			if (role == PartialExpressionRole.Union)
+			{
+				int[] widths = new int[parts.Count];
+				Parallel.For(0, parts.Count, (int n) =>
+					{
+						widths[n] = parts[n].CalculateTreeWidth();
+					});
+
+				int index = widths.IndexOfMax();
+				for (int i = parts.Count - 1; i >= 0; --i)
+					if (i != index)
+						parts.RemoveAt(i);
+
+				Optimize();
 			}
 		}
 
@@ -636,14 +790,16 @@ namespace Phinite
 			return -1;
 		}
 
-		public bool ContentEquals(object obj, bool compareOperators = false)
+		/// <summary>
+		/// Checks for equality between this PartialExpression and another object.
+		/// </summary>
+		/// <param name="part"></param>
+		/// <param name="compareOperators"></param>
+		/// <returns></returns>
+		public bool ContentEquals(PartialExpression part, bool compareOperators)
 		{
-			if (obj == null)
+			if (part == null)
 				return false;
-			if (obj is PartialExpression == false)
-				return false;
-
-			var part = (PartialExpression)obj;
 
 			if (this == part)
 				return true;
@@ -693,16 +849,37 @@ namespace Phinite
 			// return base.Equals(obj);
 		}
 
+		/// <summary>
+		/// Checks for equality between this PartialExpression and another object.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
 		public override bool Equals(object obj)
 		{
-			return ContentEquals(obj, true);
+			if (obj == null || obj is PartialExpression == false)
+				return false;
+
+			return ContentEquals((PartialExpression)obj, true);
 		}
 
+		/// <summary>
+		/// Returns the hash code for the value of this instance.
+		/// </summary>
+		/// <returns>a 32-bit signed integer hash code</returns>
 		public override int GetHashCode()
 		{
-			return base.GetHashCode();
+			return 3 * role.GetHashCode() + 7 * _operator.GetHashCode()
+				+ (_value == null ? 0 : 19 * _value.GetHashCode())
+				+ (parts == null ? 0 : 31 * parts.GetHashCode());
 		}
 
+		/// <summary>
+		/// Converts this parse tree back into human readible string.
+		/// 
+		/// Such string can be used to construct another parse tree, as it is created
+		/// to conform with the rules that apply to string argument of constructor of class RegularExpression.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			StringBuilder s = new StringBuilder();

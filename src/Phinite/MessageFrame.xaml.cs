@@ -251,12 +251,12 @@ namespace Phinite
 			MessageImage = image;
 		}
 
-		private void SetButtons(bool toggleOk = true, bool toggleCancel = false, bool toggleHelp = false,
+		private void SetButtons(bool newToggleOk = true, bool newToggleCancel = false, bool newToggleHelp = false,
 			string captionOk = "Ok", string captionCancel = "Cancel", string captionHelp = "Help")
 		{
-			ToggleOk = toggleOk;
-			ToggleCancel = toggleCancel;
-			ToggleHelp = toggleHelp;
+			ToggleOk = newToggleOk;
+			ToggleCancel = newToggleCancel;
+			ToggleHelp = newToggleHelp;
 
 			TextOk = captionOk;
 			TextCancel = captionCancel;

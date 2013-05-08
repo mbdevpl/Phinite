@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
-    <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Phi.ico</ApplicationIcon>
@@ -91,6 +91,9 @@
     </Compile>
     <Compile Include="ParseTreeDrawing.cs" />
     <Compile Include="Petzold\ArrowEnds.cs" />
+    <Compile Include="WindowSimpleCanvas.xaml.cs">
+      <DependentUpon>WindowSimpleCanvas.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WindowUserHelp.xaml.cs">
       <DependentUpon>WindowUserHelp.xaml</DependentUpon>
     </Compile>
@@ -121,6 +124,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WindowSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WindowSimpleCanvas.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

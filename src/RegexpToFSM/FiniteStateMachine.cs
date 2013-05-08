@@ -14,6 +14,31 @@ namespace Phinite
 	/// </summary>
 	public class FiniteStateMachine
 	{
+		#region auto-resolver constants
+
+		/// <summary>
+		/// Minimum number of steps taken by auto-resolver.
+		/// </summary>
+		public static readonly int MinimumSimilaritiesRefinementSteps = 4;
+
+		/// <summary>
+		/// Must be between 0 and 1.
+		/// </summary>
+		private static readonly double NeutralSimilarity = 0.5;
+
+		/// <summary>
+		/// Similarity must be at least at this level in order for two states to be considered as equivalent.
+		/// </summary>
+		public static readonly double SimilarityThresholdToInferEquivalence = 0.95;
+
+		private static readonly double SimilarityPenaltyForStatesCount = 0.25;
+
+		private static readonly double SimilarityPenaltyForTransitionsCount = 0.2;
+
+		private static readonly double SimilarityPenaltyForTransitions = 0.15;
+
+		#endregion
+
 		/// <summary>
 		/// Original input expression that was used to generate this machine.
 		/// </summary>
@@ -38,6 +63,10 @@ namespace Phinite
 		public RegularExpression NextNotLabeledState
 		{ get { return (notLabeled == null || notLabeled.Count == 0) ? null : notLabeled[0]; } }
 
+		/// <summary>
+		/// Estimates probabilities of all labeled states being equivalent
+		/// to the first of not labeled states.
+		/// </summary>
 		public ReadOnlyCollection<double> NextNotLabeledStateSimilarities
 		{ get { return nextNotLabeledStateSimilarities == null ? null : new ReadOnlyCollection<double>(nextNotLabeledStateSimilarities); } }
 		private Double[] nextNotLabeledStateSimilarities;
@@ -97,6 +126,9 @@ namespace Phinite
 		/// </summary>
 		private List<KeyValuePair<int, List<RegularExpression>>> equivalentStatesGroups;
 
+		/// <summary>
+		/// Current total count of labeled states.
+		/// </summary>
 		public int LabeledStatesCount { get { return equivalentStatesGroups.Count; } }
 
 		/// <summary>
@@ -131,6 +163,9 @@ namespace Phinite
 		}
 		private List<MachineTransition> transitions;
 
+		/// <summary>
+		/// Current total count of labeled transitions.
+		/// </summary>
 		public int LabeledTransitionsCount { get { return transitions.Count; } }
 
 		/// <summary>
@@ -172,6 +207,11 @@ namespace Phinite
 			}
 		}
 		private List<int> acceptingStatesIds;
+
+		/// <summary>
+		/// Number of steps forward that auto-resolver takes to see if given states are equivalent.
+		/// </summary>
+		private int similaritiesRefinementSteps;
 
 		/// <summary>
 		/// Current state of fsm, valid only during word evaluation phase.
@@ -237,6 +277,100 @@ namespace Phinite
 			transitions = new List<MachineTransition>();
 
 			acceptingStatesIds = new List<int>();
+
+			similaritiesRefinementSteps = FindOptimalNumberOfRefinementSteps();
+		}
+
+		private int FindOptimalNumberOfRefinementSteps()
+		{
+			var reducedInput = input.ParseTree;
+			reducedInput.Reduce();
+
+			if (reducedInput.GeneratesEmptyWord() || reducedInput.Role == PartialExpressionRole.Letter)
+				return MinimumSimilaritiesRefinementSteps;
+
+			var parts = reducedInput.Parts;
+			var distinctParts = new List<PartialExpression>();
+			distinctParts.Add(parts[0]);
+
+			for (int i = 1; i < parts.Count; ++i)
+			{
+				if (distinctParts.Any(x => x.Value.Equals(parts[i].Value)))
+					continue;
+				distinctParts.Add(parts[i]);
+			}
+
+			if (distinctParts.Count == 1)
+				return Math.Max(MinimumSimilaritiesRefinementSteps, parts.Count);
+
+			var repetitions = new int[distinctParts.Count];
+			Parallel.For(0, distinctParts.Count, (int n) =>
+			{
+				repetitions[n] = parts.Count(x => x.Value.Equals(distinctParts[n].Value));
+			});
+			return Math.Max(MinimumSimilaritiesRefinementSteps, repetitions.Max());
+		}
+
+		/// <summary>
+		/// The method performs at most chosen number of steps of finite-state machine construction.
+		/// 
+		/// The method may end prematurely when the machine is already constructed
+		/// or if an uncertain case arises (the latter only if breakIfUncertain is set to true).
+		/// </summary>
+		/// <param name="numberOfSteps">maximum number of steps that will be taken,
+		/// when set to zero or a negative number, the construction is performed until it has completed
+		/// or interrupted because of uncertainty</param>
+		/// <param name="breakIfUncertain">if false, the algorithm delegates all uncertain cases
+		/// to auto-resolver, and always finishes after designated number of steps
+		/// or when machine construction is complete</param>
+		/// <returns>false if construction was interrupted, true otherwise</returns>
+		public bool Construct(int numberOfSteps, bool breakIfUncertain)
+		{
+			if (numberOfSteps <= 0)
+				numberOfSteps = -1;
+			while (numberOfSteps != 0 && !IsConstructionFinished())
+			{
+				if (notLabeled.Count > 0 && !LabelNextExpression())
+				{
+					// automatically handle some uncertain cases
+					if (breakIfUncertain)
+					{
+						return false;
+					}
+					else if (nextNotLabeledStateSimilarities != null)
+					{
+						RefineSimilarities();
+
+						// analyze refined similarities
+						int iMax = -1;
+						for (int i = 0; i < nextNotLabeledStateSimilarities.Length; ++i)
+						{
+							if (nextNotLabeledStateSimilarities[i] < SimilarityThresholdToInferEquivalence)
+								continue;
+
+							if (iMax == -1 || nextNotLabeledStateSimilarities[iMax] < nextNotLabeledStateSimilarities[i])
+								iMax = i;
+						}
+
+						// label expression accordingly
+						nextNotLabeledStateSimilarities = null;
+						if (iMax == -1)
+							ManuallyLabelNextExpression(null);
+						else
+							ManuallyLabelNextExpression(equivalentStatesGroups[iMax].Value[0]);
+					}
+					else
+						throw new NotImplementedException("labeling failed to auto-resolve uncertainty");
+				}
+				if (notDerivedIds.Count > 0 && !DeriveNextExpression())
+				{
+					// automatically handle uncertain cases
+					throw new NotImplementedException("derivation failed while there is something to derive");
+				}
+				if (numberOfSteps > 0)
+					--numberOfSteps;
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -245,34 +379,28 @@ namespace Phinite
 		/// The method may end prematurely when the machine is already constructed.
 		/// </summary>
 		/// <param name="numberOfSteps">maximum number of steps that will be taken,
-		/// when set to zero or a negative number, the construction is performed until it has completed
-		/// or interrupted because of uncertainty</param>
-		/// <param name="breakIfUncertain">if false, the algorithm treats all uncertain states
-		/// as not equivalent to existing ones</param>
-		/// <returns>false if construction was interrupted, true otherwise</returns>
-		public bool Construct(int numberOfSteps, bool breakIfUncertain)
+		/// when set to zero or a negative number, the construction is performed until it has completed</param>
+		/// <param name="equivalentToExpressionIfUncertain">algoritm will treat all uncertain cases of not labeled states
+		/// as equivalent to given expression, or as new if this argument is null</param>
+		/// <param name="assumeNotLabeled">if true, algorithm will not even try to label new states, it will immediately
+		/// treat them as equivalent to given value of equivalentToExpressionIfUncertain parameter</param>
+		/// <returns></returns>
+		public bool Construct(int numberOfSteps, RegularExpression equivalentToExpressionIfUncertain, bool assumeNotLabeled)
 		{
 			if (numberOfSteps <= 0)
 				numberOfSteps = -1;
 			while (numberOfSteps != 0 && !IsConstructionFinished())
 			{
-				if (!LabelNextExpression() && notLabeled.Count > 0)
+				if (assumeNotLabeled || (notLabeled.Count > 0 && !LabelNextExpression()))
 				{
 					// automatically handle some uncertain cases
-					if (breakIfUncertain)
-					{
-						return false;
-					}
-					else
-					{
-						// TODO: analyze similarities
-						nextNotLabeledStateSimilarities = null;
-						ManuallyLabelNextExpression(null);
-					}
+					nextNotLabeledStateSimilarities = null;
+					ManuallyLabelNextExpression(equivalentToExpressionIfUncertain);
 				}
-				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
+				if (notDerivedIds.Count > 0 && !DeriveNextExpression())
 				{
 					// automatically handle uncertain cases
+					throw new NotImplementedException("derivation failed while there is something to derive");
 				}
 				if (numberOfSteps > 0)
 					--numberOfSteps;
@@ -280,28 +408,107 @@ namespace Phinite
 			return true;
 		}
 
-		public bool Construct(int numberOfSteps, RegularExpression equivalentToExpressionIfUncertain, bool assumeNotLabeled)
+		/// <summary>
+		/// Initially calculated probability values for similarities (public field NextNotLabeledStateSimilarities)
+		/// are refined because each case is examined more thoroughly, which gives more precise results,
+		/// but is very expensive in terms of computation time.
+		/// 
+		/// Auto-resolver launches this method automatically to ensure good approximation
+		/// of equivalence estimation.
+		/// </summary>
+		public void RefineSimilarities()
 		{
-			if (numberOfSteps != 1)
-				throw new ArgumentException("multiple default steps not currently supported");
-			if (numberOfSteps <= 0)
-				numberOfSteps = -1;
-			while (numberOfSteps != 0 && !IsConstructionFinished())
-			{
-				if (assumeNotLabeled || (!LabelNextExpression() && notLabeled.Count > 0))
+			if (nextNotLabeledStateSimilarities == null)
+				return;
+
+			FiniteStateMachine machine1 = new FiniteStateMachine(notLabeled[0], false);
+			machine1.Construct(similaritiesRefinementSteps, null, false);
+
+			// refine each similarity that can theoretically yield an equivalent state
+			Parallel.For(0, nextNotLabeledStateSimilarities.Length, (int n) =>
 				{
-					// automatically handle some uncertain cases
-					nextNotLabeledStateSimilarities = null;
-					ManuallyLabelNextExpression(equivalentToExpressionIfUncertain);
-				}
-				if (!DeriveNextExpression() && notDerivedIds.Count > 0)
-				{
-					// automatically handle uncertain cases
-				}
-				if (numberOfSteps > 0)
-					--numberOfSteps;
-			}
-			return true;
+					if (nextNotLabeledStateSimilarities[n] < NeutralSimilarity)
+						return; // it is unlikely the equivalent expression
+
+					if (equivalentStatesGroups[n].Value.Count > 1)
+					{
+						double[] localSimilarities = new double[equivalentStatesGroups[n].Value.Count];
+						Parallel.For(0, equivalentStatesGroups[n].Value.Count, (int k) =>
+							{
+								localSimilarities[k] = nextNotLabeledStateSimilarities[n];
+
+								FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[k], false);
+								machine2.Construct(similaritiesRefinementSteps, null, false);
+
+								if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
+									localSimilarities[k] -= SimilarityPenaltyForStatesCount;
+
+								if (machine1.transitions.Count != machine2.transitions.Count)
+									localSimilarities[k] -= SimilarityPenaltyForTransitionsCount;
+
+								if (localSimilarities[k] < NeutralSimilarity)
+									return;
+
+								double ratio = NeutralSimilarity / machine1.transitions.Count;
+
+								for (int i = 0; i < machine1.transitions.Count; ++i)
+								{
+									var t1 = machine1.transitions[i];
+									var t2 = machine2.transitions[i];
+
+									if (t1.InitialStateId == t2.InitialStateId && t1.ResultingStateId == t2.ResultingStateId
+										&& t1.Letters.Count == t2.Letters.Count
+										&& machine1.equivalentStatesGroups[t1.InitialStateId].Value[0]
+											.Similarity(machine2.equivalentStatesGroups[t2.InitialStateId].Value[0]) >= NeutralSimilarity
+										)
+										localSimilarities[k] += ratio;
+									else
+									{
+										localSimilarities[k] = NeutralSimilarity - SimilarityPenaltyForTransitions;
+										return;
+									}
+								}
+							});
+
+						nextNotLabeledStateSimilarities[n] = localSimilarities.Min();
+					}
+					else
+					{
+						FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[0], false);
+						machine2.Construct(similaritiesRefinementSteps, null, false);
+
+						if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
+							nextNotLabeledStateSimilarities[n] -= SimilarityPenaltyForStatesCount;
+
+						if (machine1.transitions.Count != machine2.transitions.Count)
+							nextNotLabeledStateSimilarities[n] -= SimilarityPenaltyForTransitionsCount;
+
+						if (nextNotLabeledStateSimilarities[n] < NeutralSimilarity)
+							return;
+
+						double ratio = NeutralSimilarity / machine1.transitions.Count;
+
+						for (int i = 0; i < machine1.transitions.Count; ++i)
+						{
+							var t1 = machine1.transitions[i];
+							var t2 = machine2.transitions[i];
+
+							if (t1.InitialStateId == t2.InitialStateId && t1.ResultingStateId == t2.ResultingStateId
+								&& t1.Letters.Count == t2.Letters.Count
+								&& t1.Letters.SequenceEqual(t2.Letters)
+								&& machine1.equivalentStatesGroups[t1.InitialStateId].Value[0]
+									.Similarity(machine2.equivalentStatesGroups[t2.InitialStateId].Value[0]) >= NeutralSimilarity
+								)
+								nextNotLabeledStateSimilarities[n] += ratio;
+							else
+							{
+								nextNotLabeledStateSimilarities[n] = NeutralSimilarity - SimilarityPenaltyForTransitions;
+								return;
+							}
+						}
+					}
+
+				});
 		}
 
 		/// <summary>

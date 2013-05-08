@@ -91,6 +91,10 @@ namespace Phinite
 			return Item2.Any(x => x.Equals(letter));
 		}
 
+		/// <summary>
+		/// Converts this transition into a simple string in form of "q#---(letters)-->q#".
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return String.Format("q{0}---({1})-->q{2}", Item1, String.Join(",", Item2), Item3);

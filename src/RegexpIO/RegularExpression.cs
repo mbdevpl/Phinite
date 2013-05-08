@@ -13,6 +13,27 @@ namespace Phinite
 	/// </summary>
 	public class RegularExpression
 	{
+
+		private static readonly string errorAtChar = "error at character {0} of input, just after \"{1}\": ";
+		private static readonly string errorAtStart = "error at beginning of the input: ";
+
+		/// <summary>
+		/// A set of rules that apply to text input for RegularExpression constructor.
+		/// </summary>
+		public static readonly string[] Rules
+			= new string[]
+			{
+				"union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol",
+				"kleene star and kleene plus symbols cannot be stacked",
+				"it is illegal to use an empty pair of perentheses",
+				"union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes",
+				"the expression can start only with letter or opening parenthesis",
+				"input must not contain only whitespace characters",
+				"regular expression cannot start with union operator",
+				"regular expression cannot start with unary operator or a closing parenthesis",
+				"regular expression cannot end with union operator or an opening parenthesis"
+			};
+
 		/// <summary>
 		/// List of symbols that have special meaning.
 		/// </summary>
@@ -112,7 +133,7 @@ namespace Phinite
 		/// <summary>
 		/// A tree structure that has semantic structure (and meaning) equivalent to that of a given input.
 		/// 
-		/// This variable is a result of parsing process.
+		/// This variable is a copy of the result of parsing process.
 		/// </summary>
 		public PartialExpression ParseTree { get { return new PartialExpression(parsedInput); } }
 		private PartialExpression parsedInput;
@@ -199,56 +220,84 @@ namespace Phinite
 			}
 
 			if (taggedInput.Count == 0)
-				throw new ArgumentException("input contains only whitespace characters");
+				throw new ArgumentException(Rules[5]);
 
 			if (taggedInput[0].Value == InputSymbolTag.Union)
-				throw new ArgumentException("regular expression cannot start with union operator");
+				throw new ArgumentException(Rules[6]);
 
 			if ((taggedInput[0].Value & InputSymbolTag.UnaryOperator) > 0
 					|| taggedInput[0].Value == InputSymbolTag.ClosingParenthesis)
-				throw new ArgumentException("regular expression cannot start with unary operator or a closing parenthesis");
+				throw new ArgumentException(Rules[7]);
 
 			if (taggedInput.Count > 1 && (
 					taggedInput[taggedInput.Count - 1].Value == InputSymbolTag.Union
 					|| taggedInput[taggedInput.Count - 1].Value == InputSymbolTag.OpeningParenthesis
 				))
-				throw new ArgumentException("regular expression cannot end with union operator or an opening parenthesis");
+				throw new ArgumentException(Rules[8]);
 		}
 
 		private int CheckReservedSymbolsAt(int i)
 		{
-			for (int n = 0; n < ReservedSymbols.Length; ++n)
+			int count = taggedInput.Count;
+			bool success = false;
+
+			InputSymbolTag previous = default(InputSymbolTag);
+			if (count > 0)
+				previous = taggedInput[count - 1].Value;
+			InputSymbolTag previous2 = default(InputSymbolTag);
+			if (count > 1)
+				previous2 = taggedInput[count - 2].Value;
+
+			// at most one of parallel threads reaches the last lines of action body
+			try
 			{
-				if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) != i)
-					continue;
-
-				var current = ReservedSymbols[n].Value;
-				if (taggedInput.Count > 0)
-				{
-					var previous = taggedInput[taggedInput.Count - 1].Value;
-					CheckIfTagSequenceValid(i, previous, current);
-
-					if (taggedInput.Count > 1)
+				Parallel.For(0, ReservedSymbols.Length, (int n) =>
 					{
-						var previous2 = taggedInput[taggedInput.Count - 2].Value;
-						CheckIfTagSequenceValid(i, previous2, previous, current);
-					}
-				}
-				else if (current == InputSymbolTag.Union || current == InputSymbolTag.KleeneStar
-						|| current == InputSymbolTag.KleenePlus || current == InputSymbolTag.ClosingParenthesis)
-					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-						"error at beginning of input: "
-						+ "the expression can start only with letter or opening parenthesis"));
+						if (input.IndexOf(ReservedSymbols[n].Key, i, Math.Min(ReservedSymbolMaxLength, input.Length - i)) != i)
+							return;
 
-				taggedInput.Add(ReservedSymbols[n]);
-				if (ReservedSymbols[n].Key.Length > 1)
-					i += ReservedSymbols[n].Key.Length - 1;
-				return i;
+						var current = ReservedSymbols[n].Value;
+						if (count > 0)
+						{
+							CheckIfTagSequenceValid(i, previous, current);
+
+							if (count > 1)
+								CheckIfTagSequenceValid(i, previous2, previous, current);
+						}
+						else if (current == InputSymbolTag.Union || current == InputSymbolTag.KleeneStar
+								|| current == InputSymbolTag.KleenePlus || current == InputSymbolTag.ClosingParenthesis)
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								errorAtStart + Rules[4]));
+
+						taggedInput.Add(ReservedSymbols[n]);
+						if (ReservedSymbols[n].Key.Length > 1)
+							i += ReservedSymbols[n].Key.Length - 1;
+						success = true;
+					});
 			}
+			catch (AggregateException e)
+			{
+				int exceptionsCount = e.InnerExceptions.Count;
+				if (exceptionsCount > 1)
+					throw new ArgumentException(String.Format("there are {0} errors, including an {1}",
+						exceptionsCount, e.InnerException.Message));
+				throw e.InnerException;
+			}
+
+			if (success)
+				return i;
 			return -1;
 		}
 
-		private static void CheckIfTagSequenceValid(int index, params InputSymbolTag[] tags)
+		private string GetTagsSample()
+		{
+			return String.Join("", taggedInput
+				.GetRange(Math.Max(taggedInput.Count - 5, 0), Math.Min(5, taggedInput.Count))
+				.Select((pair, i) => pair.Key)
+				);
+		}
+
+		private void CheckIfTagSequenceValid(int index, params InputSymbolTag[] tags)
 		{
 			switch (tags.Length)
 			{
@@ -263,21 +312,18 @@ namespace Phinite
 								|| current == InputSymbolTag.KleeneStar
 								|| current == InputSymbolTag.KleenePlus
 							))
-							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-								"error at character {0} of input: "
-								+ "union, kleene star and kleene plus symbol cannot occur after opening parenthis or union symbol", index));
+							throw new ArgumentException(index == 0 ? errorAtStart + Rules[0] : String.Format(
+								errorAtChar + Rules[0], index, GetTagsSample()));
 
 						if ((previous == InputSymbolTag.KleeneStar || previous == InputSymbolTag.KleenePlus)
 							&& (current == InputSymbolTag.KleeneStar || current == InputSymbolTag.KleenePlus))
-							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-								"error at character {0} of input: "
-								+ "kleene star and kleene plus symbols cannot be stacked", index));
+							throw new ArgumentException(index == 0 ? errorAtStart + Rules[1] : String.Format(
+								errorAtChar + Rules[1], index, GetTagsSample()));
 
 						if (previous == InputSymbolTag.OpeningParenthesis
 							&& current == InputSymbolTag.ClosingParenthesis)
-							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-								"error at character {0} of input: "
-								+ "it is illegal to use an empty pair of perentheses", index));
+							throw new ArgumentException(index == 0 ? errorAtStart + Rules[2] : String.Format(
+								errorAtChar + Rules[2], index, GetTagsSample()));
 					} break;
 				case 3:
 					{
@@ -291,32 +337,36 @@ namespace Phinite
 								|| current == InputSymbolTag.KleeneStar
 								|| current == InputSymbolTag.KleenePlus
 							))
-							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-								"error at character {0} of input: "
-								+ "union, kleene star and kleene plus symbol cannot be applied to empty pair of parenthes", index));
+							throw new ArgumentException(index == 0 ? errorAtStart + Rules[3] : String.Format(
+								errorAtChar + Rules[3], index));
 					} break;
 			}
 		}
 
 		private void CheckForbiddenSymbolsAt(int i)
 		{
-			for (int n = 0; n < ForbiddenSymbols.Length; ++n)
+			try
 			{
-				if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
-					continue;
+				Parallel.For(0, ForbiddenSymbols.Length, (int n) =>
+					{
+						if (input.IndexOf(ForbiddenSymbols[n], i, Math.Min(ForbiddenSymbolMaxLength, input.Length - i)) != i)
+							return;
 
-				if (i == 0)
-					throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-						"error at beginning of input: "
-						+ "use of the symbol \"{0}\" is forbidden here", ForbiddenSymbols[n]));
+						if (i == 0)
+							throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+								errorAtStart + "use of the symbol \"{0}\" is forbidden here", ForbiddenSymbols[n]));
 
-				string sample = String.Join("", taggedInput
-					.GetRange(Math.Max(taggedInput.Count - 5, 0), Math.Min(5, taggedInput.Count))
-					.Select((pair, index) => pair.Key)
-					);
-				throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
-					"error at character {0} of input, just after \"{1}\": "
-					+ "use of the symbol \"{2}\" is forbidden here", i, sample, ForbiddenSymbols[n]));
+						throw new ArgumentException(String.Format(CultureInfo.CurrentCulture,
+							errorAtChar + "use of the symbol \"{2}\" is forbidden here", i, GetTagsSample(), ForbiddenSymbols[n]));
+					});
+			}
+			catch (AggregateException e)
+			{
+				int exceptionsCount = e.InnerExceptions.Count;
+				if (exceptionsCount > 1)
+					throw new ArgumentException(String.Format("there are {0} errors, including an {1}",
+						exceptionsCount, e.InnerException.Message));
+				throw e.InnerException;
 			}
 		}
 
@@ -544,54 +594,53 @@ namespace Phinite
 			if (Equals(regexp))
 				return 1.0;
 
-			bool isAccepting = GeneratesEmptyWord();
-			bool exprIsAccepting = regexp.GeneratesEmptyWord();
-
-			if (isAccepting != exprIsAccepting)
-				return 0.0; // empty word generation properties differ
-
 			if (alphabet.Count != regexp.alphabet.Count)
 				return 0.0; // alphabet lengths differ
+
+			if (GeneratesEmptyWord() != regexp.GeneratesEmptyWord())
+				return 0.0; // empty word generation properties differ
 
 			if (alphabet.Intersect(regexp.alphabet).Count() != alphabet.Count)
 				return 0.0; // alphabet contents differ
 
-			/*
-			if (alphabet.Count > 1)
-			{
-			 */
-			//bool inequalFound = false;
-			//object _lock = new object();
 			RegularExpression[] derived = new RegularExpression[2 * alphabet.Count];
 			Parallel.For(0, 2 * alphabet.Count, (int n) =>
 				{
 					derived[n] = Derive(alphabet[n / 2]);
-					//lock (_lock)
-					//{
-					//	if (!inequalFound)
-					//			inequalFound = true;
-					//}
 				});
-			for (int i = 0; i < alphabet.Count; ++i)
-				if ((derived[2 * i] == null && derived[2 * i + 1] != null) || (derived[2 * i] != null && derived[2 * i + 1] == null))
-					return 0.0; // outgoing transitions differ
-			/*
-			}
-			else
-			{
-				var derived = Derive(alphabet[0]);
-				var exprDerived = expr.Derive(alphabet[0]);
-				if ((derived == null && exprDerived != null) || (derived != null && exprDerived == null))
-					return 0.0;
-			}
-			 */
 
+			double[] similarities = new double[alphabet.Count];
+			Parallel.For(0, alphabet.Count, (int n) =>
+				{
+					int i = 2 * n;
 
-			//double similarity = 0.0;
+					similarities[n] = 0.5;
 
-			return 0.35;
+					if (ReferenceEquals(derived[i], null) && ReferenceEquals(derived[i + 1], null))
+						return;
+
+					similarities[n] = 0.0;
+
+					if ((derived[i] == null && derived[i + 1] != null) || (derived[i] != null && derived[i + 1] == null))
+						return; // outgoing transitions differ
+
+					if (derived[i].alphabet.Count != derived[i + 1].alphabet.Count)
+						return; // alphabet lengths differ
+
+					if (derived[i].GeneratesEmptyWord() != derived[i + 1].GeneratesEmptyWord())
+						return; // empty word generation properties differ
+
+					similarities[n] = 0.5;
+				});
+
+			return similarities.Min();
 		}
 
+		/// <summary>
+		/// Checks for equality between this RegularExpression and another object.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
 		public override bool Equals(object obj)
 		{
 			if (obj == null)
@@ -607,27 +656,19 @@ namespace Phinite
 			if (input.Equals(regexp.input))
 				return true;
 
-			//if (alphabet == null || taggedInput == null || tagCount == null)
-			//	throw new ArgumentNullException(); //TagInput();
-			//if (regexp.alphabet == null || regexp.taggedInput == null || regexp.tagCount == null)
-			//	throw new ArgumentNullException(); //regexp.TagInput();
-
 			if (alphabet.Count != regexp.alphabet.Count)
 				return false;
 
 			if (alphabet.Count != alphabet.Intersect(regexp.alphabet).Count())
 				return false;
 
-			//if (parsedInput == null)
-			//	throw new ArgumentNullException(); // ParseInput();
-			//if (regexp.parsedInput == null)
-			//	throw new ArgumentNullException(); // regexp.ParseInput();
-			//throw new ArgumentException("cannot compare regular expressions that were not evaluated");
-			// this is easily handled
-
 			return parsedInput.Equals(regexp.parsedInput);
 		}
 
+		/// <summary>
+		/// Returns the hash code for the value of this instance.
+		/// </summary>
+		/// <returns>a 32-bit signed integer hash code</returns>
 		public override int GetHashCode()
 		{
 			return base.GetHashCode();

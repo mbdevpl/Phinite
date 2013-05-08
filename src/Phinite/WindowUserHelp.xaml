@@ -4,7 +4,7 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:c="comment" mc:Ignorable="c"
 		Icon="Phi.ico" Title="NITE: user-assisted finite-state machine construction"
-		Width="600" Height="500" MinWidth="550" MinHeight="350"
+		Width="600" Height="600" MinWidth="550" MinHeight="450"
 		WindowStartupLocation="CenterOwner" Closing="WindowUserHelp_Closing">
 	<Grid>
 		<Grid.RowDefinitions>
@@ -18,18 +18,24 @@
 				<TextBlock Text="Take a look: " />
 				<TextBlock Text="{Binding NewExpression}" Style="{StaticResource TextWithinPanelWithText}" />
 			</StackPanel>
+			<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+					MinHeight="50" MaxHeight="400">
+				<Canvas Name="ParseTreeCanvas" />
+			</ScrollViewer>
 			<Label Content="Labeled expressions"/>
 		</StackPanel>
-		<DataGrid Grid.Row="1" MinHeight="50"
-				ItemsSource="{Binding LabeledExpressionsData}" AutoGenerateColumns="False"
-				SelectionChanged="DataGrid_SelectionChanged" SelectedIndex="{Binding SelectedExpression}">
-			<DataGrid.Columns>
-				<DataGridTextColumn Header="Label" Binding="{Binding Item2}" Width="Auto" />
-				<DataGridTextColumn Header="Remark(s)" Binding="{Binding Item3}" Width="Auto" />
-				<DataGridTextColumn Header="Similarity" Binding="{Binding Item4}" Width="Auto" />
-				<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1}" Width="Auto" />
-			</DataGrid.Columns>
-		</DataGrid>
+		<ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto" Grid.Row="1" MinHeight="50">
+			<DataGrid AutoGenerateColumns="False"
+				ItemsSource="{Binding LabeledExpressionsData, Mode=OneWay}" SelectedIndex="{Binding SelectedExpression}"
+				SelectionChanged="DataGrid_SelectionChanged" MouseDoubleClick="DataGrid_MouseDoubleClick">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Label" Binding="{Binding Item2, Mode=OneWay}" Width="Auto" />
+					<DataGridTextColumn Header="Remark(s)" Binding="{Binding Item3, Mode=OneWay}" Width="Auto" />
+					<DataGridTextColumn Header="Similarity" Binding="{Binding Item4, Mode=OneWay}" Width="Auto" />
+					<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1, Mode=OneWay}" Width="Auto" />
+				</DataGrid.Columns>
+			</DataGrid>
+		</ScrollViewer>
 		<StatusBar>
 			<StackPanel Orientation="Horizontal" Style="{StaticResource DialogButtonContainer}">
 				<Button Click="ButtonAbort_Click">

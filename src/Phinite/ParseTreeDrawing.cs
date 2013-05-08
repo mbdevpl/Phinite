@@ -12,10 +12,10 @@ namespace Phinite
 	public static class ParseTreeDrawing
 	{
 
-		private static readonly Size ParseTreeNodeContentSize = new Size(50, 15);
+		private static readonly Size ParseTreeNodeContentSize = new Size(50, 16);
 
 		private static readonly Size ParseTreeNodeSize
-			= new Size(ParseTreeNodeContentSize.Width + 4, ParseTreeNodeContentSize.Height * 2 + 4);
+			= new Size(ParseTreeNodeContentSize.Width + 4, ParseTreeNodeContentSize.Height * 2 + 2);
 
 		private static readonly Point ParseTreeDrawingRootOffset
 			= new Point(ParseTreeNodeSize.Width / 2 + 15, ParseTreeNodeSize.Height / 2);
