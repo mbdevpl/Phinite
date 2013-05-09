@@ -606,28 +606,31 @@ namespace Phinite
 			RegularExpression[] derived = new RegularExpression[2 * alphabet.Count];
 			Parallel.For(0, 2 * alphabet.Count, (int n) =>
 				{
-					derived[n] = Derive(alphabet[n / 2]);
+					if(n < alphabet.Count)
+						derived[n] = Derive(alphabet[n / 2]);
+					else
+						derived[n] = regexp.Derive(alphabet[n / 2]);
 				});
 
 			double[] similarities = new double[alphabet.Count];
 			Parallel.For(0, alphabet.Count, (int n) =>
 				{
-					int i = 2 * n;
+					int n2 = n + alphabet.Count;
 
 					similarities[n] = 0.5;
 
-					if (ReferenceEquals(derived[i], null) && ReferenceEquals(derived[i + 1], null))
+					if (ReferenceEquals(derived[n], null) && ReferenceEquals(derived[n2], null))
 						return;
 
 					similarities[n] = 0.0;
 
-					if ((derived[i] == null && derived[i + 1] != null) || (derived[i] != null && derived[i + 1] == null))
+					if ((derived[n] == null && derived[n2] != null) || (derived[n] != null && derived[n2] == null))
 						return; // outgoing transitions differ
 
-					if (derived[i].alphabet.Count != derived[i + 1].alphabet.Count)
+					if (derived[n].alphabet.Count != derived[n2].alphabet.Count)
 						return; // alphabet lengths differ
 
-					if (derived[i].GeneratesEmptyWord() != derived[i + 1].GeneratesEmptyWord())
+					if (derived[n].GeneratesEmptyWord() != derived[n2].GeneratesEmptyWord())
 						return; // empty word generation properties differ
 
 					similarities[n] = 0.5;

@@ -174,14 +174,16 @@
 						<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=StackPanel, AncestorLevel=1}"
 								Path="Children[0].ActualWidth" />
 						<MultiBinding.Converter>
-							<con:ExpressionConverter Expression="{}{0} - {1} - 20" />
+							<con:ExpressionConverter Expression="{}({0} - {1} - 20.0 > 0 ? {0} - {1} - 20.0 : 0.0)" />
 						</MultiBinding.Converter>
 					</MultiBinding>
 				</Setter.Value>
 			</Setter>
 		</Style>
 		<Style TargetType="DataGrid">
+			<Setter Property="AutoGenerateColumns" Value="False" />
 			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="MinHeight" Value="100" />
 		</Style>
 	</Application.Resources>
 </Application>

@@ -440,6 +440,10 @@ namespace Phinite
 								FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[k], false);
 								machine2.Construct(similaritiesRefinementSteps, null, false);
 
+								while (machine2.equivalentStatesGroups.Count < similaritiesRefinementSteps
+									&& machine2.notLabeled.Count > 0)
+									machine2.Construct(1, null, false);
+
 								if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
 									localSimilarities[k] -= SimilarityPenaltyForStatesCount;
 
@@ -476,6 +480,10 @@ namespace Phinite
 					{
 						FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[0], false);
 						machine2.Construct(similaritiesRefinementSteps, null, false);
+
+						while (machine2.equivalentStatesGroups.Count < similaritiesRefinementSteps
+							&& machine2.notLabeled.Count > 0)
+							machine2.Construct(1, null, false);
 
 						if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
 							nextNotLabeledStateSimilarities[n] -= SimilarityPenaltyForStatesCount;

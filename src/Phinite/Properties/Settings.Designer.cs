@@ -13,7 +13,7 @@ namespace Phinite.Properties {
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "11.0.0.0")]
-    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
+    public sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
         
@@ -197,6 +197,126 @@ namespace Phinite.Properties {
             }
             set {
                 this["EnableAutoResolutionModeInUse"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("800")]
+        public double WindowMainWidth {
+            get {
+                return ((double)(this["WindowMainWidth"]));
+            }
+            set {
+                this["WindowMainWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
+        public global::System.Windows.WindowState WindowMainState {
+            get {
+                return ((global::System.Windows.WindowState)(this["WindowMainState"]));
+            }
+            set {
+                this["WindowMainState"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("70")]
+        public double WindowUserHelpTop {
+            get {
+                return ((double)(this["WindowUserHelpTop"]));
+            }
+            set {
+                this["WindowUserHelpTop"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
+        public global::System.Windows.WindowState WindowUserHelpState {
+            get {
+                return ((global::System.Windows.WindowState)(this["WindowUserHelpState"]));
+            }
+            set {
+                this["WindowUserHelpState"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50")]
+        public double WindowMainTop {
+            get {
+                return ((double)(this["WindowMainTop"]));
+            }
+            set {
+                this["WindowMainTop"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public double WindowMainLeft {
+            get {
+                return ((double)(this["WindowMainLeft"]));
+            }
+            set {
+                this["WindowMainLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("600")]
+        public double WindowMainHeight {
+            get {
+                return ((double)(this["WindowMainHeight"]));
+            }
+            set {
+                this["WindowMainHeight"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
+        public double WindowUserHelpLeft {
+            get {
+                return ((double)(this["WindowUserHelpLeft"]));
+            }
+            set {
+                this["WindowUserHelpLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("700")]
+        public double WindowUserHelpWidth {
+            get {
+                return ((double)(this["WindowUserHelpWidth"]));
+            }
+            set {
+                this["WindowUserHelpWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
+        public double WindowUserHelpHeight {
+            get {
+                return ((double)(this["WindowUserHelpHeight"]));
+            }
+            set {
+                this["WindowUserHelpHeight"] = value;
             }
         }
     }

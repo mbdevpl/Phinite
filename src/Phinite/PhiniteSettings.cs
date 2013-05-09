@@ -16,7 +16,7 @@ namespace Phinite
 	public class PhiniteSettings
 	{
 
-		internal Settings Settings { get { return settings; } }
+		public Settings Settings { get { return settings; } }
 		private Settings settings;
 
 		public int LayoutCreationFrequency
@@ -86,7 +86,7 @@ namespace Phinite
 			}
 		}
 
-		internal PhiniteSettings(Settings settings)
+		public PhiniteSettings(Settings settings)
 		{
 			this.settings = settings;
 		}

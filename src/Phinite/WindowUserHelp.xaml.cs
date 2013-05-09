@@ -20,8 +20,10 @@ namespace Phinite
 	/// </summary>
 	public partial class WindowUserHelp : Window, INotifyPropertyChanged
 	{
-
 		private static string infoUserHelp;
+
+		public PhiniteSettings Settings { get { return settings; } }
+		private PhiniteSettings settings;
 
 		private object fsmLock;
 
@@ -58,12 +60,14 @@ namespace Phinite
 		private bool? resolvedEquivalent = null;
 		public bool? ResolvedEquivalent { get { return resolvedEquivalent; } }
 
-		public WindowUserHelp(object machineOperationsLock, FiniteStateMachine machine)
+		public WindowUserHelp(PhiniteSettings settings, object machineOperationsLock, FiniteStateMachine machine)
 		{
 			if (machineOperationsLock == null)
 				throw new ArgumentNullException("machineOperationsLock");
 			if (machine == null)
 				throw new ArgumentNullException("machine");
+
+			this.settings = settings;
 
 			fsmLock = machineOperationsLock;
 			fsm = machine;

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.Windows;
 
 namespace Phinite
@@ -13,6 +10,10 @@ namespace Phinite
 	/// </summary>
 	public partial class App : Application
 	{
+
+		public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
+
+		public static readonly String VersionString = Version.ToString();
 
 		public static readonly String DefaultExample = "Yay!";
 

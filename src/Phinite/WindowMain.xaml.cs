@@ -34,6 +34,19 @@ namespace Phinite
 
 		private static string infoInputWord;
 
+		public PhiniteSettings Settings
+		{
+			get
+			{
+				if (settings == null)
+				{
+					var sett = Properties.Settings.Default;
+					settings = new PhiniteSettings(sett);
+					sett.SettingsSaving += Default_SettingsSaving;
+				}
+				return settings;
+			}
+		}
 		private PhiniteSettings settings;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -627,24 +640,27 @@ namespace Phinite
 				WindowUserHelp windowUserHelp = null;
 
 				Dispatcher.Invoke((Action)delegate
-				{
-					lock (regexpAndFsmLock)
 					{
-						if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
-							return;
+						lock (regexpAndFsmLock)
+						{
+							if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+								return;
 
-						fsm.RefineSimilarities();
+							fsm.RefineSimilarities();
 
-						windowUserHelp = new WindowUserHelp(regexpAndFsmLock, fsm);
-					}
+							windowUserHelp = new WindowUserHelp(settings, regexpAndFsmLock, fsm);
+						}
+						windowUserHelp.Owner = this;
 
-					windowUserHelp.Owner = this;
-					windowUserHelp.Closed += WindowUserHelp_Closed;
+						windowUserHelp.Closed += WindowUserHelp_Closed;
 
-					SetUIState(UIState.WaitingForUserHelp);
+						SetUIState(UIState.WaitingForUserHelp);
+					});
 
-					windowUserHelp.Show();
-				});
+				Dispatcher.BeginInvoke((Action)delegate
+					{
+						windowUserHelp.Show();
+					});
 
 				return;
 			}
@@ -1065,24 +1081,34 @@ namespace Phinite
 			s.AppendLine("Implemented in WPF by Mateusz Bysiek.");
 			s.AppendLine();
 
+			s.Append("Version ").Append(App.VersionString).AppendLine();
+			s.AppendLine();
+
+			s.AppendLine("This application uses:")
+				.AppendLine("- Extended WPF Toolkit, https://wpftoolkit.codeplex.com/, Microsoft Public License")
+				.AppendLine("- WPF Converters, https://wpfconverters.codeplex.com/, Microsoft Public License")
+				.AppendLine("- QuickGraph, https://quickgraph.codeplex.com/, Apache License 2.0")
+				.AppendLine("- Graph#, https://graphsharp.codeplex.com/, Microsoft Public License");
+			s.AppendLine();
+
 			s.AppendLine("To work properly, this application needs:")
 				.AppendLine("- Windows 7 operating system")
-				.AppendLine("- .NET 4.0 framework, full profile")
-				.AppendLine("- any LaTeX distibution with required packages")
-				.AppendLine("- any PDF viewer");
+				.AppendLine("- .NET 4.0 framework, full profile");
 			s.AppendLine();
 
-			s.AppendLine("LaTeX packages required:")
-				.AppendLine("- l3kernel")
-				.AppendLine("- preprint")
-				.AppendLine("- pgf")
-				.AppendLine("- hm")
-				.AppendLine("- hs")
-				.AppendLine("- xcolor");
+			s.AppendLine("This program takes advantage of modern multi-core processors.");
+			s.AppendLine("Up to several GB of memory may be needed in some cases.");
 			s.AppendLine();
 
-			s.Append("Modern multi-core processor is recommended,")
-				.AppendLine(" also up to several GB of memory\nis needed in case of some complicated expressions.");
+			s.AppendLine("Required for PDF report feature:")
+				.AppendLine("- any PDF viewer")
+				.AppendLine("- any LaTeX distibution with required packages, i.e.")
+				.AppendLine("  - l3kernel")
+				.AppendLine("  - preprint")
+				.AppendLine("  - pgf")
+				.AppendLine("  - hm")
+				.AppendLine("  - hs")
+				.AppendLine("  - xcolor");
 
 			new MessageFrame(this, "About Phinite", "Information about Phinite", s.ToString(), PhiImage.Source).ShowDialog();
 			//ShowMessageFrame("Phinite", "Missing content", "technical analysis file was not found", false);
@@ -1436,14 +1462,19 @@ namespace Phinite
 
 		private void WindowMain_Loaded(object sender, RoutedEventArgs e)
 		{
-			var sett = Properties.Settings.Default;
-			settings = new PhiniteSettings(sett);
-			sett.SettingsSaving += Default_SettingsSaving;
+			if (settings == null)
+			{
+				var sett = Properties.Settings.Default;
+				settings = new PhiniteSettings(sett);
+				sett.SettingsSaving += Default_SettingsSaving;
+			}
+
+			//Settings.Settings.WindowMainRect.X = 0;
 		}
 
 		private void Default_SettingsSaving(object sender, CancelEventArgs e)
 		{
-			var sett = Properties.Settings.Default;
+			//var sett = Properties.Settings.Default;
 		}
 
 		void WindowUserHelp_Closed(object sender, EventArgs e)
