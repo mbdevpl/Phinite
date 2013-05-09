@@ -65,6 +65,10 @@ namespace Phinite
 
 		private static readonly Brush HighlightedEdgeLabelBrush = Brushes.Black;
 
+		private static readonly double[] strokesThickness = new double[] { 1, 5 };
+
+		private static readonly int[] zIndexes = new int[] { -5, -9 };
+
 		#endregion
 
 		#region fsm and graph data
@@ -238,16 +242,14 @@ namespace Phinite
 			return true;
 		}
 
-		//private IDictionary<string, Point> Create1()
-		//{
-		//	// 1st algorithm
-		//	var algo1 = new SourceFirstTopologicalSortAlgorithm<string, Edge<string>>(graph);
-		//	algo1.Compute();
-		//	while (algo1.State != ComputationState.Finished)
-		//		Thread.Sleep(100);
+		private ICollection<string> Create1()
+		{
+			// 1st algorithm
+			var algo1 = new SourceFirstTopologicalSortAlgorithm<string, Edge<string>>(graph);
+			algo1.Compute();
 
-		//	return algo1.SortedVertices;
-		//}
+			return algo1.SortedVertices;
+		}
 
 		/// <summary>
 		/// Nodes are too close to each other.
@@ -259,8 +261,6 @@ namespace Phinite
 			ISOMLayoutParameters params2 = null;//new ISOMLayoutParameters();
 			var algo2 = new ISOMLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(graph, params2);
 			algo2.Compute();
-			while (algo2.State != ComputationState.Finished)
-				Thread.Sleep(100);
 
 			return algo2.VertexPositions;
 		}
@@ -277,8 +277,6 @@ namespace Phinite
 			var algo3 = new BalloonTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
 				graph, vertexPositions, vertexSizes, params3, vertexLabels[0]);
 			algo3.Compute();
-			//while (algo3.State != ComputationState.Finished)
-			//	Thread.Sleep(100);
 
 			return algo3.VertexPositions;
 		}
@@ -296,6 +294,7 @@ namespace Phinite
 			algo4.Compute();
 			//while (algo4.State != ComputationState.Finished)
 			//	Thread.Sleep(250);
+
 			return algo4.VertexPositions;
 		}
 
@@ -316,6 +315,7 @@ namespace Phinite
 			algo5 = new DoubleTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
 					graph, Create4(), vertexSizes, params5, vertexLabels[0]);
 			algo5.Compute();
+
 			return algo5.VertexPositions;
 		}
 
@@ -332,8 +332,8 @@ namespace Phinite
 			algo6 = new RadialTreeLayoutAlgorithm<string, Edge<string>, BidirectionalGraph<string, Edge<string>>>(
 					graph, Create4(), params6, vertexLabels[0]);
 			// selected vertex is 'root' or something of this kind
-
 			algo6.Compute();
+
 			return algo6.VertexPositions;
 		}
 
@@ -358,8 +358,6 @@ namespace Phinite
 			OneWayFSAAlgorithm<string> algo1;
 			algo1 = new OneWayFSAAlgorithm<string>(null, params1);
 			algo1.Compute();
-			while (algo1.State != ComputationState.Finished)
-				Thread.Sleep(250);
 
 			return null;
 		}
@@ -385,8 +383,6 @@ namespace Phinite
 			FSAAlgorithm<string> algo2;
 			algo2 = new FSAAlgorithm<string>(null, params2);
 			algo2.Compute();
-			while (algo2.State != ComputationState.Finished)
-				Thread.Sleep(250);
 
 			return null;
 		}
@@ -525,22 +521,8 @@ namespace Phinite
 
 					// check connected vertices
 					int transitionIndex = transitions.IndexOf(x => x.InitialStateId == key1 && x.ResultingStateId == key2);
-					//try
-					//{
-					//	transitionIndex = transitions.IndexOf(
-					//		transitions.First(x => x.InitialStateId == key1 && x.ResultingStateId == key2)
-					//		);
-					//}
-					//catch (InvalidOperationException)
-					//{
-					//	// silent catch
-					//}
 					if (transitionIndex == -1)
 						continue;
-
-					// old implementation of checking if connection exists:
-					//if (!transitions.Any(x => x.InitialStateId == key1 && x.ResultingStateId == key2))
-					//	continue;
 
 					#region state on edge
 					// check if any state is obstructed by the edge
@@ -561,7 +543,6 @@ namespace Phinite
 					#endregion
 
 					// check if the edge intersects with any other edge
-					//var line = new LineGeometry(p1, p2);
 					foreach (var keyOther1 in layoutVertices.Keys)
 						foreach (var keyOther2 in layoutVertices.Keys)
 						{
@@ -596,13 +577,10 @@ namespace Phinite
 			if (canvas == null)
 				throw new ArgumentNullException("canvas");
 
-			var canvasContent = canvas.Children;
-			canvasContent.Clear();
+			canvas.Clear();
 
 			double maxX = 0;
 			double maxY = 0;
-
-			//IEnumerable<MachineTransition> transitionsFromInitialState = transitions.Where(x => x.InitialStateId == 0);
 
 			{
 				double startAngle = FindMostFreeAngle(0, true, false, 315);
@@ -679,15 +657,15 @@ namespace Phinite
 						transforms.Children.Add(translateTransform);
 						letters.RenderTransform = transforms;
 
-						Canvas.SetLeft(letters, location.X - letters.Width / 2);
-						Canvas.SetTop(letters, location.Y - TextBlockHeight / 2);
+						canvas.Add(letters, location.X - letters.Width / 2, location.Y - TextBlockHeight / 2, 0);
 					}
 					else
 					{
 						// normal edge
 						Point endpoint = vertices[transition.Item3];
 
-						double angle = location.Angle(endpoint) - 90;
+						double angle = edges[transition].Item1 - 90;
+						// double angle = location.Angle(endpoint) - 90; // already got it
 						Point translatePoint;
 
 						Point middle = new Point((location.X + endpoint.X) / 2, (location.Y + endpoint.Y) / 2);
@@ -781,11 +759,8 @@ namespace Phinite
 						transforms.Children.Add(translateTransform);
 						letters.RenderTransform = transforms;
 
-						Canvas.SetLeft(letters, middle.X - letters.Width / 2);
-						Canvas.SetTop(letters, middle.Y - TextBlockHeight / 2);
+						canvas.Add(letters, middle.X - letters.Width / 2, middle.Y - TextBlockHeight / 2, 0);
 					}
-					canvasContent.Add(letters);
-					Canvas.SetZIndex(letters, 0);
 				}
 
 				Brush vertexBrush = null;
@@ -839,8 +814,6 @@ namespace Phinite
 
 				if (location.X > maxX) maxX = location.X;
 				if (location.Y > maxY) maxY = location.Y;
-
-				//++i;
 			}
 			canvas.Width = maxX + LayoutOffset;
 			canvas.Height = maxY + LayoutOffset;
@@ -915,8 +888,6 @@ namespace Phinite
 
 		private static void DrawDot(Canvas canvas, Brush brush, Point location)
 		{
-			var canvasContent = canvas.Children;
-
 			var border = new Ellipse();
 			border.Width = 6;
 			border.Height = 6;
@@ -924,43 +895,31 @@ namespace Phinite
 			border.StrokeThickness = 0;
 			border.Fill = brush;
 
-			canvasContent.Add(border);
-			Canvas.SetLeft(border, location.X - border.Width / 2);
-			Canvas.SetTop(border, location.Y - border.Height / 2);
-			Canvas.SetZIndex(border, 0);
+			canvas.Add(border, location.X - border.Width / 2, location.Y - border.Height / 2, 0);
 		}
 
 		private static void DrawStartArrow(Canvas canvas, Brush brush, Brush borderBrush,
 			Point location, double angle)
 		{
-			var canvasContent = canvas.Children;
+			Brush[] brushes = new Brush[] { brush, borderBrush };
 
 			Point start = new Point().MoveTo(angle, StateEllipseDiameter);
 			Point end = new Point().MoveTo(angle, StateEllipseDiameter / 2);
 
-			ArrowLine poly = MakeArrow(start, end, brush, 1);
+			for (int i = 0; i < brushes.Length; ++i)
+			{
+				if (brushes[i].Equals(Brushes.Transparent))
+					continue;
 
-			canvasContent.Add(poly);
-			Canvas.SetLeft(poly, location.X);
-			Canvas.SetTop(poly, location.Y);
-			Canvas.SetZIndex(poly, -5);
+				ArrowLine poly = MakeArrow(start, end, brushes[i], strokesThickness[i]);
 
-			if (borderBrush.Equals(Brushes.Transparent))
-				return;
-
-			poly = MakeArrow(start, end, borderBrush, 5);
-
-			canvasContent.Add(poly);
-			Canvas.SetLeft(poly, location.X);
-			Canvas.SetTop(poly, location.Y);
-			Canvas.SetZIndex(poly, -9);
+				canvas.Add(poly, location.X, location.Y, zIndexes[i]);
+			}
 		}
 
 		private static void DrawState(Canvas canvas, Brush borderBrush, Brush backgroundBrush, Brush labelBrush,
 			Point location, string label, bool isAccepting)
 		{
-			var canvasContent = canvas.Children;
-
 			var border = new Ellipse();
 			border.Width = StateEllipseDiameter;
 			border.Height = StateEllipseDiameter;
@@ -969,10 +928,7 @@ namespace Phinite
 			border.StrokeThickness = 1;
 			border.Fill = backgroundBrush;
 
-			canvasContent.Add(border);
-			Canvas.SetLeft(border, location.X - border.Width / 2);
-			Canvas.SetTop(border, location.Y - border.Height / 2);
-			Canvas.SetZIndex(border, -4);
+			canvas.Add(border, location.X - border.Width / 2, location.Y - border.Height / 2, -4);
 
 			// extra ellipse for accepting state
 			if (isAccepting)
@@ -986,10 +942,7 @@ namespace Phinite
 				border.StrokeThickness = 1;
 				border2.Fill = backgroundBrush;
 
-				canvasContent.Add(border2);
-				Canvas.SetLeft(border2, location.X - border2.Width / 2);
-				Canvas.SetTop(border2, location.Y - border2.Height / 2);
-				Canvas.SetZIndex(border2, -3);
+				canvas.Add(border2, location.X - border2.Width / 2, location.Y - border2.Height / 2, -3);
 			}
 
 			var elem = new TextBlock();
@@ -1000,10 +953,7 @@ namespace Phinite
 
 			elem.Foreground = labelBrush;
 
-			canvasContent.Add(elem);
-			Canvas.SetLeft(elem, location.X - elem.Width / 2);
-			Canvas.SetTop(elem, location.Y - elem.Height / 2);
-			Canvas.SetZIndex(elem, 0);
+			canvas.Add(elem, location.X - elem.Width / 2, location.Y - elem.Height / 2, 0);
 		}
 
 		/// <summary>
@@ -1016,46 +966,19 @@ namespace Phinite
 		private static void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point start, Point end)
 		{
-			var canvasContent = canvas.Children;
+			Brush[] brushes = new Brush[] { brush, borderBrush };
 
 			Point target = end.Copy().MoveTo(start, StateEllipseDiameter / 2);
 
-			ArrowLine edge = new ArrowLine();
-			edge.ArrowEnds = ArrowEnds.End;
-			edge.ArrowLength = 10;
-			edge.ArrowAngle = 60;
-			edge.X1 = start.X;
-			edge.Y1 = start.Y;
-			edge.X2 = target.X;
-			edge.Y2 = target.Y;
+			for (int i = 0; i < brushes.Length; ++i)
+			{
+				if (brushes[i].Equals(Brushes.Transparent))
+					continue;
 
-			edge.StrokeThickness = 1;
-			edge.Stroke = brush;
+				ArrowLine edge = MakeArrow(start, target, brushes[i], strokesThickness[i]);
 
-			canvasContent.Add(edge);
-			Canvas.SetLeft(edge, 0);
-			Canvas.SetTop(edge, 0);
-			Canvas.SetZIndex(edge, -5);
-
-			if (borderBrush.Equals(Brushes.Transparent))
-				return;
-
-			edge = new ArrowLine();
-			edge.ArrowEnds = ArrowEnds.End;
-			edge.ArrowLength = 10;
-			edge.ArrowAngle = 60;
-			edge.X1 = start.X;
-			edge.Y1 = start.Y;
-			edge.X2 = target.X;
-			edge.Y2 = target.Y;
-
-			edge.StrokeThickness = 5;
-			edge.Stroke = borderBrush;
-
-			canvasContent.Add(edge);
-			Canvas.SetLeft(edge, 0);
-			Canvas.SetTop(edge, 0);
-			Canvas.SetZIndex(edge, -9);
+				canvas.Add(edge, 0, 0, zIndexes[i]);
+			}
 		}
 
 		/// <summary>
@@ -1070,7 +993,7 @@ namespace Phinite
 		private static void DrawEdge(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point start, double startAngle, Point end, double endAngle)
 		{
-			var canvasContent = canvas.Children;
+			Brush[] brushes = new Brush[] { brush, borderBrush };
 
 			double dist = start.Distance(end) / 2;
 			Point startCtrl = start.Copy().MoveTo(startAngle, dist);
@@ -1078,101 +1001,44 @@ namespace Phinite
 
 			var ptArr = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2);
 
-			// edge without arrow
-			var bezier = new BezierSegment();
-			bezier.Point1 = startCtrl;
-			bezier.Point2 = endCtrl;
-			bezier.Point3 = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2 + 1);
+			for (int i = 0; i < brushes.Length; ++i)
+			{
+				if (brushes[i].Equals(Brushes.Transparent))
+					continue;
 
-			var path = new PathFigure();
-			path.StartPoint = start.Copy().MoveTo(startCtrl, StateEllipseDiameter / 2);
-			path.Segments.Add(bezier);
+				// edge without arrow
+				var bezier = new BezierSegment();
+				bezier.Point1 = startCtrl;
+				bezier.Point2 = endCtrl;
+				bezier.Point3 = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2 + 1);
 
-			var geo = new PathGeometry();
-			geo.Figures = new PathFigureCollection();
-			geo.Figures.Add(path);
+				var path = new PathFigure();
+				path.StartPoint = start.Copy().MoveTo(startCtrl, StateEllipseDiameter / 2);
+				path.Segments.Add(bezier);
 
-			var edge = new Path();
-			edge.Data = geo;
+				var geo = new PathGeometry();
+				geo.Figures = new PathFigureCollection();
+				geo.Figures.Add(path);
 
-			edge.Stroke = brush;
-			edge.StrokeThickness = 1;
+				var edge = new Path();
+				edge.Data = geo;
 
-			canvasContent.Add(edge);
-			Canvas.SetLeft(edge, 0);
-			Canvas.SetTop(edge, 0);
-			Canvas.SetZIndex(edge, -5);
+				edge.Stroke = brushes[i];
+				edge.StrokeThickness = strokesThickness[i];
 
-			// arrow
-			var arrow = new ArrowLine();
-			arrow.ArrowEnds = ArrowEnds.End;
-			arrow.ArrowLength = 10;
-			arrow.ArrowAngle = 60;
-			arrow.X1 = bezier.Point3.X;
-			arrow.Y1 = bezier.Point3.Y;
-			arrow.X2 = ptArr.X;
-			arrow.Y2 = ptArr.Y;
+				canvas.Add(edge, 0, 0, zIndexes[i]);
 
-			arrow.Stroke = brush;
-			arrow.StrokeThickness = 1;
+				// arrow
+				ArrowLine arrow = MakeArrow(bezier.Point3, ptArr, brushes[i], strokesThickness[i]);
 
-			canvasContent.Add(arrow);
-			Canvas.SetLeft(arrow, 0);
-			Canvas.SetTop(arrow, 0);
-			Canvas.SetZIndex(arrow, -5);
-
-			if (borderBrush.Equals(Brushes.Transparent))
-				return;
-
-			// edge without arrow
-			bezier = new BezierSegment();
-			bezier.Point1 = startCtrl;
-			bezier.Point2 = endCtrl;
-			bezier.Point3 = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2 + 1);
-
-			path = new PathFigure();
-			path.StartPoint = start.Copy().MoveTo(startCtrl, StateEllipseDiameter / 2);
-			path.Segments.Add(bezier);
-
-			geo = new PathGeometry();
-			geo.Figures = new PathFigureCollection();
-			geo.Figures.Add(path);
-
-			edge = new Path();
-			edge.Data = geo;
-
-			edge.Stroke = borderBrush;
-			edge.StrokeThickness = 5;
-
-			canvasContent.Add(edge);
-			Canvas.SetLeft(edge, 0);
-			Canvas.SetTop(edge, 0);
-			Canvas.SetZIndex(edge, -9);
-
-			// arrow
-			arrow = new ArrowLine();
-			arrow.ArrowEnds = ArrowEnds.End;
-			arrow.ArrowLength = 10;
-			arrow.ArrowAngle = 60;
-			//var ptArr = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2);
-			arrow.X1 = bezier.Point3.X;
-			arrow.Y1 = bezier.Point3.Y;
-			arrow.X2 = ptArr.X;
-			arrow.Y2 = ptArr.Y;
-
-			arrow.Stroke = borderBrush;
-			arrow.StrokeThickness = 5;
-
-			canvasContent.Add(arrow);
-			Canvas.SetLeft(arrow, 0);
-			Canvas.SetTop(arrow, 0);
-			Canvas.SetZIndex(arrow, -9);
+				canvas.Add(arrow, 0, 0, zIndexes[i]);
+			}
 		}
 
 		private static void DrawLoop(Canvas canvas, Brush brush, Brush borderBrush, Brush labelBrush,
 			Point location, double angle)
 		{
-			var canvasContent = canvas.Children;
+			Brush[] brushes = new Brush[] { brush, borderBrush };
 
 			var tempPt = location.Copy().MoveTo(angle, LoopHeight);
 			Point pt1Ctrl = tempPt.Copy().MoveTo(angle - 90, LoopHalfWidth);
@@ -1180,91 +1046,38 @@ namespace Phinite
 
 			var ptArr = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2);
 
-			// loop without arrow
-			var bezier = new BezierSegment();
-			bezier.Point1 = pt1Ctrl;
-			bezier.Point2 = pt2Ctrl;
-			bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2 + 1);
+			for (int i = 0; i < brushes.Length; ++i)
+			{
+				if (brushes[i].Equals(Brushes.Transparent))
+					continue;
 
-			var path = new PathFigure();
-			path.StartPoint = location.Copy().MoveTo(pt1Ctrl, StateEllipseDiameter / 2);
-			path.Segments.Add(bezier);
+				// loop without arrow
+				var bezier = new BezierSegment();
+				bezier.Point1 = pt1Ctrl;
+				bezier.Point2 = pt2Ctrl;
+				bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2 + 1);
 
-			var geo = new PathGeometry();
-			geo.Figures = new PathFigureCollection();
-			geo.Figures.Add(path);
+				var path = new PathFigure();
+				path.StartPoint = location.Copy().MoveTo(pt1Ctrl, StateEllipseDiameter / 2);
+				path.Segments.Add(bezier);
 
-			var loop = new Path();
-			loop.Data = geo;
+				var geo = new PathGeometry();
+				geo.Figures = new PathFigureCollection();
+				geo.Figures.Add(path);
 
-			loop.Stroke = brush;
-			loop.StrokeThickness = 1;
+				var loop = new Path();
+				loop.Data = geo;
 
-			canvasContent.Add(loop);
-			Canvas.SetLeft(loop, 0);
-			Canvas.SetTop(loop, 0);
-			Canvas.SetZIndex(loop, -5);
+				loop.Stroke = brushes[i];
+				loop.StrokeThickness = strokesThickness[i];
 
-			// arrow
-			var arrow = new ArrowLine();
-			arrow.ArrowEnds = ArrowEnds.End;
-			arrow.ArrowLength = 10;
-			arrow.ArrowAngle = 60;
-			arrow.X1 = bezier.Point3.X;
-			arrow.Y1 = bezier.Point3.Y;
-			arrow.X2 = ptArr.X;
-			arrow.Y2 = ptArr.Y;
+				canvas.Add(loop, 0, 0, zIndexes[i]);
 
-			arrow.Stroke = brush;
-			arrow.StrokeThickness = 1;
+				// arrow
+				ArrowLine arrow = MakeArrow(bezier.Point3, ptArr, brushes[i], strokesThickness[i]);
 
-			canvasContent.Add(arrow);
-			Canvas.SetLeft(arrow, 0);
-			Canvas.SetTop(arrow, 0);
-			Canvas.SetZIndex(arrow, -5);
-
-			// loop without arrow
-			bezier = new BezierSegment();
-			bezier.Point1 = pt1Ctrl;
-			bezier.Point2 = pt2Ctrl;
-			bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2 + 1);
-
-			path = new PathFigure();
-			path.StartPoint = location.Copy().MoveTo(pt1Ctrl, StateEllipseDiameter / 2);
-			path.Segments.Add(bezier);
-
-			geo = new PathGeometry();
-			geo.Figures = new PathFigureCollection();
-			geo.Figures.Add(path);
-
-			loop = new Path();
-			loop.Data = geo;
-
-			loop.Stroke = borderBrush;
-			loop.StrokeThickness = 5;
-
-			canvasContent.Add(loop);
-			Canvas.SetLeft(loop, 0);
-			Canvas.SetTop(loop, 0);
-			Canvas.SetZIndex(loop, -9);
-
-			// arrow
-			arrow = new ArrowLine();
-			arrow.ArrowEnds = ArrowEnds.End;
-			arrow.ArrowLength = 10;
-			arrow.ArrowAngle = 60;
-			arrow.X1 = bezier.Point3.X;
-			arrow.Y1 = bezier.Point3.Y;
-			arrow.X2 = ptArr.X;
-			arrow.Y2 = ptArr.Y;
-
-			arrow.Stroke = borderBrush;
-			arrow.StrokeThickness = 5;
-
-			canvasContent.Add(arrow);
-			Canvas.SetLeft(arrow, 0);
-			Canvas.SetTop(arrow, 0);
-			Canvas.SetZIndex(arrow, -9);
+				canvas.Add(arrow, 0, 0, zIndexes[i]);
+			}
 		}
 
 		private static ArrowLine MakeArrow(Point start, Point end,

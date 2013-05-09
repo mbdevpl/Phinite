@@ -451,6 +451,19 @@ namespace Phinite
 				handler(sender, new PropertyChangedEventArgs(propertyName));
 		}
 
+		public static int Add(this Canvas canvas, UIElement element, double left, double top, int zIndex)
+		{
+			Canvas.SetLeft(element, left);
+			Canvas.SetTop(element, top);
+			Canvas.SetZIndex(element, zIndex);
+			return canvas.Children.Add(element);
+		}
+
+		public static void Clear(this Canvas canvas)
+		{
+			canvas.Children.Clear();
+		}
+
 		public static void FindElementLocation(this DataGrid grid, DependencyObject element,
 			out int columnIndex, out int rowIndex)
 		{

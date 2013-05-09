@@ -430,6 +430,11 @@ namespace Phinite
 					if (nextNotLabeledStateSimilarities[n] < NeutralSimilarity)
 						return; // it is unlikely the equivalent expression
 
+					// TODO: DRY these two cases
+
+					// TODO: fix fsm network comparison to take loops into account
+					// instead of just comparing state numbers in transitions list
+
 					if (equivalentStatesGroups[n].Value.Count > 1)
 					{
 						double[] localSimilarities = new double[equivalentStatesGroups[n].Value.Count];

@@ -199,7 +199,7 @@
 								<Binding ElementName="FSMCreationScrollView" Path="ViewportHeight" />
 								<Binding ElementName="FSMCreationDepictionLabel" Path="ActualHeight" />
 								<MultiBinding.Converter>
-									<con:ExpressionConverter Expression="{}{0} - {1}" />
+									<con:ExpressionConverter Expression="{}({0} - {1} > 0 ? {0} - {1} : 0.0)" />
 								</MultiBinding.Converter>
 							</MultiBinding>
 						</ScrollViewer.MaxHeight>
