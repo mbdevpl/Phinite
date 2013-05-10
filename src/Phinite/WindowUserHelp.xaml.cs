@@ -20,8 +20,9 @@ namespace Phinite
 	/// </summary>
 	public partial class WindowUserHelp : Window, INotifyPropertyChanged
 	{
-		private static string infoUserHelp;
-
+		/// <summary>
+		/// Application settings.
+		/// </summary>
 		public PhiniteSettings Settings { get { return settings; } }
 		private PhiniteSettings settings;
 
@@ -242,24 +243,7 @@ namespace Phinite
 
 		private void Info_UserHelp(object sender, RoutedEventArgs e)
 		{
-			if (infoUserHelp == null)
-			{
-				var s = new StringBuilder();
-
-				s.AppendLine("Equivalent - given expression is equivalent to selected one.");
-				s.AppendLine("Different - the expression is different from all labeled expressions.");
-				s.AppendLine("No idea - PHINITE will automatically solve this problem.");
-				s.AppendLine();
-
-				s.AppendLine("Hint: closing the window is the same as last option");
-				s.AppendLine();
-
-				s.AppendLine("You can doubleclick regular expressions in the table to see their parse trees.");
-				s.AppendLine("This might make the comparison of long expressions easier.");
-
-				infoUserHelp = s.ToString();
-			}
-			var msg = new MessageFrame(this, "Phinite information", "User-assisted expression labeling", infoUserHelp);
+			var msg = new MessageFrame(this, "Phinite information", "User-assisted expression labeling", App.Text_UserHelp);
 			msg.ShowDialog();
 		}
 

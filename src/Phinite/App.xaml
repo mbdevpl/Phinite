@@ -7,6 +7,11 @@
 		xmlns:c="comment" mc:Ignorable="c"
 		StartupUri="WindowMain.xaml">
 	<Application.Resources>
+		<sys:Int32 x:Key="(int)0">0</sys:Int32>
+		<sys:Int32 x:Key="(int)1">1</sys:Int32>
+		<sys:Int32 x:Key="(int)2">2</sys:Int32>
+		<sys:Boolean x:Key="(bool)true">True</sys:Boolean>
+		<sys:Boolean x:Key="(bool)false">False</sys:Boolean>
 		<Style TargetType="Label">
 			<Setter Property="FontWeight" Value="Bold" />
 		</Style>
@@ -33,39 +38,23 @@
 										Path="IsEnabled" Mode="OneWay">
 						<Binding.Converter>
 							<con:MapConverter>
-								<con:Mapping To="Black">
-									<con:Mapping.From>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
-								<con:Mapping To="LightGray">
-									<con:Mapping.From>
-										<sys:Boolean>False</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
+								<con:Mapping From="{StaticResource (bool)true}" To="Black" />
+								<con:Mapping From="{StaticResource (bool)false}" To="LightGray" />
 							</con:MapConverter>
 						</Binding.Converter>
 					</Binding>
 				</Setter.Value>
 			</Setter>
 		</Style>
-		<Style TargetType="TextBlock" x:Key="ButtonSpecialTextGray" BasedOn="{StaticResource ResourceKey=ButtonSpecialText}">
+		<Style TargetType="TextBlock" x:Key="ButtonSpecialTextDarkGray" BasedOn="{StaticResource ResourceKey=ButtonSpecialText}">
 			<Setter Property="Foreground">
 				<Setter.Value>
 					<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Button, AncestorLevel=1}"
 										Path="IsEnabled" Mode="OneWay">
 						<Binding.Converter>
 							<con:MapConverter>
-								<con:Mapping To="DarkGray">
-									<con:Mapping.From>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
-								<con:Mapping To="LightGray">
-									<con:Mapping.From>
-										<sys:Boolean>False</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
+								<con:Mapping From="{StaticResource (bool)true}" To="DarkGray" />
+								<con:Mapping From="{StaticResource (bool)false}" To="LightGray" />
 							</con:MapConverter>
 						</Binding.Converter>
 					</Binding>
@@ -79,16 +68,8 @@
 										Path="IsEnabled" Mode="OneWay">
 						<Binding.Converter>
 							<con:MapConverter>
-								<con:Mapping To="Green">
-									<con:Mapping.From>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
-								<con:Mapping To="LightGray">
-									<con:Mapping.From>
-										<sys:Boolean>False</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
+								<con:Mapping From="{StaticResource (bool)true}" To="Green" />
+								<con:Mapping From="{StaticResource (bool)false}" To="LightGray" />
 							</con:MapConverter>
 						</Binding.Converter>
 					</Binding>
@@ -102,16 +83,8 @@
 										Path="IsEnabled" Mode="OneWay">
 						<Binding.Converter>
 							<con:MapConverter>
-								<con:Mapping To="Blue">
-									<con:Mapping.From>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
-								<con:Mapping To="LightGray">
-									<con:Mapping.From>
-										<sys:Boolean>False</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
+								<con:Mapping From="{StaticResource (bool)true}" To="Blue" />
+								<con:Mapping From="{StaticResource (bool)false}" To="LightGray" />
 							</con:MapConverter>
 						</Binding.Converter>
 					</Binding>
@@ -125,16 +98,8 @@
 										Path="IsEnabled" Mode="OneWay">
 						<Binding.Converter>
 							<con:MapConverter>
-								<con:Mapping To="Red">
-									<con:Mapping.From>
-										<sys:Boolean>True</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
-								<con:Mapping To="LightGray">
-									<con:Mapping.From>
-										<sys:Boolean>False</sys:Boolean>
-									</con:Mapping.From>
-								</con:Mapping>
+								<con:Mapping From="{StaticResource (bool)true}" To="Red" />
+								<con:Mapping From="{StaticResource (bool)false}" To="LightGray" />
 							</con:MapConverter>
 						</Binding.Converter>
 					</Binding>
@@ -174,7 +139,7 @@
 						<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=StackPanel, AncestorLevel=1}"
 								Path="Children[0].ActualWidth" />
 						<MultiBinding.Converter>
-							<con:ExpressionConverter Expression="{}({0} - {1} - 20.0 > 0 ? {0} - {1} - 20.0 : 0.0)" />
+							<con:ExpressionConverter Expression="{}({0} - {1} - 20 > 0 ? {0} - {1} - 20 : (double)0)" />
 						</MultiBinding.Converter>
 					</MultiBinding>
 				</Setter.Value>

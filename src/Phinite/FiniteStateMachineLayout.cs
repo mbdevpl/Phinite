@@ -77,10 +77,40 @@ namespace Phinite
 
 		private ReadOnlyCollection<RegularExpression> acceptingStates;
 
+		public ReadOnlyCollection<Point> Locations
+		{
+			get
+			{
+				if(vertices == null)
+				return null;
+
+				var locs = new Point[vertices.Count];
+				int i = 0;
+				foreach(var pair in vertices)
+					locs[i++] = pair.Value;
+
+				return new ReadOnlyCollection<Point>(locs);
+			}
+		}
 		private Dictionary<int, Point> vertices;
 
 		private ReadOnlyCollection<MachineTransition> transitions;
 
+		public ReadOnlyCollection<Tuple<int, int>> Angles
+		{
+			get
+			{
+				if (edges == null)
+					return null;
+
+				var angles = new Tuple<int, int>[edges.Count];
+				int i = 0;
+				foreach (var transition in transitions)
+					angles[i++] = edges[transition];
+
+				return new ReadOnlyCollection<Tuple<int, int>>(angles);
+			}
+		}
 		private Dictionary<MachineTransition, Tuple<int, int>> edges;
 
 		private FiniteStateMachineLayoutScore layoutScore;

@@ -4,12 +4,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -23,30 +22,10 @@ namespace Phinite
 	/// </summary>
 	public partial class WindowMain : Window, INotifyPropertyChanged
 	{
-
-		private static string infoInput;
-
-		private static string infoParseTree;
-
-		private static string infoMachineConstruction;
-
-		private static string infoLatex;
-
-		private static string infoInputWord;
-
-		public PhiniteSettings Settings
-		{
-			get
-			{
-				if (settings == null)
-				{
-					var sett = Properties.Settings.Default;
-					settings = new PhiniteSettings(sett);
-					sett.SettingsSaving += Default_SettingsSaving;
-				}
-				return settings;
-			}
-		}
+		/// <summary>
+		/// Application settings.
+		/// </summary>
+		public PhiniteSettings Settings { get { Settings_Initialize(); return settings; } }
 		private PhiniteSettings settings;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -927,7 +906,105 @@ namespace Phinite
 				f = fsm;
 			}
 
-			LatexOutputText = LatexWriter.GenerateFullLatex(inputRegexpText, r, f, true, true);
+			// TODO: move these to lock
+			var states = fsm.States;
+			var accepting = fsm.AcceptingStates;
+			var initial = fsm.InitialState;
+			var transitions = fsm.Transitions;
+
+			var locations = fsmLayout.Locations;
+			var angles = fsmLayout.Angles;
+
+			string epsilon = RegularExpression.TagsStrings[InputSymbolTag.EmptyWord];
+
+			var s1 = new StringBuilder();
+			int i = 0;
+			foreach (var state in states)
+			{
+				s1.Append(App.Template_ReportState);
+
+				bool cond1 = state == initial;
+				bool cond2 = accepting.Any(x => x == state);
+
+				s1.Replace("[data:label]", i.ToString());
+				s1.Replace("[data:remarks]", String.Format("{0}{1}{2}", cond1 ? "initial state" : "",
+					cond1 && cond2 ? " , " : "", cond2 ? "accepting state" : ""));
+				s1.Replace("[data:regexp]", state.ToString());
+
+				++i;
+			}
+
+			var s2 = new StringBuilder();
+			foreach (var transition in transitions)
+			{
+				s2.Append(App.Template_ReportTransition);
+
+				s2.Replace("[data:label1]", transition.InitialStateId.ToString());
+				s2.Replace("[data:letters]", String.Join(@", \; ", transition.Letters));
+				s2.Replace("[data:label2]", transition.ResultingStateId.ToString());
+				s2.Replace("[data:regexp1]", states[transition.InitialStateId].ToString());
+				s2.Replace("[data:regexp2]", states[transition.ResultingStateId].ToString());
+			}
+
+			StringBuilder s3 = new StringBuilder();
+
+			s3.AppendLine(@"  [->,>=stealth',shorten >=1pt,auto,transform shape]");
+			s3.AppendLine();
+
+			i = 0;
+			foreach (var state in states)
+			{
+				s3.AppendLine(App.Template_ReportGraphState);
+
+				s3.Replace("[data:x]", (locations[i].X / 35).ToString());
+				s3.Replace("[data:y]", (-locations[i].Y / 35).ToString());
+
+				s3.Replace("[data:flags]", String.Format("{0}state{1}",
+					i == 0 ? "initial," : "", accepting.Contains(state) ? ",accepting" : ""));
+				s3.Replace("[data:label]", i.ToString());
+
+				++i;
+			}
+			s3.AppendLine();
+
+			s3.AppendLine(@"    \path");
+			i = 0;
+			foreach (var transition in transitions)
+			{
+				s3.AppendLine(App.Template_ReportGraphTransition);
+
+				int index1 = transition.InitialStateId;
+				int index2 = transition.ResultingStateId;
+
+				double angle1 = -angles[i].Item1 + 90;
+				double angle2 = -angles[i].Item2 + 90;
+
+				bool loop = index2 - index1 == 0;
+
+				s3.Replace("[data:label1]", index1.ToString());
+				s3.Replace("[data:label2]", index2.ToString());
+
+				s3.Replace("[data:angle1]", (angle1 + (loop ? 20 : 0)).ToString());
+				s3.Replace("[data:angle2]", (angle2 - (loop ? 20 : 0)).ToString());
+				s3.Replace("[data:flags]", loop ? ",loop" : "");
+				s3.Replace("[data:letters]", String.Join(",", transition.Letters));
+				s3.Replace("[data:lettersflags]", (loop && ((angle1 < 0 && angle1 >= -180) || (angle1 >= 180 && angle1 < 360))) ? ",below" : ",above");
+
+				++i;
+			}
+
+			s3.AppendLine(@"    ;");
+
+			StringBuilder s = new StringBuilder(App.Template_Report);
+
+			s.Replace("[data:inputoriginal]", inputRegexpText.Replace(epsilon, @"\epsilon"));
+			s.Replace("[data:inputoptimized]", regexp.ToString().Replace(epsilon, @"\epsilon"));
+			s.Replace("[data:tablestates]", s1.ToString());
+			s.Replace("[data:tabletransitions]", s2.ToString());
+			s.Replace("[data:graph]", s3.ToString());
+
+			LatexOutputText = s.ToString();
+
 			SetUIState(UIState.ReadyForLatexProcessing);
 		}
 
@@ -941,36 +1018,20 @@ namespace Phinite
 
 			File.AppendAllText(generatedTex, LatexOutputText);
 
-			string latexExecutable = settings.Pdflatex;
-			string latexOptions = new StringBuilder()
-				.Append(@"-shell-escape ")
-				.Append(@"-interaction=batchmode ")
-				//.Append(@" -interaction=nonstopmode")
-				.Append('"').Append(generatedTexDir).Append('/').Append(generatedTex).Append('"').ToString();
+			PdfGenerator generator = new PdfGenerator(settings.Pdflatex, settings.PdfViewer);
 
-			Process p = new Process();
-			p.StartInfo = new ProcessStartInfo(latexExecutable, latexOptions);
 			try
 			{
-				if (!p.Start())
-				{
-					ShowMessageFrame("Phinite/LaTeX error", "Error while starting LaTeX",
-						String.Format("Unable to start LaTeX with this command:\n\n{0} {1}", latexExecutable, latexOptions),
-						true);
-					SetUIState(UIState.PdfGenerationError);
-					return;
-				}
+				generator.Start(generatedTex, generatedPdf);
 
-				bool userWaitsForTimeout = true;
-				var timeoutMessageFormat = new StringBuilder()
-					.Append("It takes more than {0} seconds to build PDF file.")
-					.Append(" Do you want Phinite to wait for another {1} seconds to finish?")
-					.Append(" If not, the PDF file will not be opened automatically, even when it is finally created.")
-					.ToString();
-				while (userWaitsForTimeout)
+				while (!generator.WaitForExit(settings.PdflatexTimeout))
 				{
-					if (p.WaitForExit(1000 * settings.PdflatexTimeout))
-						break;
+					bool userWaitsForTimeout = true;
+					var timeoutMessageFormat = new StringBuilder()
+						.Append("It takes more than {0} seconds to build PDF file.")
+						.Append(" Do you want Phinite to wait for another {1} seconds to finish?")
+						.Append(" If not, the PDF file will not be opened automatically, even when it is finally created.")
+						.ToString();
 
 					Dispatcher.Invoke((Action)delegate
 					{
@@ -983,51 +1044,13 @@ namespace Phinite
 
 					if (userWaitsForTimeout)
 						continue;
-
-					SetUIState(UIState.PdfGenerationTimeout);
-					return;
 				}
-
-				if (p.ExitCode != 0)
-				{
-					if (File.Exists(generatedPdf))
-						ShowMessageFrame("Phinite/LaTeX warning", "Minor errors in LaTeX execution",
-							"PDF file was created, but there were some errors and the result may not look as good as expected.",
-							true);
-					else
-					{
-						ShowMessageFrame("Phinite/LaTeX error", "Severe errors in LaTeX execution",
-							"LaTeX failed to create the PDF file due to some critical errors. Read log to diagnose a problem.",
-							true);
-						SetUIState(UIState.PdfGenerationError);
-						return;
-					}
-				}
-				else
-				{
-					try { File.Delete(filename + ".log"); }
-					catch (IOException) { }
-					try { File.Delete(filename + ".aux"); }
-					catch (IOException) { }
-				}
-
-				if (settings.PdfViewer.Length > 0)
-					Process.Start(settings.PdfViewer, generatedPdf);
-				else
-					Process.Start(generatedPdf);
 			}
-			catch (Win32Exception)
+			catch (ArgumentException e)
 			{
-				ShowMessageFrame("Phinite/LaTeX/PDF error", "Error in Phinite configuration",
-								String.Format("There is no LaTeX executable at this path:\n\n{0}\n\n"
-									+ "And/or there is no PDF viewer at this path:\n\n{1}",
-									settings.Pdflatex, settings.PdfViewer), true);
+				ShowMessageFrame("Phinite error", (string)e.Data["title"], (string)e.Data["text"], true);
 				SetUIState(UIState.PdfGenerationError);
 				return;
-			}
-			catch (ThreadStateException)
-			{
-				// silent catch
 			}
 
 			SetUIState(UIState.PdfGenerated);
@@ -1076,42 +1099,7 @@ namespace Phinite
 
 		private void OptionAbout_Click(object sender, RoutedEventArgs e)
 		{
-			StringBuilder s = new StringBuilder();
-
-			s.AppendLine("Implemented in WPF by Mateusz Bysiek.");
-			s.AppendLine();
-
-			s.Append("Version ").Append(App.VersionString).AppendLine();
-			s.AppendLine();
-
-			s.AppendLine("This application uses:")
-				.AppendLine("- Extended WPF Toolkit, https://wpftoolkit.codeplex.com/, Microsoft Public License")
-				.AppendLine("- WPF Converters, https://wpfconverters.codeplex.com/, Microsoft Public License")
-				.AppendLine("- QuickGraph, https://quickgraph.codeplex.com/, Apache License 2.0")
-				.AppendLine("- Graph#, https://graphsharp.codeplex.com/, Microsoft Public License");
-			s.AppendLine();
-
-			s.AppendLine("To work properly, this application needs:")
-				.AppendLine("- Windows 7 operating system")
-				.AppendLine("- .NET 4.0 framework, full profile");
-			s.AppendLine();
-
-			s.AppendLine("This program takes advantage of modern multi-core processors.");
-			s.AppendLine("Up to several GB of memory may be needed in some cases.");
-			s.AppendLine();
-
-			s.AppendLine("Required for PDF report feature:")
-				.AppendLine("- any PDF viewer")
-				.AppendLine("- any LaTeX distibution with required packages, i.e.")
-				.AppendLine("  - l3kernel")
-				.AppendLine("  - preprint")
-				.AppendLine("  - pgf")
-				.AppendLine("  - hm")
-				.AppendLine("  - hs")
-				.AppendLine("  - xcolor");
-
-			new MessageFrame(this, "About Phinite", "Information about Phinite", s.ToString(), PhiImage.Source).ShowDialog();
-			//ShowMessageFrame("Phinite", "Missing content", "technical analysis file was not found", false);
+			new MessageFrame(this, "About Phinite", App.Name, App.Text_About, PhiImage.Source).ShowDialog();
 		}
 
 		private void OptionViewBA_Click(object sender, RoutedEventArgs e)
@@ -1122,7 +1110,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				ShowMessageFrame("Phinite", "Missing content", "business analysis file was not found", false);
+				ShowMessageFrame("Phinite", "Missing content", "Business analysis file was not found.", false);
 			}
 		}
 
@@ -1134,7 +1122,7 @@ namespace Phinite
 			}
 			catch (Win32Exception)
 			{
-				ShowMessageFrame("Phinite", "Missing content", "technical analysis file was not found", false);
+				ShowMessageFrame("Phinite", "Missing content", "Technical analysis file was not found.", false);
 			}
 		}
 
@@ -1142,11 +1130,68 @@ namespace Phinite
 		{
 			try
 			{
-				Process.Start("bysiekm-phinite-userguide.pdf");
+				Process.Start("phinite-userguide.pdf");
 			}
 			catch (Win32Exception)
 			{
-				ShowMessageFrame("Phinite", "Missing content", "user guide file was not found", false);
+				ShowMessageFrame("Phinite", "Missing content", "User guide file was not found, it will be now automatically generated.", false);
+
+				StringBuilder s = new StringBuilder(App.Template_UserGuide);
+
+				s.Replace("[data:regexpinput]", App.Latex_RegexpInput);
+				s.Replace("[data:parsetree]", App.Latex_ParseTree);
+				s.Replace("[data:construction]", App.Latex_Construction);
+				s.Replace("[data:userhelp]", App.Latex_UserHelp);
+				s.Replace("[data:report]", App.Latex_Report);
+				s.Replace("[data:wordinput]", App.Latex_WordInput);
+				s.Replace("[data:evaluation]", App.Latex_Evaluation);
+
+				var text = s.ToString();
+
+				string filename = "phinite-userguide";
+
+				string generatedTex = filename + ".tex";
+				string generatedTexDir = Environment.CurrentDirectory.Replace('\\', '/');
+				string generatedPdf = filename + ".pdf";
+
+				File.AppendAllText(generatedTex, text);
+
+				PdfGenerator generator = new PdfGenerator(settings.Pdflatex, settings.PdfViewer);
+
+				try
+				{
+					generator.Start(generatedTex, generatedPdf);
+
+					while (!generator.WaitForExit(settings.PdflatexTimeout))
+					{
+						bool userWaitsForTimeout = true;
+						var timeoutMessageFormat = new StringBuilder()
+							.Append("It takes more than {0} seconds to build PDF file.")
+							.Append(" Do you want Phinite to wait for another {1} seconds to finish?")
+							.Append(" If not, the PDF file will not be opened automatically, even when it is finally created.")
+							.ToString();
+
+						Dispatcher.Invoke((Action)delegate
+						{
+							var dialog = new MessageFrame(this, "Phinite/LaTeX error", "LaTeX timeout",
+									String.Format(timeoutMessageFormat, settings.PdflatexTimeout, settings.PdflatexTimeout),
+									null, true, true, false, "Yes", "No");
+							if (dialog.ShowDialog() != true)
+								userWaitsForTimeout = false;
+						});
+
+						if (userWaitsForTimeout)
+							continue;
+					}
+				}
+				catch (ArgumentException ex)
+				{
+					ShowMessageFrame("Phinite error", (string)ex.Data["title"], (string)ex.Data["text"], true);
+				}
+
+				try { File.Delete(generatedTex); }
+				catch (IOException) { }
+
 			}
 		}
 
@@ -1326,155 +1371,53 @@ namespace Phinite
 
 		private void Info_Input(object sender, RoutedEventArgs e)
 		{
-			if (infoInput == null)
-			{
-				var s = new StringBuilder();
-
-				s.AppendLine("In a text box, enter aa regular expression that is valid. You can use any symbol,");
-				s.AppendLine("but remember that spaces will be ignored and some symbols have special meaning:");
-
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.EmptyWord]).Append('"');
-				s.AppendLine(" - empty word");
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.Union]).Append('"');
-				s.AppendLine(" - union");
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.KleeneStar]).Append('"');
-				s.AppendLine(" - Kleene star");
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.KleenePlus]).Append('"');
-				s.AppendLine(" - Kleene plus");
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.OpeningParenthesis]).Append('"');
-				s.Append(" and ");
-				s.Append('"').Append(RegularExpression.TagsStrings[InputSymbolTag.ClosingParenthesis]).Append('"');
-				s.AppendLine(" -  parentheses");
-				s.AppendLine();
-
-				s.AppendLine("If you abide by the following rules, your expression will surely be valid:");
-				int i = 0;
-				foreach (var rule in RegularExpression.Rules)
-					s.AppendLine(String.Format("  {0}.  {1}", ++i, rule));
-
-				s.Append("If in doubt, load one of the example expressions using leftmost menu option to see how it works.");
-				s.AppendLine();
-
-				infoInput = s.ToString();
-			}
-
-			ShowMessageFrame("Phinite information", "Regular expression input", infoInput, false);
+			ShowMessageFrame("Phinite information", "Regular expression input", App.Text_RegexpInput, false);
 		}
 
 		private void Info_ParseTree(object sender, RoutedEventArgs e)
 		{
-			if (infoParseTree == null)
-			{
-				var s = new StringBuilder();
-
-				s.Append("This screen presents a parse tree and two versions of the input regular expression above it.");
-				s.Append(" If you check that the second, (\"").Append("Validated and optimized input")
-					.Append("\"), has the same meaning as you intended, you may safely continue.");
-				s.AppendLine();
-				s.AppendLine();
-
-				s.Append("If not, please cancel the computation and enter the expression in such way that it is properly understood by the program.");
-				s.Append(" Please remember to follow the rules of regular expression operators precedence, use special symbols properly, etc.");
-
-				infoParseTree = s.ToString();
-			}
-
-			ShowMessageFrame("Phinite information", "Parse tree: first interpretation of the input", infoParseTree, false);
+			ShowMessageFrame("Phinite information", "Parse tree: first interpretation of the input", App.Text_ParseTree, false);
 		}
 
 		private void Info_MachineConstruction(object sender, RoutedEventArgs e)
 		{
-			if (infoMachineConstruction == null)
-			{
-				var s = new StringBuilder();
-
-				s.AppendLine("Use buttons in the left-bottom corner to control the construction process.");
-				s.AppendLine();
-
-				s.AppendLine("You can doubleclick regular expressions in both tables to see their parse trees.");
-				s.AppendLine();
-
-				s.Append("When the construction is complete, you may go right to word evaluation screen,");
-				s.AppendLine(" or before that stop for a moment to view a PDF with construction results report.");
-				s.AppendLine();
-
-				s.Append("To do the former, select \"Go to word evaluation\", and to do the latter select \"Generate LaTeX code\".");
-
-				infoMachineConstruction = s.ToString();
-			}
-
-			ShowMessageFrame("Phinite information", "Finite-state machine construction", infoMachineConstruction, false);
+			ShowMessageFrame("Phinite information", "Finite-state machine construction", App.Text_Construction, false);
 		}
 
 		private void Info_Latex(object sender, RoutedEventArgs e)
 		{
-			if (infoLatex == null)
-			{
-				var s = new StringBuilder();
-
-				s.AppendLine("You may edit/copy the contents of this screen to, for example, use it as a part of some other LaTeX document,");
-				s.AppendLine("because this content is copyleft (no rights reserved).");
-				s.AppendLine();
-
-				s.AppendLine("You can generate new report after editing the latex source code - the new generated PDF file will reflect");
-				s.AppendLine("changes made by you.");
-				s.AppendLine();
-
-				s.AppendLine("All .tex and .pdf files are saved in the directory where the Phinite application resides.");
-				s.AppendLine();
-
-				infoLatex = s.ToString();
-			}
-
-			ShowMessageFrame("Phinite information", "Using LaTeX to generate PDF report", infoLatex, false);
+			ShowMessageFrame("Phinite information", "Using LaTeX to generate PDF report", App.Text_Report, false);
 		}
 
 		private void Info_InputWord(object sender, RoutedEventArgs e)
 		{
-			if (infoInputWord == null)
-			{
-				var s = new StringBuilder();
+			ShowMessageFrame("Phinite information", "Word input", App.Text_WordInput, false);
+		}
 
-				s.AppendLine("Enter some word. You can use any symbols,");
-				s.AppendLine("but remember that spaces will be ignored and some symbols are forbidden:");
-
-				foreach (var symbol in RegularExpression.ForbiddenSymbols)
-				{
-					s.Append("\"");
-					s.Append(symbol);
-					s.AppendLine("\"");
-				}
-				s.AppendLine();
-
-				s.Append("Leave the field blank to evaluate (i.e. check if the machine accepts) the empty word.");
-				s.AppendLine();
-
-				s.AppendLine("If you are unsure, just start computing without any input");
-				s.Append("or write just a single letter to see how the basic case works.");
-
-				infoInputWord = s.ToString();
-			}
-
-			ShowMessageFrame("Phinite information", "Word input", infoInputWord, false);
+		private void Info_Evaluation(object sender, RoutedEventArgs e)
+		{
+			ShowMessageFrame("Phinite information", "Word evaluation", App.Text_Evaluation, false);
 		}
 
 		#endregion
 
 		private void WindowMain_Loaded(object sender, RoutedEventArgs e)
 		{
+			Settings_Initialize();
+		}
+
+		private void Settings_Initialize()
+		{
 			if (settings == null)
 			{
 				var sett = Properties.Settings.Default;
 				settings = new PhiniteSettings(sett);
-				sett.SettingsSaving += Default_SettingsSaving;
+				sett.SettingsSaving += Settings_Saving;
 			}
-
-			//Settings.Settings.WindowMainRect.X = 0;
 		}
 
-		private void Default_SettingsSaving(object sender, CancelEventArgs e)
+		private void Settings_Saving(object sender, CancelEventArgs e)
 		{
-			//var sett = Properties.Settings.Default;
 		}
 
 		void WindowUserHelp_Closed(object sender, EventArgs e)

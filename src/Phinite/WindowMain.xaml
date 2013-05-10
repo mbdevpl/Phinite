@@ -13,6 +13,7 @@
 		Height="{Binding Settings.Settings.WindowMainHeight, Mode=TwoWay}"
 		Left="{Binding Settings.Settings.WindowMainLeft, Mode=TwoWay}"
 		Top="{Binding Settings.Settings.WindowMainTop, Mode=TwoWay}"
+		WindowState="{Binding Settings.Settings.WindowMainState, Mode=TwoWay}"
 		MinWidth="750" MinHeight="400"
 		Closing="WindowMain_Closing" Loaded="WindowMain_Loaded">
 	<Window.Resources>
@@ -27,7 +28,7 @@
 					<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=2}"
 								Path="ActualWidth" Mode="OneWay">
 						<Binding.Converter>
-							<con:ExpressionConverter Expression="{}{0} - 400" />
+							<con:ExpressionConverter Expression="{}({0} > 400 ? {0} - 400 : (double)0)" />
 						</Binding.Converter>
 					</Binding>
 				</Setter.Value>
@@ -42,7 +43,7 @@
 					<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=2}"
 								Path="ActualHeight" Mode="OneWay">
 						<Binding.Converter>
-							<con:ExpressionConverter Expression="{}{0} - 150" />
+							<con:ExpressionConverter Expression="{}({0} > 150 ? {0} - 150 : (double)0)" />
 						</Binding.Converter>
 					</Binding>
 				</Setter.Value>
@@ -199,7 +200,7 @@
 								<Binding ElementName="FSMCreationScrollView" Path="ViewportHeight" />
 								<Binding ElementName="FSMCreationDepictionLabel" Path="ActualHeight" />
 								<MultiBinding.Converter>
-									<con:ExpressionConverter Expression="{}({0} - {1} > 0 ? {0} - {1} : 0.0)" />
+									<con:ExpressionConverter Expression="{}({0} > {1} ? {0} - {1} : (double)0)" />
 								</MultiBinding.Converter>
 							</MultiBinding>
 						</ScrollViewer.MaxHeight>
@@ -399,6 +400,7 @@
 					</StackPanel>
 				</Button>
 				<Button Name="OptionEvalFinalize" Content="Go back to first screen" Click="OptionEvalFinalize_Click" />
+				<Button Style="{StaticResource Info}" Click="Info_Evaluation" />
 			</StackPanel>
 		</Grid>
 		<StatusBar>

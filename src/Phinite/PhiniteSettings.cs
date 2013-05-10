@@ -101,6 +101,9 @@ namespace Phinite
 			settings.LayoutCreationFrequencyInUse = source.settings.LayoutCreationFrequencyInUse;
 			settings.LayoutCreationFrequency = source.settings.LayoutCreationFrequency;
 
+			settings.EnableAutoResolutionModeInUse = source.settings.EnableAutoResolutionModeInUse;
+			settings.EnableAutoResolutionMode = source.settings.EnableAutoResolutionMode;
+
 			settings.PdflatexInUse = source.settings.PdflatexInUse;
 			settings.Pdflatex = source.settings.Pdflatex;
 

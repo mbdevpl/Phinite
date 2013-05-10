@@ -97,7 +97,7 @@ namespace Phinite
 			IgnoredSymbols = new string[] { " ", "\t", "\n" };
 			IgnoredSymbolMaxLength = 1;
 
-			ForbiddenSymbols = new string[] { "^", "*", "+", ".", "(", ")", "ε" };
+			ForbiddenSymbols = new string[] { "^", "*", "+", ".", "(", ")" };
 			ForbiddenSymbolMaxLength = 1;
 		}
 

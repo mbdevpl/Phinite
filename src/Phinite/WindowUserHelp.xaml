@@ -9,6 +9,7 @@
 		Height="{Binding Settings.Settings.WindowUserHelpHeight, Mode=TwoWay}"
 		Left="{Binding Settings.Settings.WindowUserHelpLeft, Mode=TwoWay}"
 		Top="{Binding Settings.Settings.WindowUserHelpTop, Mode=TwoWay}"
+		WindowState="{Binding Settings.Settings.WindowUserHelpState, Mode=TwoWay}"
 		MinWidth="550" MinHeight="450"
 		Closing="WindowUserHelp_Closing">
 	<Grid>
@@ -49,72 +50,6 @@
 				<Canvas Name="ParseTreeCanvas" />
 			</ScrollViewer>
 		</Grid>
-		<!--<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-			<StackPanel>
-				<StackPanel.Width>
-					<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer, AncestorLevel=1}"
-								Path="ViewportWidth" Mode="OneWay" />
-				</StackPanel.Width>
-				<Label Content="Labeled expressions"/>
-				<DataGrid ItemsSource="{Binding LabeledExpressionsData, Mode=OneWay}"
-						SelectedIndex="{Binding SelectedExpression}" c:HorizontalScrollBarVisibility="Auto"
-						SelectionChanged="DataGrid_SelectionChanged" MouseDoubleClick="DataGrid_MouseDoubleClick">
-					<DataGrid.MaxHeight>
-						<MultiBinding Mode="OneWay">
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=1}"
-										Path="ActualHeight" />
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=StackPanel, AncestorLevel=1}"
-										Path="Children[0].ActualHeight" />
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=1}"
-										Path="Children[1].ActualHeight" />
-							<MultiBinding.Converter>
-								<con:ExpressionConverter Expression="{}({0} - {1} - {2} > 0 ? {0} - {1} - {2} : 0.0)" />
-							</MultiBinding.Converter>
-						</MultiBinding>
-					</DataGrid.MaxHeight>
-					<DataGrid.Columns>
-						<DataGridTextColumn Header="Label" Binding="{Binding Item2, Mode=OneWay}" Width="Auto" />
-						<DataGridTextColumn Header="Remark(s)" Binding="{Binding Item3, Mode=OneWay}" Width="Auto" />
-						<DataGridTextColumn Header="Similarity" Binding="{Binding Item4, Mode=OneWay}" Width="Auto" />
-						<DataGridTextColumn Header="Regular expression" Binding="{Binding Item1, Mode=OneWay}" Width="Auto" />
-					</DataGrid.Columns>
-				</DataGrid>
-				<Label Content="New regular expression"/>
-				<StackPanel Style="{StaticResource PanelWithText}">
-					<TextBlock Text="" />
-					<TextBlock Text="{Binding NewExpression}" Style="{StaticResource TextWithinPanelWithText}" />
-				</StackPanel>
-				<Label Content="Parse tree of new expression" />
-				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-						MinHeight="100" c:MaxHeight="400">
-					<ScrollViewer.MaxHeight>
-						<MultiBinding Mode="OneWay">
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=1}"
-										Path="ActualHeight" />
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=StackPanel, AncestorLevel=1}"
-										Path="Children[0].ActualHeight" />
-							<Binding RelativeSource="{RelativeSource FindAncestor, AncestorType=Grid, AncestorLevel=1}"
-										Path="Children[1].ActualHeight" />
-							<MultiBinding.Converter>
-								<con:ExpressionConverter Expression="{}({0} - {1} - {2} > 0 ? {0} - {1} - {2} : 0.0)" />
-							</MultiBinding.Converter>
-						</MultiBinding>
-					</ScrollViewer.MaxHeight>
-					<Canvas Name="ParseTreeCanvas" />
-				</ScrollViewer>
-			</StackPanel>
-		</ScrollViewer>-->
-		<!--<Grid Grid.Row="1">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto" />
-					<RowDefinition />
-				</Grid.RowDefinitions>
-				<Label Content="Parse tree of new expression" />
-				<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-						MinHeight="100" c:MaxHeight="400">
-					<Canvas Name="ParseTreeCanvas" />
-				</ScrollViewer>
-			</Grid>-->
 		<StatusBar>
 			<StackPanel Orientation="Horizontal" Style="{StaticResource DialogButtonContainer}">
 				<Button Click="ButtonAbort_Click">
@@ -137,7 +72,7 @@
 				</Button>
 				<Button Click="ButtonAuto_Click">
 					<StackPanel Orientation="Horizontal">
-						<TextBlock Style="{StaticResource ResourceKey=ButtonSpecialTextGray}" Text="&#x223C;"
+						<TextBlock Style="{StaticResource ResourceKey=ButtonSpecialTextDarkGray}" Text="&#x223C;"
 								c:Text="&#x26BD;" c:cText="&#x2048;" />
 						<TextBlock Text="No idea" />
 					</StackPanel>
