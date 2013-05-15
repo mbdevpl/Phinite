@@ -1,0 +1,44 @@
+﻿<Window x:Class="Phinite.WindowMachinePreview"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="PHINITE: visual comparison of partially constructed machines"
+		Width="700" Height="500" MinWidth="400" MinHeight="300"
+		WindowStartupLocation="CenterScreen">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<StackPanel>
+			<Label Content="Similarity level" />
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Text="Basic: " />
+			<TextBlock Text="{Binding Similarity, Mode=OneWay}" />
+				<TextBlock Text=" and refined: " />
+				<TextBlock Text="{Binding SimilarityRefined, Mode=OneWay}" />
+			</StackPanel>
+			<TextBlock Text="{Binding Relationships, Mode=OneWay}" />
+		</StackPanel>
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition />
+				<ColumnDefinition />
+			</Grid.ColumnDefinitions>
+			<ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+				<Canvas Name="CanvasLeft" />
+			</ScrollViewer>
+			<ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+				<Canvas Name="CanvasRight" />
+			</ScrollViewer>
+			
+		</Grid>
+		<StatusBar>
+			<StackPanel Style="{StaticResource DialogButtonContainer}" Orientation="Horizontal">
+				<!--<Button Content="One more step" />
+				<Button Content="Show relationships" />-->
+				<Button Content="Ok" Click="ButtonClose_Click" />
+			</StackPanel>
+		</StatusBar>
+	</Grid>
+</Window>

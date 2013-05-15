@@ -67,7 +67,7 @@
 				<ex:DecimalUpDown Grid.Row="0" Value="{Binding LayoutCreationFrequencyDefault, Mode=OneTime}" IsEnabled="False" />
 				<RadioButton Grid.Row="1" Content="custom frequency"
 						IsChecked="{Binding LayoutCreationFrequencyInUse, Converter={StaticResource From1}}" />
-				<ex:DecimalUpDown Grid.Row="1" Value="{Binding LayoutCreationFrequency}" Minimum="1" Maximum="50" />
+				<ex:DecimalUpDown Grid.Row="1" Value="{Binding LayoutCreationFrequency}" Minimum="1" Maximum="1000" />
 			</Grid>
 
 			<Label Content="Automatic resolution of problem&#013;  of similar regular expressions" />

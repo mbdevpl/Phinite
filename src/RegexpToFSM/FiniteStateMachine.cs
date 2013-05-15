@@ -31,11 +31,11 @@ namespace Phinite
 		/// </summary>
 		public static readonly double SimilarityThresholdToInferEquivalence = 0.95;
 
-		private static readonly double SimilarityPenaltyForStatesCount = 0.25;
+		//private static readonly double SimilarityPenaltyForStatesCount = 0.25;
 
-		private static readonly double SimilarityPenaltyForTransitionsCount = 0.2;
+		//private static readonly double SimilarityPenaltyForTransitionsCount = 0.2;
 
-		private static readonly double SimilarityPenaltyForTransitions = 0.15;
+		//private static readonly double SimilarityPenaltyForTransitions = 0.15;
 
 		#endregion
 
@@ -426,102 +426,168 @@ namespace Phinite
 
 			// refine each similarity that can theoretically yield an equivalent state
 			Parallel.For(0, nextNotLabeledStateSimilarities.Length, (int n) =>
+				//for (int n = 0; n < nextNotLabeledStateSimilarities.Length; ++n)
 				{
 					if (nextNotLabeledStateSimilarities[n] < NeutralSimilarity)
 						return; // it is unlikely the equivalent expression
-
-					// TODO: DRY these two cases
-
-					// TODO: fix fsm network comparison to take loops into account
-					// instead of just comparing state numbers in transitions list
 
 					if (equivalentStatesGroups[n].Value.Count > 1)
 					{
 						double[] localSimilarities = new double[equivalentStatesGroups[n].Value.Count];
 						Parallel.For(0, equivalentStatesGroups[n].Value.Count, (int k) =>
+							//for (int k = 0; k < equivalentStatesGroups[n].Value.Count; ++k)
 							{
-								localSimilarities[k] = nextNotLabeledStateSimilarities[n];
-
-								FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[k], false);
-								machine2.Construct(similaritiesRefinementSteps, null, false);
-
-								while (machine2.equivalentStatesGroups.Count < similaritiesRefinementSteps
-									&& machine2.notLabeled.Count > 0)
-									machine2.Construct(1, null, false);
-
-								if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
-									localSimilarities[k] -= SimilarityPenaltyForStatesCount;
-
-								if (machine1.transitions.Count != machine2.transitions.Count)
-									localSimilarities[k] -= SimilarityPenaltyForTransitionsCount;
-
-								if (localSimilarities[k] < NeutralSimilarity)
-									return;
-
-								double ratio = NeutralSimilarity / machine1.transitions.Count;
-
-								for (int i = 0; i < machine1.transitions.Count; ++i)
-								{
-									var t1 = machine1.transitions[i];
-									var t2 = machine2.transitions[i];
-
-									if (t1.InitialStateId == t2.InitialStateId && t1.ResultingStateId == t2.ResultingStateId
-										&& t1.Letters.Count == t2.Letters.Count
-										&& machine1.equivalentStatesGroups[t1.InitialStateId].Value[0]
-											.Similarity(machine2.equivalentStatesGroups[t2.InitialStateId].Value[0]) >= NeutralSimilarity
-										)
-										localSimilarities[k] += ratio;
-									else
-									{
-										localSimilarities[k] = NeutralSimilarity - SimilarityPenaltyForTransitions;
-										return;
-									}
-								}
+								localSimilarities[k] = CompareToExisting(machine1, n, k);
 							});
 
 						nextNotLabeledStateSimilarities[n] = localSimilarities.Min();
 					}
 					else
 					{
-						FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[0], false);
-						machine2.Construct(similaritiesRefinementSteps, null, false);
-
-						while (machine2.equivalentStatesGroups.Count < similaritiesRefinementSteps
-							&& machine2.notLabeled.Count > 0)
-							machine2.Construct(1, null, false);
-
-						if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
-							nextNotLabeledStateSimilarities[n] -= SimilarityPenaltyForStatesCount;
-
-						if (machine1.transitions.Count != machine2.transitions.Count)
-							nextNotLabeledStateSimilarities[n] -= SimilarityPenaltyForTransitionsCount;
-
-						if (nextNotLabeledStateSimilarities[n] < NeutralSimilarity)
-							return;
-
-						double ratio = NeutralSimilarity / machine1.transitions.Count;
-
-						for (int i = 0; i < machine1.transitions.Count; ++i)
-						{
-							var t1 = machine1.transitions[i];
-							var t2 = machine2.transitions[i];
-
-							if (t1.InitialStateId == t2.InitialStateId && t1.ResultingStateId == t2.ResultingStateId
-								&& t1.Letters.Count == t2.Letters.Count
-								&& t1.Letters.SequenceEqual(t2.Letters)
-								&& machine1.equivalentStatesGroups[t1.InitialStateId].Value[0]
-									.Similarity(machine2.equivalentStatesGroups[t2.InitialStateId].Value[0]) >= NeutralSimilarity
-								)
-								nextNotLabeledStateSimilarities[n] += ratio;
-							else
-							{
-								nextNotLabeledStateSimilarities[n] = NeutralSimilarity - SimilarityPenaltyForTransitions;
-								return;
-							}
-						}
+						nextNotLabeledStateSimilarities[n] = CompareToExisting(machine1, n, 0);
 					}
 
 				});
+		}
+
+		public static List<Tuple<int, int>> FindRelatedStates(FiniteStateMachine machine1, FiniteStateMachine machine2,
+			int maxListLength)
+		{
+			List<Tuple<int, int>> relations = new List<Tuple<int, int>>();
+
+			// fsm network comparison now takes loops into account
+			// instead of just comparing state numbers in transitions list
+
+			var t1init = machine1.transitions.FindAll(x => x.InitialStateId == 0);
+			var t2init = machine2.transitions.FindAll(x => x.InitialStateId == 0);
+
+			if (t1init.Count != t2init.Count)
+				return relations;
+
+			if (!t1init.TrueForAll(
+				x => t2init.Any(y =>
+				{
+					var xl = x.Letters;
+					var yl = y.Letters;
+					return xl.Count == yl.Count && xl.Intersect(yl).Count() == xl.Count;
+				})))
+				return relations;
+
+			relations.Add(new Tuple<int, int>(0, 0));
+			
+			for (int z = 0; ; ++z)
+			{
+				bool added = false;
+				int lastCount = relations.Count;
+				for (int i = 0; i < machine1.transitions.Count; ++i)
+				{
+					var t1 = machine1.transitions[i];
+					var t1l = t1.Letters;
+
+					for (int j = 0; j < machine2.transitions.Count; ++j)
+					{
+						var t2 = machine2.transitions[j];
+						var t2l = t2.Letters;
+
+						if (t1.InitialStateId == relations[z].Item1 && t2.InitialStateId == relations[z].Item2)
+							if (t1l.Count == t2l.Count && t1l.Intersect(t2l).Count() == t1l.Count)
+							{
+								var t1on = machine1.transitions.FindAll(x => x.InitialStateId == t1.ResultingStateId);
+								var t2on = machine2.transitions.FindAll(x => x.InitialStateId == t2.ResultingStateId);
+
+								if (t1on.Count != t2on.Count)
+									break;
+
+								if (!t1on.TrueForAll(
+									x => t2on.Any(y =>
+									{
+										var xl = x.Letters;
+										var yl = y.Letters;
+										return xl.Count == yl.Count && xl.Intersect(yl).Count() == xl.Count;
+									})))
+									break;
+
+								if (!relations.Any(x => x.Item1 == t1.ResultingStateId && x.Item2 == t2.ResultingStateId))
+								{
+									relations.Add(new Tuple<int, int>(t1.ResultingStateId, t2.ResultingStateId));
+									added = true;
+									break;
+								}
+							}
+					}
+					if (added)
+						break;
+				}
+				if (relations.Count == maxListLength)
+					return relations; // 1.0;
+
+				if (relations.Count == lastCount)
+					break;
+
+			}
+
+			return relations;
+		}
+
+		private double CompareToExisting(FiniteStateMachine machine1, int n, int k)
+		{
+			FiniteStateMachine machine2 = new FiniteStateMachine(equivalentStatesGroups[n].Value[k], false);
+			machine2.Construct(similaritiesRefinementSteps, null, false);
+
+			double similarity = nextNotLabeledStateSimilarities[n];
+
+			while (machine2.equivalentStatesGroups.Count < similaritiesRefinementSteps
+				&& machine2.notLabeled.Count > 0)
+				machine2.Construct(1, null, false);
+
+			int max = Math.Max(machine1.equivalentStatesGroups.Count, machine2.equivalentStatesGroups.Count);
+			int min = Math.Max(machine1.transitions.Count, machine2.transitions.Count);
+
+			//if (machine1.equivalentStatesGroups.Count != machine2.equivalentStatesGroups.Count)
+			//	similarity -= SimilarityPenaltyForStatesCount;
+
+			//if (machine1.transitions.Count != machine2.transitions.Count)
+			//	similarity -= SimilarityPenaltyForTransitionsCount;
+
+			//if (similarity < NeutralSimilarity)
+			//	return similarity;
+
+			//double ratio = NeutralSimilarity / machine1.transitions.Count;
+
+			List<Tuple<int, int>> relations = FindRelatedStates(machine1, machine2, max);
+
+			if (relations.Count == max)
+				return 1.0;
+			
+
+			//for (int i = 0; i < machine1.transitions.Count; ++i)
+			//{
+			//	var t1 = machine1.transitions[i];
+			//	var t1l = t1.Letters;
+			//	for (int j = 0; j < machine2.transitions.Count; ++j)
+			//	{
+			//		var t2 = machine2.transitions[j];
+			//		var t2l = t2.Letters;
+
+			//		if (relations.Any(x => x.Item1 == t1.InitialStateId && x.Item2 == t2.InitialStateId)
+			//			&& relations.Any(x => x.Item1 == t1.ResultingStateId && x.Item2 == t2.ResultingStateId)
+			//			&& t1l.Count == t2l.Count && t1l.Intersect(t2l).Count() == t1l.Count)
+			//		{
+			//			if (machine1.equivalentStatesGroups[t1.InitialStateId].Value[0]
+			//				.Similarity(machine2.equivalentStatesGroups[t2.InitialStateId].Value[0]) >= NeutralSimilarity
+			//				)
+			//			{
+			//				similarity += ratio;
+			//				continue;
+			//			}
+			//		}
+
+			//		similarity = NeutralSimilarity - SimilarityPenaltyForTransitions;
+			//		return similarity;
+			//	}
+			//}
+
+			return similarity;
 		}
 
 		/// <summary>

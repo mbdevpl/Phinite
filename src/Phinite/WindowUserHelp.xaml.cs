@@ -140,17 +140,26 @@ namespace Phinite
 
 			((DataGrid)sender).FindElementLocation((DependencyObject)e.OriginalSource, out column, out row);
 
-			if (column != 3)
-				return;
+			switch (column)
+			{
+				case 2:
+					{
+						new WindowMachinePreview(newExpression, LabeledExpressionsData[row].Item1,
+							Double.Parse(labeledExpressionsData[row].Item4.TrimEnd('%')) / 100).ShowDialog();
+					} break;
+				case 3:
+					{
+						var parseTree = LabeledExpressionsData[row].Item1.ParseTree;
 
-			var parseTree = LabeledExpressionsData[row].Item1.ParseTree;
+						if (parseTree == null)
+							return;
 
-			if (parseTree == null)
-				return;
-
+						new WindowSimpleCanvas(parseTree).ShowDialog();
+					} break;
+				default:
+					return;
+			}
 			e.Handled = true;
-
-			new WindowSimpleCanvas(parseTree).ShowDialog();
 		}
 
 		private void ResolveEquivalent()

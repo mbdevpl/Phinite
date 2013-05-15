@@ -164,6 +164,13 @@ namespace Phinite
 
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="sessionId"></param>
+		/// <param name="currentSessionId"></param>
+		/// <exception cref="ApplicationException">when at least one of the layout threads fails</exception>
+		/// <returns></returns>
 		public bool Create(int sessionId, ref int currentSessionId)
 		{
 			int workGroupSize = 8;
@@ -226,16 +233,16 @@ namespace Phinite
 
 						layoutsScores[n] = score;
 						layouts[n] = layout;
-
 					});
 				}
 				catch (AggregateException e)
 				{
-					foreach (var exception in e.InnerExceptions)
-					{
-						System.Console.Out.WriteLine("one of the layout jobs failed:");
-						System.Console.Out.WriteLine(exception.ToString());
-					}
+					//foreach (var exception in e.InnerExceptions)
+					//{
+					//	System.Console.Out.WriteLine("one of the layout jobs failed:");
+					//	System.Console.Out.WriteLine(exception.ToString());
+					//}
+					throw new ApplicationException("at least one of the layout finding threads caused an error", e);
 				}
 
 				if (sessionId != currentSessionId)
@@ -745,7 +752,7 @@ namespace Phinite
 						if (intersections.Count > 0)
 						{
 							var intersectionDistances = intersections.Zip(intersections.Skip(1), (x, y) => y.Distance(x)).ToArray();
-							Console.Out.WriteLine(String.Join("; ", intersectionDistances));
+							//Console.Out.WriteLine(String.Join("; ", intersectionDistances));
 
 							// find the best position for the label
 							// i.e. the longest fragment without intersections

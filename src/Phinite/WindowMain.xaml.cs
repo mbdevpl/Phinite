@@ -542,6 +542,8 @@ namespace Phinite
 
 					fsm = new FiniteStateMachine(regexp);
 
+					RegularExpression.ClearDerivationCache();
+
 					layoutAge = settings.LayoutCreationFrequency;
 				}
 			}
@@ -726,10 +728,30 @@ namespace Phinite
 				if (layout == null)
 					layout = fsmLayout;
 				// session is needed to abort layout creation on computation abort
-				else if (!layout.Create(sessionId, ref thisComputationSessionId))
+				else
 				{
-					if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+					try
+					{
+						if (!layout.Create(sessionId, ref thisComputationSessionId))
+						{
+							if (CheckIfComputationAbortedAndDealWithIt(sessionId, fsm))
+								return false;
+						}
+					}
+					catch (ApplicationException e)
+					{
+						string details = String.Empty;
+						if (e.InnerException is AggregateException)
+							details = String.Join("\n\n", ((AggregateException)e.InnerException).InnerExceptions);
+						else
+							details = e.InnerException.ToString();
+						ShowMessageFrame("Phinite error", "Layout creation failed",
+							String.Format("The error is that {0}:\n\n{1}", e.Message, details), true);
+
+						fsm = null;
+						SetUIState(UIState.ReadyForNewInputAfterError);
 						return false;
+					}
 				}
 
 				Dispatcher.BeginInvoke((Action)delegate
@@ -781,8 +803,8 @@ namespace Phinite
 			return true;
 		}
 
-		private void RefillLabeledExpressionsData(IEnumerable<RegularExpression> states,
-			ICollection<RegularExpression> accepting)
+		private void RefillLabeledExpressionsData(IList<RegularExpression> states,
+			IList<RegularExpression> accepting)
 		{
 			var data = new List<Tuple<RegularExpression, string, string>>();
 			int i = 0;
@@ -805,7 +827,7 @@ namespace Phinite
 		}
 
 		private void RefillTransitionsData(IList<RegularExpression> states,
-			IEnumerable<MachineTransition> transitions)
+			IList<MachineTransition> transitions)
 		{
 			var data2 = new List<Tuple<RegularExpression, string, string, string, RegularExpression>>();
 			foreach (var transition in transitions)
@@ -829,6 +851,7 @@ namespace Phinite
 			bool finished = false;
 			int previous = -1;
 			int state = -1;
+			bool stateAccepting = false;
 
 			lock (regexpAndFsmLock)
 			{
@@ -850,6 +873,7 @@ namespace Phinite
 				finished = fsm.IsEvaluationFinished();
 				previous = fsm.PreviousState;
 				state = fsm.CurrentState;
+				stateAccepting = fsm.IsAccepting(state);
 
 				// update strings
 				ProcessedWordFragmentText = fsm.EvaluatedWordProcessedFragment;
@@ -877,7 +901,7 @@ namespace Phinite
 
 			if (finished)
 			{
-				if (state >= 0)
+				if (state >= 0 && stateAccepting)
 					SetUIState(UIState.WordWasAccepted);
 				else
 					SetUIState(UIState.WordWasRejected);
@@ -1138,6 +1162,7 @@ namespace Phinite
 
 				StringBuilder s = new StringBuilder(App.Template_UserGuide);
 
+				s.Replace("[data:about]", App.Latex_About);
 				s.Replace("[data:regexpinput]", App.Latex_RegexpInput);
 				s.Replace("[data:parsetree]", App.Latex_ParseTree);
 				s.Replace("[data:construction]", App.Latex_Construction);

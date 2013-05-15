@@ -14,6 +14,18 @@ namespace Phinite
 	public class RegularExpression
 	{
 
+		private static Dictionary<RegularExpression, Dictionary<char, RegularExpression>> derivationCache
+			= new Dictionary<RegularExpression, Dictionary<char, RegularExpression>>();
+		private static object derivationCacheLock = new object();
+
+		public static void ClearDerivationCache()
+		{
+			lock(derivationCacheLock)
+			{
+				derivationCache.Clear();
+			}
+		}
+
 		private static readonly string errorAtChar = "error at character {0} of input, just after \"{1}\": ";
 		private static readonly string errorAtStart = "error at beginning of the input: ";
 
@@ -503,27 +515,44 @@ namespace Phinite
 			if (removedLetter.Length != 1)
 				throw new ArgumentException("a single letter must be given", "removedLetter");
 
-			if (!alphabet.Contains(removedLetter))
-				//throw new ArgumentException("this letter does not belong to the alphabet", "removedLetter");
-				return null; // this can be simply handled, no need for exception
+			RegularExpression regexp = null;
 
-			//if (taggedInput == null || tagCount == null || parsedInput == null)
-			//	throw new ArgumentNullException("parsedInput"); //EvaluateInput();
+			lock (derivationCacheLock)
+			{
+				Dictionary<char, RegularExpression> regexpList;
+				if (derivationCache.TryGetValue(this, out regexpList))
+					if (regexpList.TryGetValue(removedLetter[0], out regexp))
+						return regexp;
+			}
 
-			//var copy = new RegularExpression(this.input, true);
-			//copy.parsedInput.Derive(removedLetter);
-			//if (copy.parsedInput.Role.Equals(PartialExpressionRole.Invalid))
-			//	return null;
-			//copy.input = copy.ToString();
-			//copy.EvaluateInput();
-			//return copy;
+			if (alphabet.Contains(removedLetter))
+			{
+				var parseTreeCopy = new PartialExpression(parsedInput);
+				parseTreeCopy.Derive(removedLetter);
+				parseTreeCopy.Optimize();
+				if (parseTreeCopy.Role.Equals(PartialExpressionRole.Invalid))
+					return null;
 
-			var parseTreeCopy = new PartialExpression(parsedInput);
-			parseTreeCopy.Derive(removedLetter);
-			if (parseTreeCopy.Role.Equals(PartialExpressionRole.Invalid))
-				return null;
+				regexp = new RegularExpression(parseTreeCopy);
+			}
 
-			return new RegularExpression(parseTreeCopy);
+			lock (derivationCacheLock)
+			{
+				Dictionary<char, RegularExpression> regexpList;
+				if (derivationCache.TryGetValue(this, out regexpList))
+				{
+					if (!regexpList.ContainsKey(removedLetter[0]))
+						regexpList.Add(removedLetter[0], regexp);
+				}
+				else
+				{
+					regexpList = new Dictionary<char, RegularExpression>();
+					regexpList.Add(removedLetter[0], regexp);
+					derivationCache.Add(this, regexpList);
+				}
+			}
+
+			return regexp;
 		}
 
 		/// <summary>
@@ -606,7 +635,7 @@ namespace Phinite
 			RegularExpression[] derived = new RegularExpression[2 * alphabet.Count];
 			Parallel.For(0, 2 * alphabet.Count, (int n) =>
 				{
-					if(n < alphabet.Count)
+					if (n < alphabet.Count)
 						derived[n] = Derive(alphabet[n / 2]);
 					else
 						derived[n] = regexp.Derive(alphabet[n / 2]);

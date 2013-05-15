@@ -26,7 +26,7 @@ namespace Phinite
 
 		#region regexp examples
 
-		public static readonly String DefaultExample = "Yay!";
+		public static readonly String DefaultExample = "Infinite loop 2"; //"Yay!";
 
 		/// <summary>
 		/// Set of example regular expressions.
@@ -59,7 +59,8 @@ namespace Phinite
 				{"Mess!", "(A^+B^*C^*D^*E^*F^*G^*H^*I^*J^*K^*L^*M^*N^*O^*P^*R^*S^+T^*U^*V^*W^*X^*Y^*Z^*)^*"},
 				{"Infinite loop", "(a^*a)^*"},
 				{"Infinite loop 2", "(a(a+.)b^*)^*"},
-				{"Max processor use test", "0+(1+2+3+4+5+6+7+8+9)((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*"},
+				{"Decimal numbers, obscured", "0+(1+2+3+4+5+6+7+8+9)((0+1+2+3+4+5+6+7+8+9)^*(0+1+2+3+4+5+6+7+8+9))^*"},
+				{"Obscured", "(a+b)^*(ab+ba+.)"},
 				{"All features", "(.+bb)(aabb)^+(.+aa)+(aa+bb)^*(aa+.)"}
 			};
 
@@ -91,7 +92,8 @@ namespace Phinite
 				{"Mess!", "ABCDEFGHIJKLMNOPRSTUVWXYZ"},
 				{"Infinite loop", "aaaa"},
 				{"Infinite loop 2", "aabbabb"},
-				{"Max processor use test", "5320481"},
+				{"Decimal numbers, obscured", "5320481"},
+				{"Obscured", "aaaaa"},
 				{"All features", "bbaabbaabbaabbaa"}
 			};
 
@@ -112,6 +114,7 @@ namespace Phinite
 \usepackage{fullpage}
 \usepackage{tabularx}
 \usepackage{enumitem}
+\usepackage{url}
 			
 \begin{document}
 
@@ -120,13 +123,14 @@ namespace Phinite
 \date{\today}
 \maketitle
 
-\tableofcontents
+%\tableofcontents
 
-\newpage
+%\newpage
 
 \section{Introduction}
 
 \subsection{About Phinite}
+[data:about]
 
 \subsection{Requirements}
 
@@ -157,7 +161,8 @@ namespace Phinite
 \end{itemize}
 
 \section{Main features of application}
-Information from this section is accessible via button with a question mark \verb""?"".
+Information from this section is accessible via buttons with a question mark (\verb""?"")
+that are scattered across Phinite.
 
 \subsection{Regular expression input}
 [data:regexpinput]
@@ -277,7 +282,7 @@ there is an edge missing, it means that such transition leads to rejecting state
 \end{document}
 ";
 		}
-		
+
 		public static string Template_ReportState
 		{ get { if (template_ReportState == null) template_ReportState = Init_ReportState(); return template_ReportState; } }
 		private static string template_ReportState;
@@ -335,35 +340,46 @@ $q_{[data:label1]}$ & $[data:letters]$ & $q_{[data:label2]}$ & $[data:regexp1]$ 
 			s.Append(" Version ").Append(App.VersionString).AppendLine();
 			s.AppendLine();
 
+			if (latex) s.AppendLine(@"\begin{verbatim}");
 			s.AppendLine(@"Phinite: finite-state machine builder and simulator
 Copyright (C) 2013  Mateusz Bysiek, http://mbdev.pl/
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.");
-			s.AppendLine();
+(at your option) any later version.
 
-			s.AppendLine(@"This program is distributed in the hope that it will be useful,
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.");
+			if (latex) s.AppendLine(@"\end{verbatim}");
 			s.AppendLine();
 
 			s.Append(latex ? App.NameLatex : App.Name).AppendLine(" uses:");
 			if (latex) s.AppendLine(@"\begin{itemize}");
 			s.Append(latex ? @"\item" : "-")
-				.AppendLine(" Extended WPF Toolkit, https://wpftoolkit.codeplex.com/, Microsoft Public License")
+				.Append(" Extended WPF Toolkit, ")
+					.Append(latex ? @"\url{" : "").Append("https://wpftoolkit.codeplex.com/").Append(latex ? @"}" : "")
+					.AppendLine(", Microsoft Public License")
 				.Append(latex ? @"\item" : "-")
-				.AppendLine(" WPF Converters, https://wpfconverters.codeplex.com/, Microsoft Public License")
+				.Append(" WPF Converters, ")
+					.Append(latex ? @"\url{" : "").Append("https://wpfconverters.codeplex.com/").Append(latex ? @"}" : "")
+					.AppendLine(", Microsoft Public License")
 				.Append(latex ? @"\item" : "-")
-				.AppendLine(" QuickGraph, https://quickgraph.codeplex.com/, Apache License 2.0")
+				.Append(" QuickGraph, ")
+					.Append(latex ? @"\url{" : "").Append("https://quickgraph.codeplex.com/").Append(latex ? @"}" : "")
+					.AppendLine(", Apache License 2.0")
 				.Append(latex ? @"\item" : "-")
-				.AppendLine(" Graph#, https://graphsharp.codeplex.com/, Microsoft Public License")
+				.Append(" Graph" + (latex ? @"\" : "") + "#, ")
+					.Append(latex ? @"\url{" : "").Append("https://graphsharp.codeplex.com/").Append(latex ? @"}" : "")
+					.AppendLine(", Microsoft Public License")
 				.Append(latex ? @"\item" : "-")
-				.AppendLine(" Arrowheads, http://charlespetzold.com/blog/2007/04/191200.html, royalty-free license");
+				.Append(" Arrowheads, ")
+					.Append(latex ? @"\url{" : "").Append("http://charlespetzold.com/blog/2007/04/191200.html").Append(latex ? @"}" : "")
+					.AppendLine(", royalty-free license");
 			if (latex) s.AppendLine(@"\end{itemize}");
 			s.AppendLine();
 
@@ -568,11 +584,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.");
 			if (latex) s.AppendLine(@"\end{itemize}");
 			s.AppendLine();
 
-			s.AppendLine("Hint: closing the window is the same as last option.");
-			s.AppendLine();
+			s.AppendLine(@"Hint: closing the window is the same as last option.
 
-			s.AppendLine("You can doubleclick regular expressions in the table to see their parse trees.");
-			s.AppendLine("This might make the comparison of long expressions easier.");
+You can doubleclick regular expressions in the table to see their parse trees.
+This might make the comparison of long expressions easier.
+
+Also, you can doubleclick the similarity percentage to see details of why Phinite
+estimated the similarity in such way.
+");
 
 			return s.ToString();
 		}
