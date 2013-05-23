@@ -54,6 +54,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\Kent.Boogaart.HelperTrinity.dll</HintPath>
     </Reference>
+    <Reference Include="MBdev.Extensions">
+      <HintPath>..\..\lib\MBdev.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="QuickGraph, Version=3.2.40122.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\QuickGraph.dll</HintPath>
@@ -80,7 +83,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Extensions.cs" />
     <Compile Include="FiniteStateMachineLayoutScore.cs" />
     <Compile Include="IconHelper.cs" />
     <Compile Include="FiniteStateMachineLayout.cs" />

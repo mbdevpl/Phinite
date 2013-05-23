@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Phinite
 {
-	internal class FiniteStateMachineLayoutScore : IComparable
+	public class FiniteStateMachineLayoutScore : IComparable
 	{
 		public static readonly FiniteStateMachineLayoutScore Perfect;
 

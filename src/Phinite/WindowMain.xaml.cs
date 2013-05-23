@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using MBdev.Extensions;
 
 namespace Phinite
 {
@@ -36,6 +37,7 @@ namespace Phinite
 
 		private object uiStateLock = new object();
 		private UIState uiState;
+		public UIState UiState { get { return uiState; } }
 
 		private int computationSessionId;
 		private int thisComputationSessionId;

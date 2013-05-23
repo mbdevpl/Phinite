@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +14,7 @@ using GraphSharp.Algorithms.Layout.Contextual;
 using GraphSharp.Algorithms.Layout.Simple.FDP;
 using GraphSharp.Algorithms.Layout.Simple.Tree;
 using GraphSharp.Algorithms.OverlapRemoval;
+using MBdev.Extensions;
 using Petzold.Media2D;
 using QuickGraph;
 using QuickGraph.Algorithms;
@@ -81,12 +81,12 @@ namespace Phinite
 		{
 			get
 			{
-				if(vertices == null)
-				return null;
+				if (vertices == null)
+					return null;
 
 				var locs = new Point[vertices.Count];
 				int i = 0;
-				foreach(var pair in vertices)
+				foreach (var pair in vertices)
 					locs[i++] = pair.Value;
 
 				return new ReadOnlyCollection<Point>(locs);
@@ -114,6 +114,7 @@ namespace Phinite
 		private Dictionary<MachineTransition, Tuple<int, int>> edges;
 
 		private FiniteStateMachineLayoutScore layoutScore;
+		public FiniteStateMachineLayoutScore Score { get { return layoutScore; } }
 
 		#endregion
 
@@ -162,6 +163,12 @@ namespace Phinite
 
 			#endregion
 
+		}
+
+		public bool Create()
+		{
+			int session = -1;
+			return Create(session, ref session);
 		}
 
 		/// <summary>
@@ -682,7 +689,7 @@ namespace Phinite
 
 						DrawLoop(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush, location, angle);
 
-						Point translatePoint = new Point().MoveTo(angle, LoopHeight);
+						Point translatePoint = new Point(0, 0).MoveTo(angle, LoopHeight);
 
 						if (angle > 90 && angle <= 270)
 							angle -= 180;
@@ -720,7 +727,7 @@ namespace Phinite
 								Point p1 = vertices[intersectingTransition.InitialStateId];
 								Point p2 = vertices[intersectingTransition.ResultingStateId];
 
-								Point intersection = location.FindIntersection(endpoint, p1, p2, true);
+								Point intersection = location.FindIntersectionAssumingItExists(endpoint, p1, p2);
 
 								intersections.Add(intersection);
 							}
@@ -734,10 +741,10 @@ namespace Phinite
 
 								//double angle = location.Angle(endpoint); // already got it
 
-								Point intersection = vertices[intr.Item1].Copy().MoveTo(angle, intr.Item3);
+								Point intersection = vertices[intr.Item1].MoveTo(angle, intr.Item3);
 
 								if (intersection.DistanceToLine(location, endpoint) > intr.Item3)
-									intersection = vertices[intr.Item1].Copy().MoveTo(angle + 180, intr.Item3);
+									intersection = vertices[intr.Item1].MoveTo(angle + 180, intr.Item3);
 
 								intersections.Add(intersection);
 							}
@@ -772,10 +779,10 @@ namespace Phinite
 							if (angle > 90 && angle <= 270)
 							{
 								angle -= 180;
-								translatePoint = new Point().MoveTo(angle, TextBlockHeight / 2 + 4);
+								translatePoint = new Point(0, 0).MoveTo(angle, TextBlockHeight / 2 + 4);
 							}
 							else
-								translatePoint = new Point().MoveTo(angle, -TextBlockHeight / 2 - 4);
+								translatePoint = new Point(0, 0).MoveTo(angle, -TextBlockHeight / 2 - 4);
 
 							DrawEdge(canvas, edgeBrush, edgeBorderBrush, edgeLabelBrush,
 								location, edges[transition].Item1, endpoint, edges[transition].Item2);
@@ -786,7 +793,7 @@ namespace Phinite
 
 							if (angle > 90 && angle <= 270)
 								angle -= 180;
-							translatePoint = new Point().MoveTo(angle, TextBlockHeight / 2 - 2);
+							translatePoint = new Point(0, 0).MoveTo(angle, TextBlockHeight / 2 - 2);
 						}
 
 						var rotateTransform = new RotateTransform(angle, letters.Width / 2, TextBlockHeight / 2);
@@ -940,8 +947,8 @@ namespace Phinite
 		{
 			Brush[] brushes = new Brush[] { brush, borderBrush };
 
-			Point start = new Point().MoveTo(angle, StateEllipseDiameter);
-			Point end = new Point().MoveTo(angle, StateEllipseDiameter / 2);
+			Point start = new Point(0, 0).MoveTo(angle, StateEllipseDiameter);
+			Point end = new Point(0, 0).MoveTo(angle, StateEllipseDiameter / 2);
 
 			for (int i = 0; i < brushes.Length; ++i)
 			{
@@ -1005,7 +1012,7 @@ namespace Phinite
 		{
 			Brush[] brushes = new Brush[] { brush, borderBrush };
 
-			Point target = end.Copy().MoveTo(start, StateEllipseDiameter / 2);
+			Point target = end.MoveTo(start, StateEllipseDiameter / 2);
 
 			for (int i = 0; i < brushes.Length; ++i)
 			{
@@ -1033,10 +1040,10 @@ namespace Phinite
 			Brush[] brushes = new Brush[] { brush, borderBrush };
 
 			double dist = start.Distance(end) / 2;
-			Point startCtrl = start.Copy().MoveTo(startAngle, dist);
-			Point endCtrl = end.Copy().MoveTo(endAngle, dist);
+			Point startCtrl = start.MoveTo(startAngle, dist);
+			Point endCtrl = end.MoveTo(endAngle, dist);
 
-			var ptArr = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2);
+			var ptArr = end.MoveTo(endCtrl, StateEllipseDiameter / 2);
 
 			for (int i = 0; i < brushes.Length; ++i)
 			{
@@ -1047,10 +1054,10 @@ namespace Phinite
 				var bezier = new BezierSegment();
 				bezier.Point1 = startCtrl;
 				bezier.Point2 = endCtrl;
-				bezier.Point3 = end.Copy().MoveTo(endCtrl, StateEllipseDiameter / 2 + 1);
+				bezier.Point3 = end.MoveTo(endCtrl, StateEllipseDiameter / 2 + 1);
 
 				var path = new PathFigure();
-				path.StartPoint = start.Copy().MoveTo(startCtrl, StateEllipseDiameter / 2);
+				path.StartPoint = start.MoveTo(startCtrl, StateEllipseDiameter / 2);
 				path.Segments.Add(bezier);
 
 				var geo = new PathGeometry();
@@ -1077,11 +1084,11 @@ namespace Phinite
 		{
 			Brush[] brushes = new Brush[] { brush, borderBrush };
 
-			var tempPt = location.Copy().MoveTo(angle, LoopHeight);
-			Point pt1Ctrl = tempPt.Copy().MoveTo(angle - 90, LoopHalfWidth);
-			Point pt2Ctrl = tempPt.Copy().MoveTo(angle + 90, LoopHalfWidth);
+			var tempPt = location.MoveTo(angle, LoopHeight);
+			Point pt1Ctrl = tempPt.MoveTo(angle - 90, LoopHalfWidth);
+			Point pt2Ctrl = tempPt.MoveTo(angle + 90, LoopHalfWidth);
 
-			var ptArr = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2);
+			var ptArr = location.MoveTo(pt2Ctrl, StateEllipseDiameter / 2);
 
 			for (int i = 0; i < brushes.Length; ++i)
 			{
@@ -1092,10 +1099,10 @@ namespace Phinite
 				var bezier = new BezierSegment();
 				bezier.Point1 = pt1Ctrl;
 				bezier.Point2 = pt2Ctrl;
-				bezier.Point3 = location.Copy().MoveTo(pt2Ctrl, StateEllipseDiameter / 2 + 1);
+				bezier.Point3 = location.MoveTo(pt2Ctrl, StateEllipseDiameter / 2 + 1);
 
 				var path = new PathFigure();
-				path.StartPoint = location.Copy().MoveTo(pt1Ctrl, StateEllipseDiameter / 2);
+				path.StartPoint = location.MoveTo(pt1Ctrl, StateEllipseDiameter / 2);
 				path.Segments.Add(bezier);
 
 				var geo = new PathGeometry();
