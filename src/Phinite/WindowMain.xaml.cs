@@ -1132,7 +1132,11 @@ namespace Phinite
 		{
 			try
 			{
-				Process.Start("bysiekm-business-analysis.pdf");
+				// "bysiekm-business-analysis.pdf"
+				if (settings.PdfViewer.Length > 0)
+					Process.Start(settings.PdfViewer, "skorupap_business_analysis.pdf");
+				else
+					Process.Start("skorupap_business_analysis.pdf");
 			}
 			catch (Win32Exception)
 			{
@@ -1144,7 +1148,10 @@ namespace Phinite
 		{
 			try
 			{
-				Process.Start("bysiekm-technical-analysis.pdf");
+				if (settings.PdfViewer.Length > 0)
+					Process.Start(settings.PdfViewer, "bysiekm-technical-analysis.pdf");
+				else
+					Process.Start("bysiekm-technical-analysis.pdf");
 			}
 			catch (Win32Exception)
 			{
