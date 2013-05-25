@@ -1179,6 +1179,7 @@ namespace Phinite
 				s.Replace("[data:report]", App.Latex_Report);
 				s.Replace("[data:wordinput]", App.Latex_WordInput);
 				s.Replace("[data:evaluation]", App.Latex_Evaluation);
+				s.Replace("[data:settings]", App.Latex_Settings);
 
 				var text = s.ToString();
 

@@ -20,6 +20,7 @@ See documentation.
 - 28 Feb 2013 - project started
 - 14 Mar 2013 - business analysis
 - 21 Mar 2013 - technical analysis
+- 25 May 2013 - first release
 
 ## License
 

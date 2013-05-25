@@ -16,8 +16,18 @@ Thumbs.db
 /src/*/obj
 /src/*/bin
 /src/TestResults
+*.vshost.exe
+*.vshost.exe.config
+*.vshost.exe.manifest
+
+# Release
+/bin/*.pdb
+/bin/*.xml
+/bin/*.tex
+/bin/*.zip
+/bin/*.pdf
 
 # Temporary enries
-/bin
+/doc/skorupap_buisness_analysis.docx
 /doc/business_analysis/tex/example.tex
 /doc/business_analysis/example.pdf

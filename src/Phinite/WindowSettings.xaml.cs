@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Windows;
+using MBdev.Extensions;
 
 namespace Phinite
 {
@@ -23,7 +24,7 @@ namespace Phinite
 				if (phi.Settings.LayoutCreationFrequencyInUse == value)
 					return;
 				phi.Settings.LayoutCreationFrequencyInUse = value;
-				InvokePropertyChanged("LayoutCreationFrequencyInUse");
+				this.InvokePropertyChanged(PropertyChanged, "LayoutCreationFrequencyInUse");
 			}
 		}
 
@@ -37,7 +38,7 @@ namespace Phinite
 				if (phi.Settings.LayoutCreationFrequency == (int)value)
 					return;
 				phi.Settings.LayoutCreationFrequency = (int)value;
-				InvokePropertyChanged("LayoutCreationFrequency");
+				this.InvokePropertyChanged(PropertyChanged, "LayoutCreationFrequency");
 				LayoutCreationFrequencyInUse = 1;
 			}
 		}
@@ -50,7 +51,7 @@ namespace Phinite
 				if (phi.Settings.EnableAutoResolutionModeInUse == value)
 					return;
 				phi.Settings.EnableAutoResolutionModeInUse = value;
-				InvokePropertyChanged("EnableAutoResolutionModeInUse");
+				this.InvokePropertyChanged(PropertyChanged, "EnableAutoResolutionModeInUse");
 			}
 		}
 
@@ -64,7 +65,7 @@ namespace Phinite
 				if (phi.Settings.EnableAutoResolutionMode == value)
 					return;
 				phi.Settings.EnableAutoResolutionMode = value;
-				InvokePropertyChanged("EnableAutoResolutionMode");
+				this.InvokePropertyChanged(PropertyChanged, "EnableAutoResolutionMode");
 				EnableAutoResolutionModeInUse = 1;
 			}
 		}
@@ -77,7 +78,7 @@ namespace Phinite
 				if (phi.Settings.PdflatexInUse == value)
 					return;
 				phi.Settings.PdflatexInUse = value;
-				InvokePropertyChanged("PdflatexInUse");
+				this.InvokePropertyChanged(PropertyChanged, "PdflatexInUse");
 			}
 		}
 
@@ -93,7 +94,7 @@ namespace Phinite
 				if (phi.Settings.Pdflatex.Equals(value))
 					return;
 				phi.Settings.Pdflatex = value;
-				InvokePropertyChanged("Pdflatex");
+				this.InvokePropertyChanged(PropertyChanged, "Pdflatex");
 				PdflatexInUse = 2;
 			}
 		}
@@ -106,7 +107,7 @@ namespace Phinite
 				if (phi.Settings.PdflatexTimeoutInUse == value)
 					return;
 				phi.Settings.PdflatexTimeoutInUse = value;
-				InvokePropertyChanged("PdflatexTimeoutInUse");
+				this.InvokePropertyChanged(PropertyChanged, "PdflatexTimeoutInUse");
 			}
 		}
 
@@ -120,7 +121,7 @@ namespace Phinite
 				if (phi.Settings.PdflatexTimeout == (int)value)
 					return;
 				phi.Settings.PdflatexTimeout = (int)value;
-				InvokePropertyChanged("PdflatexTimeout");
+				this.InvokePropertyChanged(PropertyChanged, "PdflatexTimeout");
 				PdflatexTimeoutInUse = 1;
 			}
 		}
@@ -133,7 +134,7 @@ namespace Phinite
 				if (phi.Settings.PdfViewerInUse == value)
 					return;
 				phi.Settings.PdfViewerInUse = value;
-				InvokePropertyChanged("PdfViewerInUse");
+				this.InvokePropertyChanged(PropertyChanged, "PdfViewerInUse");
 			}
 		}
 
@@ -147,7 +148,7 @@ namespace Phinite
 				if (phi.Settings.PdfViewer.Equals(value))
 					return;
 				phi.Settings.PdfViewer = value;
-				InvokePropertyChanged("PdfViewer");
+				this.InvokePropertyChanged(PropertyChanged, "PdfViewer");
 				PdfViewerInUse = 2;
 			}
 		}
@@ -161,12 +162,6 @@ namespace Phinite
 			InitializeComponent();
 		}
 
-		private void InvokePropertyChanged(string propertyName)
-		{
-			if (PropertyChanged != null)
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-		}
-
 		private void ButtonOk_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = true;
@@ -177,6 +172,12 @@ namespace Phinite
 		{
 			DialogResult = false;
 			Close();
+		}
+
+		private void Info_Settings(object sender, RoutedEventArgs e)
+		{
+			var msg = new MessageFrame(this, "Phinite information", "Application settings", App.Text_Settings);
+			msg.ShowDialog();
 		}
 
 		protected override void OnSourceInitialized(EventArgs e)

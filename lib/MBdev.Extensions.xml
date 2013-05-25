@@ -25,6 +25,46 @@
             <param name="array"></param>
             <returns></returns>
         </member>
+        <member name="M:MBdev.Extensions.ArrayExtensions.IndexOfTrue(System.Boolean[])">
+            <summary>
+            Returns index of the first occurance of 'true' in this array,
+            or -1 if array has only 'false' values.
+            </summary>
+            <param name="array"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MBdev.Extensions.ArrayExtensions.IndexOfFalse(System.Boolean[])">
+            <summary>
+            Returns index of the first occurance of 'false' in this array,
+            or -1 if array has only 'true' values.
+            </summary>
+            <param name="array"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MBdev.Extensions.ArrayExtensions.MatrixAdd(System.Int32[][],System.Int32)">
+            <summary>
+            Adds corresponding elements of matrices.
+            </summary>
+            <param name="input"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MBdev.Extensions.ArrayExtensions.MatrixMultiply(System.Int32[][],System.Int32)">
+            <summary>
+            Multiplies each entry of a matrix by specific value.
+            </summary>
+            <param name="input"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MBdev.Extensions.ArrayExtensions.MatrixMultiply(System.Int32[][],System.Int32[][])">
+            <summary>
+            Performs a matrix multiplication.
+            </summary>
+            <param name="m1"></param>
+            <param name="m2"></param>
+            <returns></returns>
+        </member>
         <member name="T:MBdev.Extensions.IEnumerableExtensions">
             <summary>
             Extensions for System.Collections.Generic.IEnumerable
@@ -63,6 +103,14 @@
             <typeparam name="T"></typeparam>
             <param name="list"></param>
             <returns></returns>
+        </member>
+        <member name="M:MBdev.Extensions.IListExtensions.ToSet``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            Removes elements that are duplicates according to regular Equals() method
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="list"></param>
+            <returns>a new list, that has no duplicates</returns>
         </member>
         <member name="T:MBdev.Extensions.PointExtensions">
             <summary>
@@ -179,6 +227,15 @@
             <param name="otherLineEndPoint"></param>
             <returns></returns>
         </member>
+        <member name="M:MBdev.Extensions.PointExtensions.IsInside(System.Windows.Point,System.Collections.Generic.IList{System.Windows.Point})">
+            <summary>
+            Checks if a given point is inside of a polygon defined by list of points.
+            Edge of a polygon is also treated as inside.
+            </summary>
+            <param name="point"></param>
+            <param name="polygon"></param>
+            <returns></returns>
+        </member>
         <member name="T:MBdev.Extensions.PresentationExtensions">
             <summary>
             Extensions for Windows Presentation Foundation controls.
@@ -236,6 +293,15 @@
             Removes all controls from the canvas.
             </summary>
             <param name="canvas"></param>
+        </member>
+        <member name="M:MBdev.Extensions.PresentationExtensions.FindElementLocation(System.Windows.Controls.DataGrid,System.Windows.DependencyObject,System.Int32@,System.Int32@)">
+            <summary>
+            Finds an element in the data grid.
+            </summary>
+            <param name="grid"></param>
+            <param name="element"></param>
+            <param name="columnIndex"></param>
+            <param name="rowIndex"></param>
         </member>
     </members>
 </doc>

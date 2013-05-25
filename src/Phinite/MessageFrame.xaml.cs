@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
+using MBdev.Extensions;
 
 namespace Phinite
 {
@@ -14,171 +15,64 @@ namespace Phinite
 	/// </summary>
 	public partial class MessageFrame : Window, INotifyPropertyChanged
 	{
-
-		private string windowTitle;
+		/// <summary>
+		/// Title of the message frame.
+		/// </summary>
 		public string WindowTitle
-		{
-			get { return windowTitle; }
-			set
-			{
-				if (windowTitle == value)
-					return;
-				windowTitle = value;
+		{ get { return windowTitle; } set { this.ChangeProperty(PropertyChanged, ref windowTitle, value, "WindowTitle"); } }
+		private string windowTitle;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("WindowTitle"));
-			}
-		}
-
-		private string messageTitle;
+		/// <summary>
+		/// Title of the message, printed inside the frame right above the message.
+		/// </summary>
 		public string MessageTitle
-		{
-			get { return messageTitle; }
-			set
-			{
-				if (messageTitle == value)
-					return;
-				messageTitle = value;
+		{ get { return messageTitle; } set { this.ChangeProperty(PropertyChanged, ref messageTitle, value, "MessageTitle"); } }
+		private string messageTitle;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("MessageTitle"));
-			}
-		}
-
-		private string messageText;
+		/// <summary>
+		/// Text of the message.
+		/// </summary>
 		public string MessageText
-		{
-			get { return messageText; }
-			set
-			{
-				if (messageText == value)
-					return;
-				messageText = value;
+		{ get { return messageText; } set { this.ChangeProperty(PropertyChanged, ref messageText, value, "MessageText"); } }
+		private string messageText;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("MessageText"));
-			}
-		}
-
-		private ImageSource messageImage;
+		/// <summary>
+		/// Image put on the left-hand side of the message text.
+		/// </summary>
 		public ImageSource MessageImage
-		{
-			get { return messageImage; }
-			set
-			{
-				if (messageImage == value)
-					return;
-				messageImage = value;
+		{ get { return messageImage; } set { this.ChangeProperty(PropertyChanged, ref messageImage, value, "MessageImage"); } }
+		private ImageSource messageImage;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("MessageImage"));
-			}
-		}
-
-		private bool toggleImage;
 		public bool ToggleImage
-		{
-			get { return toggleImage; }
-			set
-			{
-				if (toggleImage == value)
-					return;
-				toggleImage = value;
+		{ get { return toggleImage; } set { this.ChangeProperty(PropertyChanged, ref toggleImage, ref value, "ToggleImage"); } }
+		private bool toggleImage;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ToggleImage"));
-			}
-		}
-
-		private bool toggleOk;
 		public bool ToggleOk
-		{
-			get { return toggleOk; }
-			set
-			{
-				if (toggleOk == value)
-					return;
-				toggleOk = value;
+		{ get { return toggleOk; } set { this.ChangeProperty(PropertyChanged, ref toggleOk, ref value, "ToggleOk"); } }
+		private bool toggleOk;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ToggleOk"));
-			}
-		}
-
-		private string textOk;
 		public string TextOk
-		{
-			get { return textOk; }
-			set
-			{
-				if (textOk == value)
-					return;
-				textOk = value;
+		{ get { return textOk; } set { this.ChangeProperty(PropertyChanged, ref textOk, value, "TextOk"); } }
+		private string textOk;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("TextOk"));
-			}
-		}
-
-		private bool toggleCancel;
 		public bool ToggleCancel
-		{
-			get { return toggleCancel; }
-			set
-			{
-				if (toggleCancel == value)
-					return;
-				toggleCancel = value;
+		{ get { return toggleCancel; } set { this.ChangeProperty(PropertyChanged, ref toggleCancel, ref value, "ToggleCancel"); } }
+		private bool toggleCancel;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ToggleCancel"));
-			}
-		}
-
-		private string textCancel;
+		/// <summary>
+		/// Text printed on the 'Cancel' button.
+		/// </summary>
 		public string TextCancel
-		{
-			get { return textCancel; }
-			set
-			{
-				if (textCancel == value)
-					return;
-				textCancel = value;
+		{ get { return textCancel; } set { this.ChangeProperty(PropertyChanged, ref textCancel, value, "TextCancel"); } }
+		private string textCancel;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("TextCancel"));
-			}
-		}
-
-		private bool toggleHelp;
 		public bool ToggleHelp
-		{
-			get { return toggleHelp; }
-			set
-			{
-				if (toggleHelp == value)
-					return;
-				toggleHelp = value;
+		{ get { return toggleHelp; } set { this.ChangeProperty(PropertyChanged, ref toggleHelp, ref value, "ToggleHelp"); } }
+		private bool toggleHelp;
 
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("ToggleHelp"));
-			}
-		}
-
-		private string textHelp;
 		public string TextHelp
-		{
-			get { return textHelp; }
-			set
-			{
-				if (textHelp == value)
-					return;
-				textHelp = value;
-
-				if (PropertyChanged != null)
-					PropertyChanged(this, new PropertyChangedEventArgs("TextHelp"));
-			}
-		}
+		{ get { return textHelp; } set { this.ChangeProperty(PropertyChanged, ref textHelp, value, "TextHelp"); } }
+		private string textHelp;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 

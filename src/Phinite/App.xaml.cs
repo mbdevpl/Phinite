@@ -474,6 +474,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.");
 			return s.ToString();
 		}
 
+		public static string Text_UserHelp
+		{ get { if (text_UserHelp == null) text_UserHelp = Init_UserHelp(false); return text_UserHelp; } }
+		private static string text_UserHelp;
+
+		public static string Latex_UserHelp
+		{ get { if (latex_UserHelp == null) latex_UserHelp = Init_UserHelp(true); return latex_UserHelp; } }
+		private static string latex_UserHelp;
+
+		private static string Init_UserHelp(bool latex)
+		{
+			var s = new StringBuilder();
+
+			s.AppendLine("Buttons on this screen have the following meaning:");
+
+			if (latex) s.AppendLine(@"\begin{itemize}");
+			if (latex) s.Append(@"\item ");
+			s.AppendLine("Equivalent - given expression is equivalent to the one selected in the table.");
+			if (latex) s.Append(@"\item ");
+			s.AppendLine("Different - the expression is different from all labeled expressions.");
+			if (latex) s.Append(@"\item ");
+			s.AppendLine("No idea - PHINITE will automatically solve this problem.");
+			if (latex) s.AppendLine(@"\end{itemize}");
+			s.AppendLine();
+
+			s.AppendLine(@"Hint: closing the window is the same as last option.
+
+You can doubleclick regular expressions in the table to see their parse trees.
+This might make the comparison of long expressions easier.
+
+Also, you can doubleclick the similarity percentage to see details of why Phinite
+estimated the similarity in such way.
+");
+
+			return s.ToString();
+		}
+
 		public static string Text_Report
 		{ get { if (text_Report == null) text_Report = Init_Report(false); return text_Report; } }
 		private static string text_Report;
@@ -560,37 +596,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.");
 			return s.ToString();
 		}
 
-		public static string Text_UserHelp
-		{ get { if (text_UserHelp == null) text_UserHelp = Init_UserHelp(false); return text_UserHelp; } }
-		private static string text_UserHelp;
+		public static string Text_Settings
+		{ get { if (text_Settings == null) text_Settings = Init_Settings(false); return text_Settings; } }
+		private static string text_Settings;
 
-		public static string Latex_UserHelp
-		{ get { if (latex_UserHelp == null) latex_UserHelp = Init_UserHelp(true); return latex_UserHelp; } }
-		private static string latex_UserHelp;
+		public static string Latex_Settings
+		{ get { if (latex_Settings == null) latex_Settings = Init_Settings(true); return latex_Settings; } }
+		private static string latex_Settings;
 
-		private static string Init_UserHelp(bool latex)
+		private static string Init_Settings(bool latex)
 		{
 			var s = new StringBuilder();
 
-			s.AppendLine("Buttons on this screen have the following meaning:");
+			s.AppendLine(@"If you are not sure what the settings do, do not change them.
 
-			if (latex) s.AppendLine(@"\begin{itemize}");
-			if (latex) s.Append(@"\item ");
-			s.AppendLine("Equivalent - given expression is equivalent to the one selected in the table.");
-			if (latex) s.Append(@"\item ");
-			s.AppendLine("Different - the expression is different from all labeled expressions.");
-			if (latex) s.Append(@"\item ");
-			s.AppendLine("No idea - PHINITE will automatically solve this problem.");
-			if (latex) s.AppendLine(@"\end{itemize}");
-			s.AppendLine();
-
-			s.AppendLine(@"Hint: closing the window is the same as last option.
-
-You can doubleclick regular expressions in the table to see their parse trees.
-This might make the comparison of long expressions easier.
-
-Also, you can doubleclick the similarity percentage to see details of why Phinite
-estimated the similarity in such way.
+Each option consists of two parts, the radio button which indicates
+which option is active, and a second part (text field, numeric field,
+check box, etc.) that indicates what is the value of a given option.
 ");
 
 			return s.ToString();

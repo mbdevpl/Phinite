@@ -165,6 +165,7 @@
 			<StackPanel Orientation="Horizontal" Style="{StaticResource DialogButtonContainer}">
 				<Button Content="Ok" Click="ButtonOk_Click" />
 				<Button Content="Cancel" Click="ButtonCancel_Click" />
+				<Button Style="{StaticResource Info}" Click="Info_Settings" />
 			</StackPanel>
 		</StatusBar>
 	</Grid>
