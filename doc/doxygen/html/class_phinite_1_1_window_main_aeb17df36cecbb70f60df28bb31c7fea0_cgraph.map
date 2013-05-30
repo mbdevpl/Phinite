@@ -1,0 +1,8 @@
+<map id="Phinite.WindowMain.WindowMain" name="Phinite.WindowMain.WindowMain">
+<area shape="rect" id="node3" href="$class_phinite_1_1_window_main.html#ad2d965b9d788bba6a3ce1fdb8923a684" title="Phinite.WindowMain.SetUIState" alt="" coords="274,12,481,39"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_window_main.html#a5f524b63f3fe103cb26803aebda38829" title="Phinite.WindowMain.CallMethod\lInNewThread" alt="" coords="273,63,482,105"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_window_main.html#a6ac9661b8d3511d18b530da4e9a1c3b2" title="Phinite.WindowMain.Window\lInitializationWorker" alt="" coords="282,129,473,170"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_window_main.html#a74a84390cf6335bdfe88ba7fe4f83bf7" title="Phinite.WindowMain.SetUIState\lDirectly" alt="" coords="531,5,738,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_window_main.html#a411ae1731945f95f5ab7e7886e16c368" title="Phinite.WindowMain.SetUIVisibility" alt="" coords="787,12,1013,39"/>
+<area shape="rect" id="node13" href="$class_phinite_1_1_window_main.html#abc2248cbb18228ccebe65be9aee1ac9d" title="Phinite.WindowMain.Option\lExample_Click" alt="" coords="543,129,726,170"/>
+</map>

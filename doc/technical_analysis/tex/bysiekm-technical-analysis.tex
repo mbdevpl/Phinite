@@ -26,7 +26,7 @@ expression \newline and for simulating machine's evaluation of a given word}
 
 \company{WUT}
 \documentsubject{technical analysis}
-\documenttopicslist{technical analysis of the problem, details of used algorihms, interface specification}
+\documenttopicslist{technical analysis of the problem, details of used algorithms, interface specification}
 
 \documentsummary{Author of the document analyses the problem of designing an application for solving
 a well defined language\mbox{-}theory related problem, doing it from the developer team leader
@@ -130,7 +130,7 @@ two components. The first component has to be installed by the user.
 
 \section{Development process constraints}
 
-This section provides a set of requiremets with regard to the environment, in which the application
+This section provides a set of requirements with regard to the environment, in which the application
 and its documentation will be developed.
 
 \subsection*{Definitions}
@@ -170,7 +170,7 @@ and its documentation will be developed.
 
   \item All classes, interfaces and enumerated types have to be at least briefly described. 
 
-  \item All public properites and UI event handlers also have to be documented.
+  \item All public properties and UI event handlers also have to be documented.
 
   \item The source code documentation will follow the standard C\# documentation rules, because the
   Visual Studio has built-in support for creation of such documentation.
@@ -276,12 +276,12 @@ This screen, apart from above mentioned elements, must contain:
 
   \item the text box for regexp input,
 
-  \item information about how to write the expression; this information must include list of special
-  symbols and their meaning,
+  \item information (or link to information) about how to write the expression; this information
+  must include list of special symbols and their meaning,
 
   \item button that will invoke step-by-step computation,
 
-  \item button that will invoke computation up to final solution.
+  \item button that will invoke immediate computation up to final solution.
 
 \end{enumerate}
 
@@ -305,6 +305,9 @@ This screen, in its main area, must contain:
 
 \end{enumerate}
 
+\vspace{10pt} \noindent
+This screen may not be shown if user selects immediate computation option on the previous screen.
+
 \begin{figure}[ht!]
   \centering
   \includegraphics[width=.9\textwidth]{../../graphics/Screen2.png}
@@ -326,7 +329,7 @@ This screen, in its main area, must contain:
   \item buttons that enable the user to control the computation, i.e. enable him/her to proceed to
   the next step, go to final result, or abort computation,
 
-  \item button that enables the user to create \LaTeX{} source code and subsequentialy a PDF file,
+  \item button that enables the user to create \LaTeX{} source code and subsequently a PDF file,
 
   \item button that enables the user to go to word evaluation phase.
 
@@ -339,6 +342,19 @@ This screen, in its main area, must contain:
 \end{figure}
 
 \newpage
+
+At the beginning, a screen is displayed where input word is shown, and two empty tables are
+displayed: one for list of labeled states and another for discovered transitions. In each step,
+entries in tables may be added if in a given step some new state is labeled or is derived.
+
+Moreover, there is a place reserved (in a scroll box) to display a graph that represents those
+two tables in their current state. This graph will follow coloring of the example in
+business analysis.
+
+Moreover, the states derived in the last step have changed their border colors to light blue. And,
+the state labeled in latest step is highlighted by having its background changed to light blue.
+
+All states that exist longer that since latest step follow the usual coloring scheme.
 
 \begin{figure}[ht!]
   \centering
@@ -354,7 +370,7 @@ This screen, in its main area, must contain:
 
   \item a text box for input word,
 
-  \item information about all rules that apply to the entered word,
+  \item information (or link to information) about all rules that apply to the entered word,
 
   \item buttons for step-by-step and immediate solution.
 
@@ -383,11 +399,10 @@ This screen, in its main area, must contain:
 
 \end{enumerate}
 
-\subsection{Other screens}
-
-The application may contain other screens, which will be defined by the developing team. For
-example, there may be a special screen for user-assisted machine creation, as well as a screen that
-allows the user to edit \LaTeX{} source code before the PDF is created.
+\vspace{10pt} \noindent
+The word evaluation algorithm will use the same rules for coloring and formatting of graph of the
+machine as it was used for its construction. The difference is that the tables are not displayed,
+and the input expression is substituted with the input word that is evaluated.
 
 \newpage
 
@@ -402,6 +417,60 @@ allows the user to edit \LaTeX{} source code before the PDF is created.
   \includegraphics[width=.85\textwidth]{../../graphics/Screen7.png}
   \caption{example of completed evaluation}
 \end{figure}
+
+\newpage
+
+\subsection{User-assisted machine creation screen}
+
+Phinite will in certain scenarios (described later on) ask user about decision with regard to
+finite-state machine construction process.
+
+The screen dedicated for such situations must contain:
+\begin{enumerate}[noitemsep,nolistsep]
+
+  \item a table of currently labeled states that has at very least those columns that an analogous
+  table in machine creation screen has,
+
+  \item textual representation of currently evaluated regular expression,
+
+  \item button that indicates that user decides that currently evaluated expression is different
+  from any labeled so far,
+
+  \item button that indicates that user decides that currently evaluated expression is equivalent to
+  the one selected in the table,
+
+  \item button that launches auto-resolver that makes automatic assessment of a state equivalence
+  probability and acts upon it.
+
+\end{enumerate}
+
+\subsection{Other screens}
+
+The application may contain other screens, which will be defined by the developing team. For
+example, there may be a special screen for user-assisted machine creation, as well as a screen that
+allows the user to edit \LaTeX{} source code before the PDF is created. Those screens must be
+arranged in the same theme that other screens, but its content is not subject to the requirements.
+Also, no extra screen can be a part of a workflow defined in this document - such screen can only be
+part of a branch that goes outside the workflow and returns back to the same place.
+
+\section{Workflow}
+
+The basic application workflow is defined below:
+
+\vspace{10pt}
+Regular expression input phase (regular expression input screen, validation results screen),
+
+$ \downarrow $
+
+Machine construction phase (machine creation screen, user-assisted machine creation screen),
+
+$ \downarrow $
+
+Evaluation phase (word input screen, evaluation screen),
+
+$ \downarrow $
+
+Regular expression input phase.
 
 \newpage
 
@@ -570,7 +639,7 @@ most of the computational complexity is on the side of \verb|PartialExpression| 
 \end{figure}
 
 The development team must preserve the types and names of all public properties of all types
-mentioned in the two above sections. The names and return types of pulbic methods also have to be
+mentioned in the two above sections. The names and return types of public methods also have to be
 preserved. The names of all listed classes and enumerations also have to be exactly as specified.
 All public properties must be treated as read-only - some backing fields should be created and used
 for processing.
@@ -721,7 +790,7 @@ the operator of the last of the parts of Part is set to \verb|KleenePlus| \\
 \vspace{10pt} All other encountered pairs of Role-Symbol result in an undefined behaviour. Such pairs would
 however violate the rules of the underlying grammar, therefore they can, and shall be detected in
 the tagging step. Also, in the table there are some assumptions about data integrity which are
-ommited. Catching of invalid tag sequences in before starting parsing phase and correct
+omitted. Catching of invalid tag sequences in before starting parsing phase and correct
 implementation of the above algorithm ensures data integrity i.e. ensures that the correct parse
 tree will be built.
 
@@ -759,7 +828,7 @@ Below is the list of patterns that are considered not optimal, together with met
 
   \item If a \verb|Union| has some parts that are equal, the duplicates can be safely deleted.
 
-  \item If we have two consequtive parts of a \verb|Concatenation| that satisfy all of the following conditions:
+  \item If we have two consecutive parts of a \verb|Concatenation| that satisfy all of the following conditions:
 
   \begin{itemize}
 
@@ -828,7 +897,7 @@ Below is the list of patterns that are considered not optimal, together with met
   a+b+c$
 
   \item If some partial expression is a \verb|Union| and has \verb|KleeneStar|, then every its part
-  that is a \verb|EmptyWord| can be safely deleted, beceause the empty word will be generated
+  that is a \verb|EmptyWord| can be safely deleted, because the empty word will be generated
   anyway.
 
   For instance: $(a+\epsilon+b)^* \equiv (a+b)^*$
@@ -846,27 +915,12 @@ is why the implementation of optimization is not mandatory.
 
 \subsection{Conversion of RegularExpression object into FiniteStateMachine object}
 
-\subsubsection{Graphics}
-
-At the begining, a screen is displayed where input word is shown, and two empty tables are
-displayed: one for list of labeled states and another for discovered transitions. In each step,
-entries in tables may be added if in a given step some new state is labeled or is derived.
-
-Moreover, there is a place reserved (in a scroll box) to display a graph that represents those
-two tables in their current state. This graph will follow coloring of the example in
-business analysis.
-
-Moreover, the states derived in the last step have changed their border colors to gray. And, the
-state labeled in latest step is highlighted by having its background changed to gray.
-
-All states that exist longer that since latest step follow the usual coloring scheme.
-
 \subsubsection{Step-by-step construction}
 
 The two following (labeling and derivation) steps are executed in the loop, until the computation is
 complete. Conditions for ending the computation are described in relevant section later on.
 
-Splitting the computation into loop consisting of small, repetative steps, is necessary for
+Splitting the computation into loop consisting of small, repetitive steps, is necessary for
 implementation of step-by-step computation. When immediate result is needed, a loop can be simply
 set to run without interruption.
 
@@ -933,7 +987,7 @@ set to run without interruption.
 
     \item A copy of parse tree of Element is made, this copy becomes the currently processed tree.
 
-    \item Currently processed tree is alwayes labeled ``Tree''.
+    \item Currently processed tree is always labeled ``Tree''.
 
     \item The Tree is processed using the rules contained in the tables that follow. In that tables:
     Role is simply the role of Tree, Operator is the Tree's unary operator.
@@ -997,7 +1051,7 @@ Operator & actions \\ \hline
 
 \end{tabularx}
 
-\newpage
+%\newpage
 
 \vspace{10pt}
 The second table with transformations:
@@ -1065,6 +1119,8 @@ are executed \\
 
 \end{tabularx}
 
+\newpage
+
 \subsubsection{Ending the computation}
 
 Computation is regarded as complete when after the derivation step, both \verb|notLabeled| and
@@ -1072,7 +1128,7 @@ Computation is regarded as complete when after the derivation step, both \verb|n
 
 \subsubsection*{LaTeX output}
 
-There will be a feature that consists of constructing a latex soure and pdf file from that source.
+There will be a feature that consists of constructing a latex source and pdf file from that source.
 The latex code is created if user selects a relevant option. This option is made available only
 after the machine is fully constructed. The latex file will contain two tables: with labeled states
 and with transitions. It will also contain a code that, after processing by pdf-latex software, will
@@ -1080,34 +1136,27 @@ generate a simple graph that depicts the machine. This graph must follow standar
 formatting and coloring used in mathematics to draw finite-state machine. The representation may
 differ from the one presented in the graphical user interface.
 
-After the pdf file is generated, it should be automatically displayed to the user. If ther are any
+After the pdf file is generated, it should be automatically displayed to the user. If there are any
 errors in the processing or creating the latex code, or displaying the made pdf file, the user must
 be notified via a message box.
 
-\newpage
+%\newpage
 
 \subsection{Evaluation of a given word using FiniteStateMachine object}
 
 As the input, the algorithm takes fully constructed finite-state machine, and a word. Algorithm goes
 through the word from beginning to the end, letter by letter.
 
-Remark:
+Remark 1:
 
 User can use any characters to form the word, but if he/she uses some symbols that are used as
 special symbols in the process of constructing the machine, such as parentheses, the word will be
 always rejected, because no machine constructed by the application has transition over letter
 \verb|(| or\verb|)|.
 
-\subsubsection{Graphics}
-
-The word evaluation algorithm will use the same rules for coloring and formatting of graph of the machine as it was
-used for its construction. The difference is that the tables are not displayed, and the input
-expression is substituted with the input word that is evaluated.
-
-Remark:
+Remark 2:
 
 The machine does not change in current algorithm - only the highlighted state changes.
-
 
 \subsubsection{Procedure}
 
@@ -1117,7 +1166,7 @@ The machine does not change in current algorithm - only the highlighted state ch
 
   \item Current state of machine is set to its \verb|InitialState|. Current state is always
   highlighted by either interchanging background color with text color, or by changing background to
-  gray. Only one highlight scheme must be chosen, and has to remain the same at all steps.
+  light blue. Only one highlight scheme must be chosen, and has to remain the same at all steps.
 
   \item A loop starts.
 
@@ -1125,7 +1174,7 @@ The machine does not change in current algorithm - only the highlighted state ch
 
   \item If there are, check if there is a transition from current state to some state, over the
   currently processed letter of input. If there is, change current state and mark the letter as
-  processed. If there is no such transition, highlight current state in oragne and go to the last step.
+  processed. If there is no such transition, highlight current state in orange and go to the last step.
 
   \item Loop ends, go back to step 3.
 

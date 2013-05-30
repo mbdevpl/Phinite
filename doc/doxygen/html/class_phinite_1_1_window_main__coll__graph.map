@@ -1,0 +1,9 @@
+<map id="Phinite.WindowMain" name="Phinite.WindowMain">
+<area shape="rect" id="node6" href="$class_phinite_1_1_phinite_settings.html" title="Makes the Phinite settings management easier." alt="" coords="607,107,761,133"/>
+<area shape="rect" id="node8" href="$class_phinite_1_1_properties_1_1_settings.html" title="Phinite.Properties.Settings" alt="" coords="294,60,471,87"/>
+<area shape="rect" id="node10" href="$class_phinite_1_1_finite_state_machine_layout.html" title="Phinite.FiniteStateMachine\lLayout" alt="" coords="595,158,773,199"/>
+<area shape="rect" id="node12" href="$class_phinite_1_1_finite_state_machine_layout_score.html" title="Phinite.FiniteStateMachine\lLayoutScore" alt="" coords="293,165,472,206"/>
+<area shape="rect" id="node17" href="$class_phinite_1_1_finite_state_machine.html" title="Stores all information about a finite&#45;state machine: states and transitions, also about initial and a..." alt="" coords="595,287,773,313"/>
+<area shape="rect" id="node19" href="$class_phinite_1_1_regular_expression.html" title="This class stores all information about a regular expression and is responsible for transforming plai..." alt="" coords="295,277,470,304"/>
+<area shape="rect" id="node21" href="$class_phinite_1_1_partial_expression.html" title="Part of the expression that serves as a single node of a parse tree of a complete RegularExpression..." alt="" coords="5,277,173,304"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="Phinite.ParseTreeDrawing.DrawParseTree" name="Phinite.ParseTreeDrawing.DrawParseTree">
+<area shape="rect" id="node3" href="$class_phinite_1_1_partial_expression.html#a10a23472d093d701cd8b618e07998771" title="Calculates the width of this parse tree. Width is understood as the number of the leaves..." alt="" coords="230,5,402,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_partial_expression.html#a7e621538853ddc1198bedc7fe20bb25e" title="Calculates the height of this parse tree. Height is understood as the maximum distance from root to a..." alt="" coords="230,70,402,111"/>
+</map>

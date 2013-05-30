@@ -1,0 +1,7 @@
+<map id="Phinite.WindowSimpleCanvas.ButtonReduce_Click" name="Phinite.WindowSimpleCanvas.ButtonReduce_Click">
+<area shape="rect" id="node3" href="$class_phinite_1_1_partial_expression.html#a9374060011167c38bf17d4659449a3a7" title="Reduces expression to the longest non&#45;reducable word. " alt="" coords="270,5,442,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_parse_tree_drawing.html#aa33df69e2778e6fb03009e3e83b015d8" title="Clears the canvas and draws the parse tree on it. " alt="" coords="254,71,458,97"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_parse_tree_drawing.html#aa7d6266bd1b52be0f9898dbc2779c819" title="Phinite.ParseTreeDrawing.\lDrawParseTree" alt="" coords="507,63,682,105"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_partial_expression.html#a10a23472d093d701cd8b618e07998771" title="Calculates the width of this parse tree. Width is understood as the number of the leaves..." alt="" coords="731,30,903,71"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_partial_expression.html#a7e621538853ddc1198bedc7fe20bb25e" title="Calculates the height of this parse tree. Height is understood as the maximum distance from root to a..." alt="" coords="731,95,903,137"/>
+</map>

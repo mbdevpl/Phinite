@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['selectedexpression',['selectedExpression',['../class_phinite_1_1_window_user_help.html#a743658bf27644d66ee16e0cd92f5cdda',1,'Phinite::WindowUserHelp']]],
+  ['settings',['settings',['../class_phinite_1_1_phinite_settings.html#a7e082cfd2caad2953c3381a0826134a4',1,'Phinite.PhiniteSettings.settings()'],['../class_phinite_1_1_window_main.html#a49135a81f925140d9c82cc3e9c6ec916',1,'Phinite.WindowMain.settings()'],['../class_phinite_1_1_window_user_help.html#a31b4399cf85c248d535864b6408b6ae7',1,'Phinite.WindowUserHelp.settings()']]],
+  ['similaritiesrefinementsteps',['similaritiesRefinementSteps',['../class_phinite_1_1_finite_state_machine.html#a3c5019670c719925ad2959bd9f751aaa',1,'Phinite::FiniteStateMachine']]],
+  ['similarity',['similarity',['../class_phinite_1_1_window_machine_preview.html#a70692c58ef179898db4af761899625db',1,'Phinite::WindowMachinePreview']]],
+  ['similarityrefined',['similarityRefined',['../class_phinite_1_1_window_machine_preview.html#aef9c48ca925d811a47293ac3c9de3fcc',1,'Phinite::WindowMachinePreview']]],
+  ['similaritythresholdtoinferequivalence',['SimilarityThresholdToInferEquivalence',['../class_phinite_1_1_finite_state_machine.html#ab7082db713a06a5d4be98a1550acf54e',1,'Phinite::FiniteStateMachine']]],
+  ['stateellipsediameter',['StateEllipseDiameter',['../class_phinite_1_1_finite_state_machine_layout.html#aafe7915156d7cd5ca06505c4ca949c3b',1,'Phinite::FiniteStateMachineLayout']]],
+  ['states',['states',['../class_phinite_1_1_finite_state_machine_layout.html#a0fc17678680d45c590d3d29df2c9aa03',1,'Phinite.FiniteStateMachineLayout.states()'],['../class_phinite_1_1_window_user_help.html#a97456307ecb1dea9351099ddb8419fef',1,'Phinite.WindowUserHelp.states()']]],
+  ['stateslabeledcount',['statesLabeledCount',['../class_phinite_1_1_window_main.html#a5e2e7fbae9be393311be2f3c84d348f4',1,'Phinite::WindowMain']]],
+  ['statesleftcount',['statesLeftCount',['../class_phinite_1_1_window_main.html#ab8dbd57fafc5149ade103356813f4f2e',1,'Phinite::WindowMain']]],
+  ['status',['Status',['../class_phinite_1_1_u_i_state_info.html#af4febec2f3d5fb44b9f631c28c502710',1,'Phinite::UIStateInfo']]],
+  ['statustext',['statusText',['../class_phinite_1_1_window_main.html#a3420d9fe11cc698fbceecfdef2ca8c0b',1,'Phinite::WindowMain']]],
+  ['stepbystep',['stepByStep',['../class_phinite_1_1_window_main.html#ab93f8bf4782b889ff3ff6b970171eada',1,'Phinite::WindowMain']]],
+  ['strokesthickness',['strokesThickness',['../class_phinite_1_1_finite_state_machine_layout.html#a35a70771e805e979e1ba44c494a7837e',1,'Phinite::FiniteStateMachineLayout']]],
+  ['swp_5fframechanged',['SWP_FRAMECHANGED',['../class_phinite_1_1_icon_helper.html#aafb4aae4fbe25d6f20455a4e89917e4e',1,'Phinite::IconHelper']]],
+  ['swp_5fnomove',['SWP_NOMOVE',['../class_phinite_1_1_icon_helper.html#a1e0a19ab52b684f2248a1a246bd7096a',1,'Phinite::IconHelper']]],
+  ['swp_5fnosize',['SWP_NOSIZE',['../class_phinite_1_1_icon_helper.html#a4549ee3838b8d6ea5e53d5c9576384d2',1,'Phinite::IconHelper']]],
+  ['swp_5fnozorder',['SWP_NOZORDER',['../class_phinite_1_1_icon_helper.html#a575c64a047a9376c7788a4f82fc9c692',1,'Phinite::IconHelper']]]
+];

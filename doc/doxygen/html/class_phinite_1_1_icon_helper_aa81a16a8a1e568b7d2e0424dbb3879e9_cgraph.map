@@ -1,0 +1,6 @@
+<map id="Phinite.IconHelper.RemoveIcon" name="Phinite.IconHelper.RemoveIcon">
+<area shape="rect" id="node3" href="$class_phinite_1_1_native_methods.html#a09b581359445e8f078bb97075b2323a3" title="Phinite.NativeMethods.Get\lWindowLong" alt="" coords="261,5,437,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_native_methods.html#a8a45d9e86e03cb38243c189de94213ac" title="Phinite.NativeMethods.Set\lWindowLong" alt="" coords="262,70,437,111"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_native_methods.html#ad837abf16a1dc94d2d182315b1be6543" title="Phinite.NativeMethods.Set\lWindowPos" alt="" coords="262,135,437,177"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_native_methods.html#a60c805980bd85f50d53b06517ba9cfe6" title="Phinite.NativeMethods.Send\lMessage" alt="" coords="257,201,442,242"/>
+</map>

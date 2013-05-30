@@ -1,0 +1,6 @@
+<map id="Phinite.RegularExpression.CheckForbiddenSymbolsAt" name="Phinite.RegularExpression.CheckForbiddenSymbolsAt">
+<area shape="rect" id="node3" href="$class_phinite_1_1_regular_expression.html#a453bcceacc822b78c845b0de124f4fcb" title="Phinite.RegularExpression.\lTagInput" alt="" coords="235,38,413,79"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_regular_expression.html#ad78c560dd2ec2bfc19fa354642c81791" title="Phinite.RegularExpression.\lRegularExpression" alt="" coords="461,5,640,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_regular_expression.html#adfb543bd1a54b5c0b73fa0ace0a66448" title="Evaluates the input string again. Can be used multiple times, but the result will always be the same..." alt="" coords="461,70,640,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_regular_expression.html#aae083c65e35a4535f02a9fdf5e9cd01e" title="Creates a regular expression from a given " alt="" coords="688,70,867,111"/>
+</map>

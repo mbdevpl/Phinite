@@ -1,0 +1,26 @@
+var class_phinite_1_1_window_settings =
+[
+    [ "WindowSettings", "class_phinite_1_1_window_settings.html#a8cd49c63f5fb0c0de16de4472cd863a6", null ],
+    [ "ButtonCancel_Click", "class_phinite_1_1_window_settings.html#a7570bdf3bc9ddd4f874a207e9b7a530a", null ],
+    [ "ButtonOk_Click", "class_phinite_1_1_window_settings.html#a7216b95ff54ab6e8c10c0f37f3f7c84d", null ],
+    [ "Info_Settings", "class_phinite_1_1_window_settings.html#aced1b30d22e085c2be7a37c4db4c0f57", null ],
+    [ "OnSourceInitialized", "class_phinite_1_1_window_settings.html#a67076c06237537b69d259525d72126f1", null ],
+    [ "phi", "class_phinite_1_1_window_settings.html#a8647550526270fd84d374e123cebc411", null ],
+    [ "EnableAutoResolutionMode", "class_phinite_1_1_window_settings.html#a4ecb90e1179f574aa41f28beb0ab7a0a", null ],
+    [ "EnableAutoResolutionModeDefault", "class_phinite_1_1_window_settings.html#a2e990f183755f490db6a2099dd3b9c14", null ],
+    [ "EnableAutoResolutionModeInUse", "class_phinite_1_1_window_settings.html#adaf8d430ab363ef9855ce504a974cc3a", null ],
+    [ "LayoutCreationFrequency", "class_phinite_1_1_window_settings.html#abd908e5d5d216fae583d71c96a902e39", null ],
+    [ "LayoutCreationFrequencyDefault", "class_phinite_1_1_window_settings.html#a2b18d7945aa0928e9a39c6946f247ca7", null ],
+    [ "LayoutCreationFrequencyInUse", "class_phinite_1_1_window_settings.html#a9c0fcae4c3adc531f53fc1934dbb8b82", null ],
+    [ "Pdflatex", "class_phinite_1_1_window_settings.html#a0e998bc15e2ceb60fc671847c5338709", null ],
+    [ "PdflatexExternal", "class_phinite_1_1_window_settings.html#a20785cad6a902f84ae4da3f580607a17", null ],
+    [ "PdflatexInternal", "class_phinite_1_1_window_settings.html#ae7c2432e85d640dcbecb673b625e6f40", null ],
+    [ "PdflatexInUse", "class_phinite_1_1_window_settings.html#aaece40c618ff5d81bd9529a1b35bb363", null ],
+    [ "PdflatexTimeout", "class_phinite_1_1_window_settings.html#a7b4941cf3724c328919225eaec19beea", null ],
+    [ "PdflatexTimeoutDefault", "class_phinite_1_1_window_settings.html#aeafd6625b52e09018aa16dce7e3e4f42", null ],
+    [ "PdflatexTimeoutInUse", "class_phinite_1_1_window_settings.html#afcb11e4b896145f3b6f1d1f25ba6b60a", null ],
+    [ "PdfViewer", "class_phinite_1_1_window_settings.html#a7acad27513e1025eba9f2023cab6b77a", null ],
+    [ "PdfViewerInternal", "class_phinite_1_1_window_settings.html#a06928120870bd867a541fd3336289bc4", null ],
+    [ "PdfViewerInUse", "class_phinite_1_1_window_settings.html#a40f1941cd03cf587189d2b1ce8dff053", null ],
+    [ "PropertyChanged", "class_phinite_1_1_window_settings.html#a58092e5b633669844c87b3978c8c4c98", null ]
+];

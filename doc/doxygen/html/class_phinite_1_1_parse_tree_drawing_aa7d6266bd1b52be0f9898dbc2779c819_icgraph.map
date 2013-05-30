@@ -1,0 +1,8 @@
+<map id="Phinite.ParseTreeDrawing.DrawParseTree" name="Phinite.ParseTreeDrawing.DrawParseTree">
+<area shape="rect" id="node3" href="$class_phinite_1_1_parse_tree_drawing.html#aa33df69e2778e6fb03009e3e83b015d8" title="Clears the canvas and draws the parse tree on it. " alt="" coords="230,143,434,169"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_window_main.html#a12294924132fd5324ed6e0c9914a0ed7" title="Phinite.WindowMain.Validation\lWorker" alt="" coords="490,5,691,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_window_simple_canvas.html#a17e330a60dbc52fac176eb961d063623" title="Phinite.WindowSimpleCanvas.\lWindowSimpleCanvas" alt="" coords="491,70,690,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_window_simple_canvas.html#a4704e223a05d76d42f06ae50ddc3a9fc" title="Phinite.WindowSimpleCanvas.\lButtonOptimize_Click" alt="" coords="491,135,690,177"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_window_simple_canvas.html#a310fa08ee05943ec37015f644a2be9da" title="Phinite.WindowSimpleCanvas.\lButtonReduce_Click" alt="" coords="491,201,690,242"/>
+<area shape="rect" id="node13" href="$class_phinite_1_1_window_user_help.html#a58d985000d09141ca724522e6a76a92b" title="Phinite.WindowUserHelp.Window\lUserHelp" alt="" coords="483,266,698,307"/>
+</map>

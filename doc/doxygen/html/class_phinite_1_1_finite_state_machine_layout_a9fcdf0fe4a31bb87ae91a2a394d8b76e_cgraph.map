@@ -1,0 +1,9 @@
+<map id="Phinite.FiniteStateMachineLayout.Draw" name="Phinite.FiniteStateMachineLayout.Draw">
+<area shape="rect" id="node3" href="$class_phinite_1_1_finite_state_machine_layout.html#a8f1b84e9b52170e969a6bc697d978907" title="Phinite.FiniteStateMachine\lLayout.Draw" alt="" coords="232,135,411,177"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine_layout.html#a7483a308d26a03f68820b8becfa70444" title="Phinite.FiniteStateMachine\lLayout.FindMostFreeAngle" alt="" coords="459,5,637,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_finite_state_machine_layout.html#a2f56a100c9513985f7a09aca660b6326" title="Phinite.FiniteStateMachine\lLayout.DrawStartArrow" alt="" coords="459,70,637,111"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_finite_state_machine_layout.html#abf120a755bf4e419b8a130875592490d" title="Phinite.FiniteStateMachine\lLayout.DrawLoop" alt="" coords="459,135,637,177"/>
+<area shape="rect" id="node14" href="$class_phinite_1_1_finite_state_machine_layout.html#aa124152a20909f7146526b8b89e05f67" title="Draws straight edge from start point to end point. " alt="" coords="459,201,637,242"/>
+<area shape="rect" id="node17" href="$class_phinite_1_1_finite_state_machine_layout.html#ac23d9a8c711e82a7ea995daaa9f5f09c" title="Phinite.FiniteStateMachine\lLayout.DrawState" alt="" coords="459,266,637,307"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_finite_state_machine_layout.html#a83691d4fc8374d0bde8e2997b3788e4b" title="Phinite.FiniteStateMachine\lLayout.MakeArrow" alt="" coords="685,135,864,177"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="Phinite.FiniteStateMachine.Construct" name="Phinite.FiniteStateMachine.Construct">
+<area shape="rect" id="node3" href="$class_phinite_1_1_window_machine_preview.html#a0a3633acfe8e35924c75a91cd84e81a1" title="Phinite.WindowMachinePreview.\lWindowMachinePreview" alt="" coords="241,5,450,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_window_user_help.html#ae6586a0a11437f31e37f387cb91da3ad" title="Phinite.WindowUserHelp.Resolve\lEquivalent" alt="" coords="238,70,453,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_window_user_help.html#ac3d935fc848b74541725f483ae12ff94" title="Phinite.WindowUserHelp.Resolve\lDifferent" alt="" coords="238,135,453,177"/>
+<area shape="rect" id="node13" href="$class_phinite_1_1_window_user_help.html#ab78efa80ccaa373cfbc35d3189d2261f" title="Phinite.WindowUserHelp.Auto\lResolveEquivalenceProblem" alt="" coords="247,201,443,242"/>
+<area shape="rect" id="node19" href="$class_phinite_1_1_finite_state_machine.html#a6a147806b23bfd6dfd64ae082ffcc0f8" title="Creates a new finite&#45;state machine from a given regular expression. " alt="" coords="254,266,437,307"/>
+<area shape="rect" id="node21" href="$class_phinite_1_1_finite_state_machine.html#ae5f34f9baa401dec47c58c5680b2a995" title="Initially calculated probability values for similarities (public field NextNotLabeledStateSimilaritie..." alt="" coords="254,331,437,373"/>
+<area shape="rect" id="node23" href="$class_phinite_1_1_finite_state_machine.html#a205a275326aa97205c9668c4352b424b" title="Phinite.FiniteStateMachine.\lCompareToExisting" alt="" coords="254,397,437,438"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_window_user_help.html#a893e97689b7c2918a037da3f9e488019" title="Phinite.WindowUserHelp.Button\lEquivalent_Click" alt="" coords="506,70,713,111"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_window_user_help.html#ac43cdd04647740ba36a07d08e636ae25" title="Phinite.WindowUserHelp.Button\lDifferent_Click" alt="" coords="506,135,713,177"/>
+<area shape="rect" id="node15" href="$class_phinite_1_1_window_user_help.html#a39879543ed432944c9f7b88ccf0beb5e" title="Phinite.WindowUserHelp.Button\lAuto_Click" alt="" coords="506,201,713,242"/>
+<area shape="rect" id="node17" href="$class_phinite_1_1_window_user_help.html#afb24e704b442b3ca37bd5313886d50de" title="Phinite.WindowUserHelp.Window\lUserHelp_Closing" alt="" coords="502,266,717,307"/>
+</map>

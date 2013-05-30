@@ -1,0 +1,6 @@
+<map id="Phinite.FiniteStateMachineLayout.Create" name="Phinite.FiniteStateMachineLayout.Create">
+<area shape="rect" id="node3" href="$class_phinite_1_1_finite_state_machine_layout.html#a495ca31e8fbcf2048717f0eaea7992cd" title="Uses GraphSharp CompoundFDPLayoutAlgorithm, i.e. a force&#45;based algorithm." alt="" coords="232,5,411,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine_layout.html#a7d170d1d74f8f2acd34d6981845f5ae2" title="Returns a score of a given layout." alt="" coords="232,70,411,111"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_finite_state_machine_layout.html#a9f9652adcd61f2520565bd3ed1a76c18" title="Phinite.FiniteStateMachine\lLayout.CreateEdges" alt="" coords="232,135,411,177"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_finite_state_machine_layout.html#a7483a308d26a03f68820b8becfa70444" title="Phinite.FiniteStateMachine\lLayout.FindMostFreeAngle" alt="" coords="459,135,637,177"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="Phinite.RegularExpression.Similarity" name="Phinite.RegularExpression.Similarity">
+<area shape="rect" id="node3" href="$class_phinite_1_1_regular_expression.html#a7fd0672bd3e74bca878e8c40d08df8fa" title="Returns true if this expression generates an empty word, and false otherwise. " alt="" coords="232,29,411,70"/>
+<area shape="rect" id="node6" href="$class_phinite_1_1_regular_expression.html#ad90df23e8055fde3ad52305b34008305" title="Derives a new expression by removing a given letter from the beginning of this regular expression..." alt="" coords="232,94,411,135"/>
+</map>

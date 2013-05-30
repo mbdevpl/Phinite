@@ -1,0 +1,6 @@
+<map id="Phinite.PartialExpression.Reduce" name="Phinite.PartialExpression.Reduce">
+<area shape="rect" id="node3" href="$class_phinite_1_1_window_simple_canvas.html#a310fa08ee05943ec37015f644a2be9da" title="Phinite.WindowSimpleCanvas.\lButtonReduce_Click" alt="" coords="253,5,451,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine.html#a2a573b12010eaddf00c55df2b168e5b9" title="Phinite.FiniteStateMachine.\lFindOptimalNumberOfRefinementSteps" alt="" coords="227,70,477,111"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_finite_state_machine.html#adcc4b575895a68dff95b70d5961f0f40" title="Phinite.FiniteStateMachine.\lInitializeConstruction" alt="" coords="526,70,709,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_finite_state_machine.html#a6a147806b23bfd6dfd64ae082ffcc0f8" title="Creates a new finite&#45;state machine from a given regular expression. " alt="" coords="758,70,941,111"/>
+</map>

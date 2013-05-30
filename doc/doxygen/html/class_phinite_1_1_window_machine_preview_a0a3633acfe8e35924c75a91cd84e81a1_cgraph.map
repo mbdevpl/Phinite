@@ -1,0 +1,15 @@
+<map id="Phinite.WindowMachinePreview.WindowMachinePreview" name="Phinite.WindowMachinePreview.WindowMachinePreview">
+<area shape="rect" id="node3" href="$class_phinite_1_1_finite_state_machine.html#a0b9b0ed3d3b3ed83826e20f3813e0f5f" title="The method performs at most chosen number of steps of finite&#45;state machine construction." alt="" coords="265,5,447,46"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine_layout.html#a60b0bd73f76711093d363b3a55a0a44d" title="Phinite.FiniteStateMachine\lLayout.Create" alt="" coords="267,70,445,111"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_regular_expression.html#a7360869b6f733b26565abe8f556b3f6a" title="Estimates similarity between two regular expressions, on a scale from 0 to 1. " alt="" coords="267,135,445,177"/>
+<area shape="rect" id="node14" href="$class_phinite_1_1_finite_state_machine.html#a3c5d8dffb852f7981ab37068621a1718" title="Phinite.FiniteStateMachine.\lFindRelatedStates" alt="" coords="265,201,447,242"/>
+<area shape="rect" id="node16" href="$class_phinite_1_1_finite_state_machine_layout.html#a8f1b84e9b52170e969a6bc697d978907" title="Phinite.FiniteStateMachine\lLayout.Draw" alt="" coords="267,299,445,341"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_regular_expression.html#a7fd0672bd3e74bca878e8c40d08df8fa" title="Returns true if this expression generates an empty word, and false otherwise. " alt="" coords="496,70,675,111"/>
+<area shape="rect" id="node12" href="$class_phinite_1_1_regular_expression.html#ad90df23e8055fde3ad52305b34008305" title="Derives a new expression by removing a given letter from the beginning of this regular expression..." alt="" coords="496,135,675,177"/>
+<area shape="rect" id="node18" href="$class_phinite_1_1_finite_state_machine_layout.html#a7483a308d26a03f68820b8becfa70444" title="Phinite.FiniteStateMachine\lLayout.FindMostFreeAngle" alt="" coords="496,201,675,242"/>
+<area shape="rect" id="node20" href="$class_phinite_1_1_finite_state_machine_layout.html#a2f56a100c9513985f7a09aca660b6326" title="Phinite.FiniteStateMachine\lLayout.DrawStartArrow" alt="" coords="496,266,675,307"/>
+<area shape="rect" id="node24" href="$class_phinite_1_1_finite_state_machine_layout.html#abf120a755bf4e419b8a130875592490d" title="Phinite.FiniteStateMachine\lLayout.DrawLoop" alt="" coords="496,331,675,373"/>
+<area shape="rect" id="node27" href="$class_phinite_1_1_finite_state_machine_layout.html#aa124152a20909f7146526b8b89e05f67" title="Draws straight edge from start point to end point. " alt="" coords="496,397,675,438"/>
+<area shape="rect" id="node30" href="$class_phinite_1_1_finite_state_machine_layout.html#ac23d9a8c711e82a7ea995daaa9f5f09c" title="Phinite.FiniteStateMachine\lLayout.DrawState" alt="" coords="496,462,675,503"/>
+<area shape="rect" id="node22" href="$class_phinite_1_1_finite_state_machine_layout.html#a83691d4fc8374d0bde8e2997b3788e4b" title="Phinite.FiniteStateMachine\lLayout.MakeArrow" alt="" coords="723,331,901,373"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="Phinite.FiniteStateMachineLayout.DrawStartArrow" name="Phinite.FiniteStateMachineLayout.DrawStartArrow">
+<area shape="rect" id="node3" href="$class_phinite_1_1_finite_state_machine_layout.html#a8f1b84e9b52170e969a6bc697d978907" title="Phinite.FiniteStateMachine\lLayout.Draw" alt="" coords="232,70,411,111"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine_layout.html#a199035ff07f7dbdfc7bc506b34dc08f0" title="Phinite.FiniteStateMachine\lLayout.Draw" alt="" coords="479,5,657,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_window_machine_preview.html#a0a3633acfe8e35924c75a91cd84e81a1" title="Phinite.WindowMachinePreview.\lWindowMachinePreview" alt="" coords="463,70,673,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_window_main.html#a5b6fe2caa340131aff3587125a28c9b5" title="Return value indicates whether the state is shown or not. " alt="" coords="459,135,677,177"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="Phinite.RegularExpression.Derive" name="Phinite.RegularExpression.Derive">
+<area shape="rect" id="node3" href="$class_phinite_1_1_regular_expression.html#a7360869b6f733b26565abe8f556b3f6a" title="Estimates similarity between two regular expressions, on a scale from 0 to 1. " alt="" coords="235,5,413,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_finite_state_machine.html#a1db452d5d03351b9bf4ecf743d3eb361" title="Derives next expression from the not&#45;derived&#45;expressions queue. " alt="" coords="233,70,415,111"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_window_machine_preview.html#a0a3633acfe8e35924c75a91cd84e81a1" title="Phinite.WindowMachinePreview.\lWindowMachinePreview" alt="" coords="465,5,674,46"/>
+</map>

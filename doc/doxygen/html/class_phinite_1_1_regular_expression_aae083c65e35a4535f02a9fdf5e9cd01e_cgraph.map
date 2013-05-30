@@ -1,0 +1,10 @@
+<map id="Phinite.RegularExpression.RegularExpression" name="Phinite.RegularExpression.RegularExpression">
+<area shape="rect" id="node3" href="$class_phinite_1_1_regular_expression.html#adfb543bd1a54b5c0b73fa0ace0a66448" title="Evaluates the input string again. Can be used multiple times, but the result will always be the same..." alt="" coords="232,135,411,177"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_regular_expression.html#a453bcceacc822b78c845b0de124f4fcb" title="Phinite.RegularExpression.\lTagInput" alt="" coords="459,37,637,78"/>
+<area shape="rect" id="node13" href="$class_phinite_1_1_regular_expression.html#ad814c6130ac846451e47b15b8f3897c5" title="Phinite.RegularExpression.\lCountTags" alt="" coords="459,102,637,143"/>
+<area shape="rect" id="node15" href="$class_phinite_1_1_regular_expression.html#ad34c94d6359de5ae9f839f9dcfa350cc" title="Phinite.RegularExpression.\lParseInput" alt="" coords="459,167,637,209"/>
+<area shape="rect" id="node17" href="$class_phinite_1_1_regular_expression.html#a8e3eea3213348e4a129a0e01a948a59d" title="Removes useless nodes from the parse tree. " alt="" coords="459,233,637,274"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_regular_expression.html#a7464641b36ce861c4a46b67290cce676" title="Phinite.RegularExpression.\lCheckReservedSymbolsAt" alt="" coords="687,5,865,46"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_regular_expression.html#add74fa3acc22ed76b9f9c22d4541e01e" title="Phinite.RegularExpression.\lCheckForbiddenSymbolsAt" alt="" coords="686,70,866,111"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_regular_expression.html#a46e674575cf76355bfde4c50e5583a01" title="Phinite.RegularExpression.\lCheckIfTagSequenceValid" alt="" coords="915,5,1093,46"/>
+</map>

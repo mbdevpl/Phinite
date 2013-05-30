@@ -1,0 +1,7 @@
+<map id="Phinite.FiniteStateMachine.FiniteStateMachine" name="Phinite.FiniteStateMachine.FiniteStateMachine">
+<area shape="rect" id="node3" href="$class_phinite_1_1_finite_state_machine.html#adcc4b575895a68dff95b70d5961f0f40" title="Phinite.FiniteStateMachine.\lInitializeConstruction" alt="" coords="238,5,421,46"/>
+<area shape="rect" id="node9" href="$class_phinite_1_1_finite_state_machine.html#a0b9b0ed3d3b3ed83826e20f3813e0f5f" title="The method performs at most chosen number of steps of finite&#45;state machine construction." alt="" coords="238,70,421,111"/>
+<area shape="rect" id="node11" href="$class_phinite_1_1_finite_state_machine.html#a9d41aefaded5e1719b7acf59d0bcd124" title="Phinite.FiniteStateMachine.\lInitializeEvaluation" alt="" coords="238,135,421,177"/>
+<area shape="rect" id="node5" href="$class_phinite_1_1_finite_state_machine.html#a2a573b12010eaddf00c55df2b168e5b9" title="Phinite.FiniteStateMachine.\lFindOptimalNumberOfRefinementSteps" alt="" coords="470,5,719,46"/>
+<area shape="rect" id="node7" href="$class_phinite_1_1_partial_expression.html#a9374060011167c38bf17d4659449a3a7" title="Reduces expression to the longest non&#45;reducable word. " alt="" coords="769,5,941,46"/>
+</map>
