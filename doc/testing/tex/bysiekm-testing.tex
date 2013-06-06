@@ -1,0 +1,325 @@
+\documentclass{article}
+\usepackage[cm]{fullpage} %very small margins (around 1.5cm)
+\usepackage[utf8]{inputenc} %sets input encoding to UTF-8, needed for Polish, Japanese, etc.
+\usepackage[T1]{fontenc} %needed for Polish characters
+\usepackage{lmodern} %this font handles Polish characters properly
+
+\PassOptionsToPackage{usenames,dvipsnames,svgnames}{xcolor}
+
+\input{../../includes/titlepage}
+
+\logoleft{../../graphics/logo_pw.jpg}
+\logoleftscale{0.395}
+\logoright{../../graphics/logo_mini.png}
+\logorightscale{0.16}
+\university{Warsaw University of Technology}
+\faculty{Faculty of Mathematics and~Computer~Science}
+\location{Warsaw}
+\supervisor{dr Lucjan Stapp}
+\title{Testing of ReCon}
+\description{an application for building finite-state machine that is equivalent to a given regular
+expression \newline and for simulating machine's evaluation of a given word}
+\author{Mateusz Bysiek}
+\date{6 Jun 2013}
+
+\input{../../includes/documentmetric}
+
+\company{WUT}
+\documentsubject{test report}
+\documenttopicslist{conformance tests, testing scenarios, detected anomailes, general recommendations}
+
+\documentsummary{Author provides definitions of test scenarios that include expected application
+behavior, and performs them, writnig down all results, and he compares the contents
+of arfifacts from previous stages of the project to the actual application experience.}
+
+\openingdate{1 Jun 2013}
+\version{1.0}
+\status{final}
+\filename{bysiekm-testing.pdf}
+
+\input{../../includes/footer}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{multicol} %use \begin{multicols}{#} for # columns
+\usepackage{enumitem} %remove vertical space in itemize with: [noitemsep,nolistsep]
+\usepackage{tikz}
+%\usepackage{minted} %use \begin{minted}[mathescape,linenos,numbersep=5pt,gobble=0,framesep=2mm]{c++}
+\usepackage{tabularx}
+\usepackage{../../includes/pgf-umlcd}
+
+\usetikzlibrary{arrows,positioning,automata}
+
+\newcommand{\writehere}{\textbf{\textcolor{red}{Write here!}}}
+
+\newcommand{\errorminor}{Minor, }
+
+\newcommand{\errormajor}{\textbf{Major}, }
+
+\newcommand{\errorcritical}{\textbf{\textcolor{red}{Critical}}, }
+
+\begin{document}
+
+\input{firstpages}
+
+\section*{Abstract}
+
+This is a acceptance test report for an application for building finite-state machine that is
+equivalent to a given regular expression \newline and for simulating machine's evaluation of a given
+word. Application's name is ReCon.
+
+Author of the document lists test scenarios that are relevant for working
+application that is meant to solve a well defined language\mbox{-}theory related problem, he does it
+from end-user perspective, i.e. provides definitions of test scenarios that include expected
+application behavior, and performs them, writnig down all results.
+
+He also compares the contents of arfifacts from previous stages of the project to the actual
+application experience, he does it from end-user perspective, adversary perspective, and technical
+advisor perspective.
+
+\section{Release package}
+Release package contains application executable, together with business
+analysis and technical analysis. The application executable is accompanied by several supporting
+files.
+
+\subsection{Anomalies}
+There are some obsolete files in the release package:
+\begin{itemize}%[noitemsep,nolistsep]
+  \item *.pdb
+  \item RegexFiniteAutomaton.vshost.*
+\end{itemize}
+
+The presence of additional executable may confuse some users. Presence of debugging symbols may
+help the adversary to reverse engineer the application, which may be undesired.
+
+Otherwise, release package is well prepared - it contains all required files and the application can
+be launched without the need for any initial environment configuration.
+
+\section{Conformance with the documentation}
+
+\subsection{Business analysis}
+The application fulfills most of the requirements defined in the business analysis. However there
+are some parts of the application that are in contradiction with the business analysis, and there
+was no indication in technical analysis that the requirements with regard these parts have changed.
+
+\subsection{Business analysis - nonconforming parts}
+
+\subsubsection{Section 2.1.2}
+Per ``Upper index characters should be preceded by a “\^{}” sign.'' the language for regular
+expressions used in the application is partially wrong. It is important to remark that in most part
+in conforms with the business analysis.
+
+\subsubsection{Section 2.2.3}
+Per ``user of the application should be able to observe computation for a given regular expression
+on the generated automata'' and ``The transition is made when the user clicks Next step button'' the
+application is missing step-by-step machine construction.
+
+\newpage
+
+\subsection{Technical analysis}
+When main features are concerned, the application realizes the main purposes described in the
+documentation, however there are some details that require attention.
+
+\subsection{Technical analysis - nonconforming parts}
+
+\subsubsection{Section ``General Requirements''}
+Per ``All states are marked as black ellipses, all transitions as directed nodes (also black).'' the
+coloring scheme used in the application is wrong.
+
+\subsubsection{Section ``GUI''}
+Per ``in the input section there are two radio button’s groups. One for entering the input and the
+second one for selecting computation mode.'' the application has two radio buttton groups, but one
+of these groups consists of only one radio option.
+
+\section{Startup}
+There are no general preconditions for these tests. 
+
+\subsection{Testing scenarios}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{Nr} & \textbf{Scenario} & \textbf{Input} & \textbf{Expected Result}  \\
+\midrule
+1 & starting app
+& double-click on app executable
+& app opens \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Anomalies}
+None detected.
+
+\newpage
+
+\section{Regular expression handling}
+Before theses thests: launch application, and wait for 2 seconds.
+
+\subsection{Testing scenarios}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{Nr} & \textbf{Scenario} & \textbf{Input} & \textbf{Expected Result}  \\
+\midrule
+1 & empty text box
+& leave text box empty, click convert
+& error indication is seen \\
+\midrule
+2 & empty word
+& enter ``$ \$ $'' in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+3 & letter ``a''
+& enter ``$ a $'' in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+4 & nonsense input
+& enter ``$ a^*(^* $'' in the text box, click convert
+& error indication is seen \\
+\midrule
+5 & advanced test 1
+& enter ``$ (a+b)(a+b)(a+b)(a+b) $'' \newline in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+6 & advanced test 2
+& enter ``$ (a+b)^* $'' in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+7 & kleene star
+& enter ``$ a^* $'' in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+8 & kleene plus
+& enter ``$a$\^{}'' in the text box, click convert
+& computation ends normally, automaton is seen \\
+\midrule
+9 & special characters
+& enter ``\#'', ``.'', ``\_'' or ``-'' in the text box, click convert
+& error indication is seen \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Anomalies}
+Detected in the following scenarios:
+\begin{itemize}
+
+  \item 1: \errorcritical application stops working and exits.
+
+  \item 2: \errorcritical application stops working and exits.
+
+  \item 4: \errorcritical application stops working and exits.
+
+  \item 5, 6 and 7: \errorminor resulting automatons are not minimal.
+
+  \item 9: \errorcritical application stops working and exits.
+
+\end{itemize}
+
+\subsection{Comments}
+\errormajor I have not found any method of launching conversion of regular expression into
+finite-state machine in step-by-step mode - the only choice is to do immediate computation.
+
+\errormajor there is an issue of missing step-by-stem finite-state machine construction feature.
+Either the module is missing, or a user control that enables the user to choose construction mode
+was forgotten.
+
+\newpage
+
+\section{Word handling}
+Before these tests: launch application, enter ``$ a^* $'' in the regexp text box, click convert.
+
+\subsection{Testing scenarios}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{Nr} & \textbf{Scenario} & \textbf{Input} & \textbf{Expected Result}  \\
+\midrule
+1 & accepted word
+& select normal mode, enter ``aaa'', click observe
+& computation ends normally, information that word was accepted is seen \\
+\midrule
+2 & rejected word
+& select normal mode, enter ``aab'', click observe
+& computation ends normally, information that word was rejected is seen \\
+\midrule
+3 & accepted word, stepping
+& select step-by-step mode, enter ``aaa'', click observe
+& computation ends normally, information that word was accepted is seen \\
+\midrule
+4 & rejected word, stepping
+& select step-by-step mode, enter ``aab'', click observe
+& computation ends normally, information that word was rejected is seen \\
+\midrule
+5 & accepted empty word
+& select normal mode, enter nothing, click observe
+& computation ends normally, information that word was accepted is seen \\
+\midrule
+6 & accepted empty word, stepping
+& select step-by-step mode, enter nothing, click observe
+& computation ends normally, information that word was accepted is seen \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Anomalies}
+Detected in the following scenarios:
+\begin{itemize}
+
+  \item 2 and 4: \errorcritical application stops working and exits.
+
+\end{itemize}
+
+\section{Closing}
+Before these tests: launch application.
+
+\subsection{Testing scenarios}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{Nr} & \textbf{Scenario} & \textbf{Input} & \textbf{Expected Result}  \\
+\midrule
+1 & exiting while app idle
+& wait for 2 seconds, click on X in app window
+& application shuts down \\
+\midrule
+2 & exiting while app computing
+& enter ``$ a^{128} $'' (128 ``a''s) in the text box, click convert, immediately click on X in app window
+& application shuts down \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Anomalies}
+Detected in the following scenarios:
+\begin{itemize}
+
+  \item 2: \errormajor the X button is not responding until the application finishes computation
+
+\end{itemize}
+
+\newpage
+
+\section{Summary}
+Application performs well for a very specific input data. It handles typical regular expressions,
+and produces not always minimal, but correct finite-state machines. However, application is unable
+to handle any unexpected content, therefore in my opinion error handling is either not present or it
+is not properly done.
+
+In most part, application conforms with requirements defined in the previous stages of the project,
+but there are some features that are either required but not implemented, or implemented but in a
+way that is not correct from the formal requirements point of view. 
+
+There is also an issue of UI blocking that is an application wide issue - whenever application is
+occupied, user cannot perform any other tasks, but there is no indication of this, the application
+window simply hangs until the application becomes idle.
+
+In conclusion, the ReCon application is conditionally accepted as it is. There is one condition of
+acceptance: it is that error handling must be done properly, so that no unexpected application
+shutdown happens when the tests defined above are performed.
+
+\end{document}

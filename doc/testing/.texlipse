@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Thu Jun 06 10:23:18 CEST 2013
+markTmpDer=true
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=bysiekm-testing.tex
+outputFile=bysiekm-testing.pdf
+langSpell=en
+markDer=true
+srcDir=tex
