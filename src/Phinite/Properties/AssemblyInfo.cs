@@ -10,9 +10,9 @@ using System.Windows;
 [assembly: AssemblyTitle("Phinite")]
 [assembly: AssemblyDescription("Application for constructing a finite-state machine equivalent to a given regular expression, and word evaluation on constructed machine.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("MBdev")]
 [assembly: AssemblyProduct("Phinite")]
-[assembly: AssemblyCopyright("Copyright © Mateusz Bysiek 2013")]
+[assembly: AssemblyCopyright("Copyright © 2013 Mateusz Bysiek  http://mbdev.pl/")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
