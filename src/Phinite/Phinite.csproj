@@ -54,8 +54,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\Kent.Boogaart.HelperTrinity.dll</HintPath>
     </Reference>
-    <Reference Include="MBdev.Extensions">
-      <HintPath>..\..\lib\MBdev.Extensions.dll</HintPath>
+    <Reference Include="mbdev_extensions_csharp">
+      <HintPath>..\..\lib\mbdev_extensions_csharp.dll</HintPath>
     </Reference>
     <Reference Include="QuickGraph, Version=3.2.40122.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -84,14 +84,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="FiniteStateMachineLayoutScore.cs" />
-    <Compile Include="IconHelper.cs" />
     <Compile Include="FiniteStateMachineLayout.cs" />
-    <Compile Include="MessageFrame.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>MessageFrame.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ParseTreeDrawing.cs" />
-    <Compile Include="PdfGenerator.cs" />
     <Compile Include="Petzold\ArrowEnds.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="WindowMachinePreview.xaml.cs">
@@ -128,10 +122,6 @@
       <DependentUpon>WindowMain.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="MessageFrame.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="WindowSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

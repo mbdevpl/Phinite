@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>MBdev.Extensions</name>
+        <name>mbdev_extensions_csharp</name>
     </assembly>
     <members>
         <member name="T:MBdev.Extensions.ArrayExtensions">
@@ -111,6 +111,63 @@
             <typeparam name="T"></typeparam>
             <param name="list"></param>
             <returns>a new list, that has no duplicates</returns>
+        </member>
+        <member name="T:MBdev.Extensions.MessageFrame">
+            <summary>
+            A Frame that is used to display messages in WPF style (not those default dialogs
+            that look like straight from Windows 2000).
+            
+            Interaction logic for SystemMessage.xaml
+            </summary>
+            <summary>
+            MessageFrame
+            </summary>
+        </member>
+        <member name="M:MBdev.Extensions.MessageFrame.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="P:MBdev.Extensions.MessageFrame.WindowTitle">
+            <summary>
+            Title of the message frame.
+            </summary>
+        </member>
+        <member name="P:MBdev.Extensions.MessageFrame.MessageTitle">
+            <summary>
+            Title of the message, printed inside the frame right above the message.
+            </summary>
+        </member>
+        <member name="P:MBdev.Extensions.MessageFrame.MessageText">
+            <summary>
+            Text of the message.
+            </summary>
+        </member>
+        <member name="P:MBdev.Extensions.MessageFrame.MessageImage">
+            <summary>
+            Image put on the left-hand side of the message text.
+            </summary>
+        </member>
+        <member name="P:MBdev.Extensions.MessageFrame.TextCancel">
+            <summary>
+            Text printed on the 'Cancel' button.
+            </summary>
+        </member>
+        <member name="M:MBdev.Extensions.PdfGenerator.Start(System.String,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="texInputFileLocation"></param>
+            <param name="pdfOutputFileLocation"></param>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="M:MBdev.Extensions.PdfGenerator.WaitForExit(System.Int32)">
+            <summary>
+            Blocks until PDF file is created or timeout happens.
+            </summary>
+            <param name="pdflatexTimeout"></param>
+            <returns>false if timeout happened</returns>
+            <exception cref="T:System.ArgumentException"></exception>
         </member>
         <member name="T:MBdev.Extensions.PointExtensions">
             <summary>
@@ -276,6 +333,13 @@
             <param name="sender">an object that implements INotifyPropertyChanged</param>
             <param name="handler">PropertyChanged event handler</param>
             <param name="propertyName">name of the public property</param>
+        </member>
+        <member name="M:MBdev.Extensions.PresentationExtensions.GetCompanyName(System.Windows.Window)">
+            <summary>
+            
+            </summary>
+            <param name="window"></param>
+            <returns></returns>
         </member>
         <member name="M:MBdev.Extensions.PresentationExtensions.Add(System.Windows.Controls.Canvas,System.Windows.UIElement,System.Double,System.Double,System.Int32)">
             <summary>
